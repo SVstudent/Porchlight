@@ -18,7 +18,7 @@ export default function ApprovalCard({ approval, members, volunteers, onDecided 
     try {
       const edits = {};
       if (tool === 'dispatch_outreach') {
-        const changed = messages.some((m, i) => m.body !== (input.messages[i] || {}).body);
+        const changed = messages.some((m, i) => m.body !== (input.messages[i] || {}).body || (m.call_script || '') !== ((input.messages[i] || {}).call_script || ''));
         if (changed) edits.messages = messages;
       }
       await api.decide(approval.id, { decision, note, edits });
@@ -51,11 +51,19 @@ export default function ApprovalCard({ approval, members, volunteers, onDecided 
                   <div className="to">
                     {mem?.name || m.member_id}
                     <span className="ch">{m.channel} · {m.language}{mem?.phone ? ` · ${mem.phone}` : ''}</span>
-                    {m.call_script ? <details><summary className="small muted">call script</summary><div className="small">{m.call_script}</div></details> : null}
+                    {m.channel === 'voice' ? <span className="voice-pill">phone call · Polly voice</span> : null}
+                    {m.call_script && m.channel !== 'voice' ? <details><summary className="small muted">call script</summary><div className="small">{m.call_script}</div></details> : null}
                   </div>
                   <div>
+                    {m.channel === 'voice' ? (
+                      <div className="voice-script">
+                        <div className="eyebrow">What the call will say ({m.language === 'es' ? 'Polly.Lupe' : 'Polly.Joanna'})</div>
+                        <textarea value={m.call_script || ''} placeholder="Call script (falls back to the message below, links removed)" onChange={(e) => setMessages(messages.map((x, j) => (j === i ? { ...x, call_script: e.target.value } : x)))} />
+                        <div className="count">then: “Press 1 if you are okay. Press 2 if you need help.”</div>
+                      </div>
+                    ) : null}
                     <textarea value={m.body} onChange={(e) => setMessages(messages.map((x, j) => (j === i ? { ...x, body: e.target.value } : x)))} />
-                    <div className="count">{m.body.length} chars · {'{checkin_link}'} becomes a one-tap link</div>
+                    <div className="count">{m.body.length} chars · {m.channel === 'voice' ? 'text fallback if the call cannot be placed' : `{'{checkin_link}'} becomes a one-tap link`}</div>
                   </div>
                 </div>
               );

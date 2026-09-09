@@ -244,3 +244,9 @@ th { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: 
 .lang { align-self: flex-end; }
 .lang button { border: 1px solid var(--line-strong); background: var(--surface); padding: 4px 10px; border-radius: 999px; font-size: 13px; }
 .lang button.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+/* ---- voice ---- */
+.voice-pill { display: inline-block; margin-top: 4px; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--amber-soft, #fbe9c9); color: var(--amber-ink, #8a5a10); }
+.voice-script { margin-bottom: 8px; padding: 8px 10px; border-radius: 10px; background: var(--surface-2); border-left: 3px solid var(--amber, #e39a2f); }
+.voice-script .eyebrow { margin-bottom: 4px; }
+.voice-script textarea { width: 100%; min-height: 72px; font-size: 14px; }

@@ -263,7 +263,8 @@ def dispatch_outreach_impl(episode_id: str, messages: list[dict], coordinator_no
         body = msg.body.replace("{checkin_link}", _checkin_link(token))
         if "{checkin_link}" not in msg.body:
             body = f"{body}\nCheck in: {_checkin_link(token)}"
-        res = deliver(m, body, preferred=msg.channel, subject=f"{settings.COMMUNITY_NAME}: please check in")
+        res = deliver(m, body, preferred=msg.channel, subject=f"{settings.COMMUNITY_NAME}: please check in",
+                      meta={"token": token, "language": msg.language, "call_script": msg.call_script})
         store.put_checkin(Checkin(token=token, episode_id=ep.id, member_id=m.id, channel=res.channel,
                                   status="sent" if res.ok else "failed", note="" if res.ok else res.detail))
         bus.emit("dispatch", f"{'Sent' if res.ok else 'FAILED'} {res.channel} to {m.name}: {res.detail}",

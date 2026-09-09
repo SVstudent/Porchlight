@@ -56,6 +56,8 @@ class Settings:
     TWILIO_FROM_NUMBER = os.getenv("TWILIO_FROM_NUMBER", "")
     TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
     SES_FROM_EMAIL = os.getenv("SES_FROM_EMAIL", "")
+    # Voice webhooks: skip Twilio signature validation (local testing only)
+    VOICE_SKIP_SIGNATURE = _bool("VOICE_SKIP_SIGNATURE", False)
     # Optional: redirect every outbound message to one number/chat/email for demos
     DEMO_OVERRIDE_PHONE = os.getenv("DEMO_OVERRIDE_PHONE", "")
     DEMO_OVERRIDE_TELEGRAM_CHAT_ID = os.getenv("DEMO_OVERRIDE_TELEGRAM_CHAT_ID", "")
