@@ -94,7 +94,7 @@ The task includes the playbook for this hazard: take elevated_risk_factors and r
 
 TRIAGE_PROMPT = COMMON_RULES + """
 Role: TRIAGE. Call get_episode_context, then get_roster. For members whose risk factors match the hazard, call
-get_member_conditions for the highest-risk ones (you do not need to check everyone). Which risk factors count
+get_member_conditions once, passing every member id you want conditions for in a single call. Which risk factors count
 as "elevated" comes from the assessment and the playbook for this hazard (a flood endangers different people
 than a heat wave). Assign every opted-in member a tier:
   1 = contact within the hour and probably needs an in-person visit or a ride (multiple elevated risk factors,

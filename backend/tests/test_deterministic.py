@@ -62,6 +62,52 @@ def test_store_atomic_updates():
     assert st.episode(ep.id).status == "monitoring" and len(st.episode(ep.id).timeline) == 200
 
 
+def test_member_conditions_is_one_call_for_the_whole_roster():
+    """Triage used to ask about each neighbour separately: a model round trip and two HTTP calls per person.
+
+    Asking once for everyone is the point of the batched signature. This checks that it really is one call,
+    that neighbours close enough to share a forecast grid cell are not fetched twice, and that one unknown id
+    is reported rather than losing the rest of the answer. open_meteo is stubbed, so no network is used.
+    """
+    import app.agents.tools as tools
+    from app.models import Member
+
+    st = Store(path=os.path.join(tempfile.mkdtemp(), "cond.db"))
+    here, next_door, across_town = (33.5000, -112.1700), (33.5001, -112.1701), (33.6500, -112.0100)
+    for i, (lat, lon) in enumerate([here, next_door, across_town]):
+        st.put_member(Member(id=f"m{i}", name=f"Neighbour {i}", lat=lat, lon=lon))
+
+    calls = []
+
+    class Stub:
+        @staticmethod
+        def current_conditions(lat, lon):
+            calls.append((lat, lon))
+            return {"temp_f": 101.0}
+
+        @staticmethod
+        def air_quality(lat, lon):
+            return {"us_aqi": 42}
+
+        @staticmethod
+        def aqi_label(v):
+            return "Good"
+
+    real_store, real_meteo = tools.store, tools.open_meteo
+    tools.store, tools.open_meteo = st, Stub()
+    try:
+        fn = getattr(tools.get_member_conditions, "_tool_func", None) or tools.get_member_conditions
+        out = fn(["m0", "m1", "m2", "nobody"])
+    finally:
+        tools.store, tools.open_meteo = real_store, real_meteo
+
+    assert set(out) == {"m0", "m1", "m2", "nobody"}, f"not every id came back: {sorted(out)}"
+    assert "error" in out["nobody"], "an unknown id should be reported, not silently dropped"
+    assert out["m0"]["weather"]["temp_f"] == 101.0
+    assert len(calls) == 2, (
+        f"expected one forecast per location (two doors apart share one), got {len(calls)}: {calls}")
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_") and callable(fn):

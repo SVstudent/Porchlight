@@ -6,6 +6,8 @@ world, and every one of them is gated by the ApprovalGateHook interrupt unless p
 """
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
+
 import logging
 import secrets
 from typing import Any
@@ -119,30 +121,58 @@ def get_area_conditions() -> dict:
 
 
 @tool
-def get_member_conditions(member_id: str) -> dict:
-    """Live weather and air quality at one member's home, plus the distance to the nearest cooling resource.
+def get_member_conditions(member_ids: list[str]) -> dict:
+    """Live weather and air quality at each member's home, plus the distance to the nearest cooled place.
+    Ask for every member you care about in one call rather than one at a time.
     Args:
-        member_id: id from get_roster
+        member_ids: ids from get_roster
     """
-    m = store.member(member_id)
-    if not m:
-        return {"error": f"unknown member {member_id}"}
-    try:
-        wx = open_meteo.current_conditions(m.lat, m.lon)
-    except Exception as e:  # noqa: BLE001
-        wx = {"error": str(e)}
-    try:
-        aq = open_meteo.air_quality(m.lat, m.lon)
-        aq["label"] = open_meteo.aqi_label(aq.get("us_aqi"))
-    except Exception as e:  # noqa: BLE001
-        aq = {"error": str(e)}
-    nearest = None
-    for r in store.resources():
-        if r.kind in ("cooling_center", "warming_center", "shelter", "clean_air"):
+    if isinstance(member_ids, str):  # a model that sends one bare id instead of a list
+        member_ids = [member_ids]
+    if not member_ids:
+        return {"error": "give at least one member_id"}
+
+    cooled = [r for r in store.resources()
+              if r.kind in ("cooling_center", "warming_center", "shelter", "clean_air")]
+    # Open-Meteo resolves to a grid cell several kilometres across, so neighbours within about a kilometre
+    # of each other get the identical forecast anyway. Group them and fetch once per group rather than once
+    # per person: same numbers, a fraction of the requests.
+    wanted: list[tuple[str, Any]] = []
+    out: dict[str, Any] = {}
+    for member_id in member_ids[:50]:
+        m = store.member(member_id)
+        if not m:
+            out[member_id] = {"error": f"unknown member {member_id}"}
+        else:
+            wanted.append((member_id, m))
+
+    def _fetch(key: tuple[float, float]) -> dict:
+        lat, lon = key
+        try:
+            wx = open_meteo.current_conditions(lat, lon)
+        except Exception as e:  # noqa: BLE001
+            wx = {"error": str(e)}
+        try:
+            aq = open_meteo.air_quality(lat, lon)
+            aq["label"] = open_meteo.aqi_label(aq.get("us_aqi"))
+        except Exception as e:  # noqa: BLE001
+            aq = {"error": str(e)}
+        return {"weather": wx, "air_quality": aq}
+
+    keys = {(round(m.lat, 2), round(m.lon, 2)) for _, m in wanted}
+    # Serially this is a minute of waiting in the middle of a live demo; the calls are independent.
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        by_place = dict(zip(keys, pool.map(_fetch, keys)))
+
+    for member_id, m in wanted:
+        key = (round(m.lat, 2), round(m.lon, 2))
+        nearest = None
+        for r in cooled:
             d = haversine_km(m.lat, m.lon, r.lat, r.lon)
             if nearest is None or d < nearest["distance_km"]:
                 nearest = {"resource_id": r.id, "name": r.name, "distance_km": round(d, 2)}
-    return {"member_id": m.id, "name": m.name, "weather": wx, "air_quality": aq, "nearest_resource": nearest}
+        out[m.id] = {"name": m.name, "nearest_resource": nearest, **by_place[key]}
+    return out
 
 
 @tool
