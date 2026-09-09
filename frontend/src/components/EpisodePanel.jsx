@@ -3,6 +3,7 @@ import ApprovalCard from './ApprovalCard.jsx';
 import RosterStatus from './RosterStatus.jsx';
 import MapView from './MapView.jsx';
 import { api, clock, timeAgo } from '../lib/api.js';
+import HazardPill from './HazardPill.jsx';
 
 const STEPS = [
   { id: 'assess', n: 'Sentinel', s: 'Assess' },
@@ -55,10 +56,11 @@ export default function EpisodePanel({ episode, members, volunteers, resources, 
 
   return (
     <>
-      <section className={`panel hazard-card ${ep.status}`}>
+      <section className={`panel hazard-card ${ep.status} hz-card-${h.hazard_type || 'other'}`}>
         <div className="panel-b">
           <div className="hazard-meta">
             <span className={`pill ${STATUS_PILL[ep.status] || ''}`}>{ep.status.replace('_', ' ')}{ep.busy ? ' · agents working' : ''}</span>
+            <HazardPill type={h.hazard_type} />
             <span className="pill small">{h.source === 'replay' ? 'replay of a real NWS alert' : h.source === 'nws' ? 'live NWS alert' : h.source}</span>
             {h.severity ? <span className="pill small">{h.severity}</span> : null}
             <span className="small muted">opened {timeAgo(ep.created_at)}</span>

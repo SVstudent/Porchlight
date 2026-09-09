@@ -92,7 +92,19 @@ def list_fixtures() -> list[dict[str, Any]]:
             d = json.loads(p.read_text())
             feat = d["features"][0] if "features" in d else d
             props = feat.get("properties", feat)
-            out.append({"id": p.stem, "event": props.get("event"), "headline": props.get("headline"), "sender": props.get("senderName"), "area": (props.get("areaDesc") or "")[:80]})
+            meta = d.get("porchlight", {}) if isinstance(d, dict) else {}
+            sender = props.get("senderName") or ""
+            out.append({
+                "id": p.stem,
+                "event": props.get("event"),
+                "hazard_type": nws.classify_event(props.get("event") or ""),
+                "place": meta.get("place") or sender.removeprefix("NWS ").strip(),
+                "date": (props.get("sent") or props.get("onset") or props.get("effective") or "")[:10],
+                "source_url": meta.get("source_url") or props.get("id"),
+                "headline": props.get("headline"),
+                "sender": sender,
+                "area": (props.get("areaDesc") or "")[:80],
+            })
         except Exception:  # noqa: BLE001
             continue
     return out

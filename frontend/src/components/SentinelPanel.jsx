@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Radar, RotateCw, History, PlusCircle } from 'lucide-react';
 import { api, usePoll, timeAgo } from '../lib/api.js';
+import HazardPill from './HazardPill.jsx';
 
 function Reading({ v, l, unit, hot, warn }) {
   return (
@@ -95,13 +96,16 @@ export default function SentinelPanel({ onEpisode, health, refreshHealth }) {
       <section className="panel">
         <div className="panel-h"><History size={15} /><h3>Replay a real alert</h3></div>
         <div className="panel-b stack">
-          <div className="small muted">Archived NWS alerts run through the identical pipeline, labelled as replays. Use when the sky won't cooperate.</div>
+          <div className="small muted">Real archived NWS alerts, any hazard, run through the identical pipeline and labelled as replays. Use when the sky won't cooperate.</div>
           {(fixtures?.fixtures || []).map((f) => (
-            <div key={f.id} className="stack" style={{ gap: 4 }}>
-              <div style={{ fontWeight: 600 }}>{f.event}</div>
-              <div className="small muted">{f.headline}</div>
-              <button className="btn amber sm" disabled={!!busy} onClick={() => run(f.id, () => api.replay(f.id))} style={{ alignSelf: 'flex-start' }}>
-                {busy === f.id ? 'Starting agents…' : 'Replay this alert'}
+            <div key={f.id} className="fixture-row">
+              <HazardPill type={f.hazard_type} />
+              <div className="fx-main">
+                <div className="fx-t">{f.event}</div>
+                <div className="small muted fx-d">{[f.place, f.date].filter(Boolean).join(' · ')}</div>
+              </div>
+              <button className="btn amber sm" disabled={!!busy} onClick={() => run(f.id, () => api.replay(f.id))} title={f.headline}>
+                {busy === f.id ? 'Starting…' : 'Replay'}
               </button>
             </div>
           ))}
