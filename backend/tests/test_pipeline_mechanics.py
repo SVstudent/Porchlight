@@ -49,8 +49,11 @@ def _hazard() -> HazardEvent:
     )
 
 
-async def _drive() -> dict:
+async def _run(decision: str, escalate_member_id: str = "") -> dict:
+    """Run one episode from detection to settled, answering every pause with `decision`."""
     model = _seed()
+    if escalate_member_id:
+        model.escalate = escalate_member_id
     r = EpisodeRunner()
     r.model = lambda: model  # type: ignore[method-assign]
 
@@ -58,18 +61,45 @@ async def _drive() -> dict:
     await _settle(r, ep.id)
 
     seen: list[str] = []
-    # Work through every pause the graph raises, approving each one, until it stops pausing.
+    # Work through every pause the graph raises until it stops pausing.
     for _ in range(6):
         pending = [a for a in store.approvals(ep.id) if a.status == "pending"]
         if not pending:
             break
         for a in pending:
             seen.append(a.kind)
-            await r.decide(a.id, "approve", note="Approved by the mechanics test.")
+            await r.decide(a.id, decision, note=f"{decision} by the mechanics test.")
         await _settle(r, ep.id)
 
     return {"episode": store.episode(ep.id), "approvals_seen": seen, "model": model,
-            "checkins": store.checkins(ep.id)}
+            "runner": r, "checkins": store.checkins(ep.id)}
+
+
+async def _drive() -> dict:
+    approved = await _run("approve")
+
+    # A neighbour who never answered. The follow-up agent should notice and escalate.
+    ep_id = approved["episode"].id
+    silent = store.checkins(ep_id)[0]
+    store.mutate_checkin(silent.token, lambda c: setattr(c, "status", "no_response"))
+    approved["model"].escalate = silent.member_id
+    r = approved["runner"]
+    await r.run_followup(ep_id)
+    await _settle(r, ep_id + ":followup")
+    for _ in range(3):
+        pending = [a for a in store.approvals(ep_id) if a.status == "pending"]
+        if not pending:
+            break
+        for a in pending:
+            approved["approvals_seen"].append(a.kind)
+            await r.decide(a.id, "approve", note="Approved by the mechanics test.")
+        await _settle(r, ep_id + ":followup")
+    approved["episode"] = store.episode(ep_id)
+    approved["escalated_member"] = silent.member_id
+
+    # A second, independent episode where the coordinator says no to everything.
+    rejected = await _run("reject")
+    return {"approved": approved, "rejected": rejected}
 
 
 async def _settle(r: EpisodeRunner, ep_id: str, limit: float = 90.0) -> None:
@@ -86,7 +116,9 @@ async def _settle(r: EpisodeRunner, ep_id: str, limit: float = 90.0) -> None:
             pass
 
 
-RESULT = asyncio.run(_drive())
+_BOTH = asyncio.run(_drive())
+RESULT = _BOTH["approved"]
+REJECTED = _BOTH["rejected"]
 
 
 def test_the_gated_tools_actually_paused_the_graph():
@@ -119,6 +151,26 @@ def test_the_run_reached_the_end():
         + " | ".join(t.text[:120] for t in ep.timeline[-3:]))
 
 
+def test_rejecting_an_approval_sends_nothing():
+    """The safety claim the whole design rests on: no message leaves without a coordinator's yes."""
+    ep = REJECTED["episode"]
+    assert REJECTED["approvals_seen"], "the rejected run never even asked, so nothing was gated"
+    assert not store.checkins(ep.id), (
+        f"{len(store.checkins(ep.id))} check-ins exist for an episode where every approval was refused")
+    assert ep.status != "failed", f"a refusal should end the run cleanly, not fail it (status {ep.status})"
+
+
+def test_a_silent_neighbor_is_escalated():
+    """The demo's closing beat: nobody answered, so a volunteer is sent."""
+    ep = RESULT["episode"]
+    assert "followup" in RESULT["model"].calls, (
+        f"the follow-up agent never ran; nodes seen: {RESULT['model'].calls}")
+    assert "escalation" in RESULT["approvals_seen"] or any(
+        t.kind == "escalation" for t in ep.timeline), (
+        "no escalation reached the coordinator; timeline kinds: "
+        + ", ".join(sorted({t.kind for t in ep.timeline})))
+
+
 def test_every_node_was_reached_in_order():
     calls = RESULT["model"].calls
     assert calls[0] == "assess", f"assess did not run first: {calls}"
@@ -132,6 +184,8 @@ if __name__ == "__main__":
     print(f"  nodes that ran: {', '.join(RESULT['model'].calls)}")
     print(f"  pauses for approval: {', '.join(RESULT['approvals_seen']) or 'none'}")
     print(f"  check-ins created: {len(RESULT['checkins'])}")
+    rej = REJECTED["episode"]
+    print(f"  refused run {rej.id}: status '{rej.status}', {len(store.checkins(rej.id))} check-ins")
     for name, fn in list(globals().items()):
         if name.startswith("test_") and callable(fn):
             fn()

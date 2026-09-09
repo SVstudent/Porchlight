@@ -24,6 +24,7 @@ APP_TOOLS = {
     "get_member_conditions", "get_electricity_dependent_members", "get_neighbor_history",
     "submit_triage_plan", "find_nearby_cooled_places", "dispatch_outreach", "list_volunteers",
     "list_community_resources", "assign_volunteers", "get_checkin_status", "record_coordinator_brief",
+    "escalate_member",
 }
 
 ASSESSMENT = {
@@ -67,10 +68,12 @@ def _text(body: str) -> list[dict[str, Any]]:
 class ScriptedModel(Model):
     """Picks its reply from which node is calling, identified by that node's own submit tool."""
 
-    def __init__(self, member_ids: list[str], volunteer_id: str, resource_id: str) -> None:
+    def __init__(self, member_ids: list[str], volunteer_id: str, resource_id: str,
+                 escalate: str = "") -> None:
         self.members = member_ids
         self.volunteer = volunteer_id
         self.resource = resource_id
+        self.escalate = escalate  # member id the follow-up agent should escalate, if it is asked to run
         self.calls: list[str] = []  # node names, in the order they asked for a completion
         self._n = 0
 
@@ -137,6 +140,16 @@ class ScriptedModel(Model):
                                  "task": "wellness_visit", "reason": "Scripted test double.", "priority": 1}],
                 "recommended_resource_ids": [self.resource],
                 "gaps": [],
+            }, use_id):
+                yield ev
+            return
+
+        if "escalate_member" in names and self.escalate and not self._done("followup"):
+            self.calls.append("followup")
+            for ev in _tool_use("escalate_member", {
+                "member_id": self.escalate, "action": "volunteer_visit",
+                "reason": "Scripted test double: no reply past the grace period.",
+                "volunteer_id": self.volunteer,
             }, use_id):
                 yield ev
             return
