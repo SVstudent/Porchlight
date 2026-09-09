@@ -75,6 +75,41 @@ async def _run(decision: str, escalate_member_id: str = "") -> dict:
             "runner": r, "checkins": store.checkins(ep.id)}
 
 
+async def _restart_resume() -> dict:
+    """The README claims a paused run survives a restart. Prove it by throwing the Graph object away.
+
+    Dropping the in-memory graph is what a process restart looks like to the runner: the next call has
+    to rebuild it, and the rebuilt Graph reloads its state from the FileSessionManager session on disk.
+    """
+    model = _seed()
+    r = EpisodeRunner()
+    r.model = lambda: model  # type: ignore[method-assign]
+    ep = await r.start(_hazard())
+    await _settle(r, ep.id)
+
+    pending = [a for a in store.approvals(ep.id) if a.status == "pending"]
+    if not pending:
+        return {"episode": store.episode(ep.id), "paused": False, "rebuilt": False}
+
+    r._graphs.pop(ep.id, None)          # the restart
+    r._graphs.pop(ep.id + ":followup", None)
+    rebuilt_from_disk = ep.id not in r._graphs
+
+    for a in pending:
+        await r.decide(a.id, "approve", note="Approved after a restart.")
+    await _settle(r, ep.id)
+    for _ in range(4):
+        more = [a for a in store.approvals(ep.id) if a.status == "pending"]
+        if not more:
+            break
+        for a in more:
+            await r.decide(a.id, "approve", note="Approved after a restart.")
+        await _settle(r, ep.id)
+
+    return {"episode": store.episode(ep.id), "paused": True, "rebuilt": rebuilt_from_disk,
+            "checkins": store.checkins(ep.id)}
+
+
 async def _drive() -> dict:
     approved = await _run("approve")
 
@@ -99,7 +134,9 @@ async def _drive() -> dict:
 
     # A second, independent episode where the coordinator says no to everything.
     rejected = await _run("reject")
-    return {"approved": approved, "rejected": rejected}
+    # A third that is interrupted, loses its graph, and has to come back from the session on disk.
+    restarted = await _restart_resume()
+    return {"approved": approved, "rejected": rejected, "restarted": restarted}
 
 
 async def _settle(r: EpisodeRunner, ep_id: str, limit: float = 90.0) -> None:
@@ -119,6 +156,7 @@ async def _settle(r: EpisodeRunner, ep_id: str, limit: float = 90.0) -> None:
 _BOTH = asyncio.run(_drive())
 RESULT = _BOTH["approved"]
 REJECTED = _BOTH["rejected"]
+RESTARTED = _BOTH["restarted"]
 
 
 def test_the_gated_tools_actually_paused_the_graph():
@@ -171,6 +209,17 @@ def test_a_silent_neighbor_is_escalated():
     assert ep.status == "escalating", f"a carried-out escalation should leave the episode escalating, not {ep.status}"
 
 
+def test_a_paused_run_survives_losing_its_graph():
+    """The README says a paused run resumes after a restart. This is that claim, tested."""
+    assert RESTARTED["paused"], "the run never paused, so there was nothing to resume"
+    assert RESTARTED["rebuilt"], "the graph was not actually discarded, so nothing was proven"
+    ep = RESTARTED["episode"]
+    assert ep.status != "failed", (
+        "resuming from the persisted session failed; last timeline entries: "
+        + " | ".join(t.text[:120] for t in ep.timeline[-3:]))
+    assert RESTARTED["checkins"], "the graph came back but the approved messages never went out"
+
+
 def test_every_node_was_reached_in_order():
     calls = RESULT["model"].calls
     assert calls[0] == "assess", f"assess did not run first: {calls}"
@@ -186,6 +235,9 @@ if __name__ == "__main__":
     print(f"  check-ins created: {len(RESULT['checkins'])}")
     rej = REJECTED["episode"]
     print(f"  refused run {rej.id}: status '{rej.status}', {len(store.checkins(rej.id))} check-ins")
+    res = RESTARTED["episode"]
+    print(f"  restarted run {res.id}: status '{res.status}', "
+          f"{len(RESTARTED.get('checkins') or [])} check-ins after rebuilding the graph from disk")
     for name, fn in list(globals().items()):
         if name.startswith("test_") and callable(fn):
             fn()
