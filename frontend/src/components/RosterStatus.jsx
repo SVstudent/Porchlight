@@ -4,7 +4,7 @@ const RF_LABEL = { lives_alone: 'lives alone', age_75_plus: '75+', no_air_condit
 function voiceLabel(c) {
   const note = (c?.note || '').toLowerCase();
   if (note.includes('no-answer')) return 'No answer · will retry';
-  if (note.includes('busy')) return 'Line busy · will retry';
+  if (note.includes('phone call: busy')) return 'Line busy · will retry';
   if (note.includes('call: failed') || note.includes('call: canceled')) return 'Call failed · will retry';
   if (note.includes('no key pressed')) return 'Call answered · no key pressed';
   if (note.includes('pressed 1')) return 'Pressed 1: I\'m OK';

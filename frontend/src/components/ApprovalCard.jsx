@@ -63,7 +63,7 @@ export default function ApprovalCard({ approval, members, volunteers, onDecided 
                       </div>
                     ) : null}
                     <textarea value={m.body} onChange={(e) => setMessages(messages.map((x, j) => (j === i ? { ...x, body: e.target.value } : x)))} />
-                    <div className="count">{m.body.length} chars · {m.channel === 'voice' ? 'text fallback if the call cannot be placed' : `{'{checkin_link}'} becomes a one-tap link`}</div>
+                    <div className="count">{m.body.length} chars · {m.channel === 'voice' ? 'text fallback if the call cannot be placed' : '{checkin_link} becomes a one-tap link'}</div>
                   </div>
                 </div>
               );
