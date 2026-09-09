@@ -1,0 +1,7 @@
+.env
+data/*.db
+data/sessions/
+__pycache__/
+*.pyc
+.venv/
+venv/

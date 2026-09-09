@@ -1,0 +1,11 @@
+# secrets stay in backend/.env
+backend/.env
+backend/data/*.db
+backend/data/sessions/
+**/__pycache__/
+*.pyc
+.venv/
+venv/
+frontend/node_modules/
+frontend/dist/
+.DS_Store
