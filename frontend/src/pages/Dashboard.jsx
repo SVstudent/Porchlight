@@ -54,7 +54,9 @@ export default function Dashboard() {
   useEffect(() => { loadEpisode(); }, [loadEpisode]);
 
   // Poll the open episode only while its agents are still working; SSE covers the rest.
-  const working = !!episode?.busy || ['assessing', 'triaging', 'dispatching', 'escalating'].includes(episode?.status);
+  // 'escalating' is not in this list on purpose: like 'monitoring' it is a settled state that can last
+  // for hours, and `busy` already covers a follow-up agent that is genuinely mid-run.
+  const working = !!episode?.busy || ['assessing', 'triaging', 'dispatching'].includes(episode?.status);
 
   const [events, connected] = useEventStream((ev) => {
     if (REFRESH_EPISODE.has(ev.type)) queueLoad();

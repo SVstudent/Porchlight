@@ -165,10 +165,10 @@ def test_a_silent_neighbor_is_escalated():
     ep = RESULT["episode"]
     assert "followup" in RESULT["model"].calls, (
         f"the follow-up agent never ran; nodes seen: {RESULT['model'].calls}")
-    assert "escalation" in RESULT["approvals_seen"] or any(
-        t.kind == "escalation" for t in ep.timeline), (
-        "no escalation reached the coordinator; timeline kinds: "
-        + ", ".join(sorted({t.kind for t in ep.timeline})))
+    assert "escalation" in RESULT["approvals_seen"], (
+        "the escalation never asked the coordinator; pauses seen: "
+        + ", ".join(RESULT["approvals_seen"]))
+    assert ep.status == "escalating", f"a carried-out escalation should leave the episode escalating, not {ep.status}"
 
 
 def test_every_node_was_reached_in_order():

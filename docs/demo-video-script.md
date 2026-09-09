@@ -4,6 +4,21 @@ Record at 1440x900, dashboard on the left monitor, a phone (or the check-in page
 
 Roster names used below come from `backend/app/seed.py`: Rosa Alvarez (over 75, lives alone, swamp cooler only, Spanish), Walter Boyd (over 75, home oxygen concentrator), Earl Jackson (over 75, early dementia, lives alone), Helen Park (COPD, lives alone), Marisol Alvarez (volunteer: Spanish, drives), Priya Natarajan RN (volunteer: medical).
 
+## Before you hit record
+
+Open the presenter view at `/demo` and clear its checklist first. Then:
+
+1. **Backend on 8787, frontend on 5173.** Nothing else may hold 5173. Porchlight's Vite is pinned there
+   (`strictPort`), because `PUBLIC_BASE_URL` in `backend/.env` builds every check-in link from it — a link
+   on the wrong port opens somebody else's application on camera. If `npm run dev` fails with `EADDRINUSE`,
+   run `lsof -i :5173` and stop the other process. Do not change the port to get past it.
+2. **The readiness list must show "Check-in links open Porchlight" green.** That check actually fetches the
+   URL, so it is the one that catches the mistake above.
+3. **Model timeouts.** `NODE_TIMEOUT_S` and `GRAPH_TIMEOUT_S` default to values that suit Bedrock. Recording
+   against a local model is not viable: measured on this machine, a small local model needs 20+ minutes for
+   a single triage node.
+4. **Pause the sentinel** if a real alert for the roster's area could fire mid-take and open a second episode.
+
 | # | Beat | Time | On screen | Zoom on | Narration (read exactly) |
 |---|---|---|---|---|---|
 | 1 | Cold open | 0:00 to 0:25 | Black card. Text fades in line by line: "June 2021. Portland." / "69 people died in one county." / "71% lived alone." Then: "February 2021. Texas." / "246 people died." / "25 because the power to their oxygen or dialysis stopped." | Nothing. Let the text sit. | In the 2021 Pacific Northwest heat dome, 69 people died in Multnomah County. Seventy-eight percent were 60 or older, and 71 percent lived alone. Seven months earlier in Texas, 246 people died in a winter storm. Twenty-five of them because the power to their dialysis, oxygen, or medical equipment went out. |
