@@ -81,6 +81,7 @@ async def telegram_job() -> None:
 def start() -> None:
     scheduler.add_job(sentinel_job, "interval", minutes=settings.SENTINEL_INTERVAL_MINUTES, id="sentinel",
                       next_run_time=datetime.now() + timedelta(seconds=20))  # first scan shortly after startup
-    scheduler.add_job(followup_job, "interval", minutes=settings.FOLLOWUP_INTERVAL_MINUTES, id="followup")
+    followup_minutes = store.get_setting("followup_interval_minutes", settings.FOLLOWUP_INTERVAL_MINUTES)
+    scheduler.add_job(followup_job, "interval", minutes=followup_minutes, id="followup")
     scheduler.add_job(telegram_job, "interval", seconds=8, id="telegram")
     scheduler.start()

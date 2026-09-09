@@ -15,6 +15,7 @@ from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+from . import routes_demo
 from . import routes_memory
 from . import routes_outage
 from . import routes_report
@@ -376,6 +377,7 @@ def admin_reset() -> dict[str, Any]:
     return {"reset": True}
 
 
+app.include_router(routes_demo.router)
 app.include_router(routes_memory.router)
 app.include_router(routes_outage.router)
 app.include_router(routes_report.router)

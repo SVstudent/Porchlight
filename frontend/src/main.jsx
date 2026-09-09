@@ -5,6 +5,8 @@ import './index.css';
 import Dashboard from './pages/Dashboard.jsx';
 import Checkin from './pages/Checkin.jsx';
 import Roster from './pages/Roster.jsx';
+import Demo from './pages/Demo.jsx';
+import Compare from './pages/Compare.jsx';
 import Report from './pages/Report.jsx';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
@@ -15,6 +17,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/episodes/:id" element={<Dashboard />} />
         <Route path="/episodes/:id/report" element={<Report />} />
         <Route path="/roster" element={<Roster />} />
+        <Route path="/demo" element={<Demo />} />
+        <Route path="/compare" element={<Compare />} />
         <Route path="/checkin/:token" element={<Checkin />} />
       </Routes>
     </BrowserRouter>

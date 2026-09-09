@@ -1,7 +1,15 @@
 import { NavLink, Link } from 'react-router-dom';
+import SettingsMenu from './SettingsMenu.jsx';
 import { timeAgo } from '../lib/api.js';
 
-export default function TopBar({ health, connected }) {
+function modelLabel(id = '') {
+  if (id.startsWith('bedrock:')) return `Bedrock · ${id.split(':').slice(1).join(':').split('.').pop()}`;
+  if (id.startsWith('anthropic:')) return `Anthropic · ${id.split(':')[1]}`;
+  if (id.startsWith('ollama:')) return `Ollama · ${id.split(':').slice(1).join(':')}`;
+  return id;
+}
+
+export default function TopBar({ health, connected, refreshHealth }) {
   const sentinelOn = health?.sentinel_enabled;
   return (
     <header className="topbar">
@@ -15,24 +23,36 @@ export default function TopBar({ health, connected }) {
       <nav>
         <NavLink to="/" end>Desk</NavLink>
         <NavLink to="/roster">Roster</NavLink>
+        <NavLink to="/compare">Compare</NavLink>
+        <NavLink to="/demo">Present</NavLink>
       </nav>
       <span className="spacer" />
-      <span className={`pill ${sentinelOn ? 'live' : 'off'}`} title="Deterministic hazard scan of NWS + Open-Meteo">
+      <span className={`pill ${sentinelOn ? 'live' : 'off'}`} title="Deterministic hazard scan of National Weather Service alerts and live conditions">
         <span className="dot" />
-        {sentinelOn ? `Sentinel watching · scanned ${health?.last_scan_at ? timeAgo(health.last_scan_at) : 'not yet'}` : 'Sentinel paused'}
+        {sentinelOn
+          ? `Watching · scanned ${health?.last_scan_at ? timeAgo(health.last_scan_at) : 'not yet'}`
+          : 'Watching paused'}
       </span>
-      <span className={`pill ${connected ? 'live' : 'off'}`} title="Server-sent events from the Strands agents">
+      <span className={`pill ${connected ? 'live' : 'off'}`} title="Live event stream from the Strands agents">
         <span className="dot" />
-        {connected ? 'Live agent feed' : 'Reconnecting…'}
+        {connected ? 'Agent feed live' : 'Reconnecting…'}
       </span>
       {health?.models?.length ? (
-        <span className="pill mono small" title="Strands model provider (fallback order)">
-          {health.models[0].replace('bedrock:', 'Bedrock · ').replace('anthropic:', 'Anthropic · ').replace('ollama:', 'Ollama · ')}
+        <span className="pill mono small" title={`Model fallback order: ${health.models.join(' → ')}`}>
+          {modelLabel(health.models[0])}
         </span>
-      ) : null}
-      <span className={`pill ${health?.send_mode === 'live' ? 'green' : 'warn'}`} title="SEND_MODE in backend/.env">
-        {health?.send_mode === 'live' ? 'Sending live' : 'Console send mode'}
+      ) : (
+        <span className="pill red small" title="No model provider is configured in backend/.env">No model</span>
+      )}
+      <span
+        className={`pill ${health?.send_mode === 'live' ? 'green' : 'warn'}`}
+        title={health?.send_mode === 'live'
+          ? 'Messages are really being sent'
+          : 'Messages are written to the activity feed instead of being sent. Set SEND_MODE=live in backend/.env to send.'}
+      >
+        {health?.send_mode === 'live' ? 'Sending for real' : 'Practice mode'}
       </span>
+      <SettingsMenu health={health} refreshHealth={refreshHealth} />
     </header>
   );
 }

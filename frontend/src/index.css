@@ -339,3 +339,88 @@ a.btn { text-decoration: none; }
 .hist-memories ul { margin: 4px 0 0; padding-left: 18px; }
 .hist-lesson-form { gap: 6px; }
 .hist-lesson-form input { flex: 1; min-width: 0; }
+
+/* ---- collapsible panels ---- */
+.panel.fold { overflow: hidden; }
+.fold-h {
+  display: flex; align-items: center; gap: 8px; width: 100%; padding: 10px 14px;
+  background: transparent; border: 0; text-align: left; color: var(--ink);
+}
+.fold-h:hover { background: var(--surface-2); }
+.fold-h h3 { margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0.02em; }
+.fold-h .chev { transition: transform 0.15s ease; color: var(--ink-2); flex: none; }
+.panel.fold.open .fold-h .chev { transform: rotate(90deg); }
+.panel.fold.open .fold-h { border-bottom: 1px solid var(--line); }
+.fold-badge {
+  margin-left: auto; font-size: 11px; color: var(--ink-2); background: var(--surface-2);
+  padding: 2px 8px; border-radius: 999px; white-space: nowrap;
+}
+.fold-b { padding: 12px 14px; }
+
+/* ---- top bar settings popover ---- */
+.menu-wrap { position: relative; }
+.menu-pop {
+  position: absolute; right: 0; top: calc(100% + 8px); z-index: 40; width: 320px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: var(--shadow); padding: 14px; display: flex; flex-direction: column; gap: 10px;
+}
+.menu-pop .check { align-items: flex-start; line-height: 1.35; }
+.menu-pop .check input { margin-top: 2px; flex: none; }
+.field { display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+.field > span { color: var(--ink-2); }
+.field input[type="number"] { width: 90px; }
+
+/* ---- presenter view ---- */
+.demo-intro { max-width: 70ch; }
+.demo-intro h1 { font-family: var(--font-display); font-size: 30px; margin: 0 0 6px; letter-spacing: -0.01em; }
+.demo-intro p { margin: 0; color: var(--ink-2); font-size: 15px; line-height: 1.5; }
+.demo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 14px; align-items: start; }
+@media (max-width: 760px) { .demo-grid { grid-template-columns: 1fr; } }
+
+.checklist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
+.checklist li { display: grid; grid-template-columns: 18px 1fr; gap: 9px; align-items: start; }
+.checklist li.ok > svg { color: var(--green); }
+.checklist li.no > svg { color: var(--warn); }
+.checklist .l { font-weight: 600; font-size: 13px; }
+.checklist .d { font-size: 12px; color: var(--ink-2); line-height: 1.4; overflow-wrap: anywhere; }
+
+.fixture-list { display: flex; flex-direction: column; }
+.fixture-row { display: flex; align-items: center; gap: 9px; padding: 9px 0; border-top: 1px solid var(--line); }
+.fixture-row:first-child { border-top: 0; }
+.fixture-row .fx { flex: 1; min-width: 0; }
+.fixture-row .fx .t { font-weight: 600; font-size: 13px; }
+.fixture-row .fx .d { font-size: 11.5px; color: var(--ink-2); }
+
+.demo-phone-panel .panel-b { display: flex; flex-direction: column; }
+.phone {
+  width: 320px; max-width: 100%; height: 560px; margin: 0 auto;
+  border: 10px solid #1e2a2b; border-radius: 30px; overflow: hidden; background: var(--surface);
+  box-shadow: var(--shadow);
+}
+.phone iframe { width: 100%; height: 100%; border: 0; display: block; }
+
+/* ---- hazard comparison ---- */
+.cmp-heads { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+.cmp-head { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px; }
+.cmp-head .t { font-weight: 700; margin-top: 6px; }
+.cmp-head .d { font-size: 11.5px; color: var(--ink-2); }
+.cmp-sum { font-size: 12.5px; line-height: 1.45; margin: 8px 0; }
+.cmp-table th, .cmp-table td { vertical-align: top; }
+.cmp-table th:first-child, .cmp-table td:first-child { min-width: 190px; }
+.cmp-cell { min-width: 170px; }
+.cmp-why { font-size: 11px; color: var(--ink-2); line-height: 1.35; margin-top: 4px; }
+.cmp-mark { margin-left: 6px; font-weight: 700; }
+
+/* ---- sticky approval ---- */
+.approval.pending-sticky { position: sticky; top: 62px; z-index: 15; }
+
+/* ---- embedded panels + episode list ---- */
+.embedded > .panel-b { padding: 0; }
+.embedded > .panel-b + .panel-b { border-top: 1px solid var(--line); padding-top: 12px; margin-top: 12px; }
+.ep-row.on { background: var(--surface-2); border-radius: 6px; }
+.ep-row { padding-left: 6px; padding-right: 6px; }
+.ep-row { align-items: flex-start; gap: 8px; }
+.ep-main { flex: 1; min-width: 0; }
+.ep-main .t { font-weight: 600; font-size: 13px; line-height: 1.3; overflow-wrap: anywhere; white-space: normal; }
+.ep-meta { display: flex; gap: 6px; align-items: center; margin-top: 3px; flex-wrap: wrap; }
+.approval-slot { position: sticky; top: 60px; z-index: 15; }

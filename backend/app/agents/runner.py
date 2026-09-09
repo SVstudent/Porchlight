@@ -207,6 +207,15 @@ class EpisodeRunner:
         return a
 
     # ------------------------------------------------------------ follow-up agent
+    async def retry(self, ep_id: str) -> None:
+        """Re-run a failed episode. The graph is rebuilt from its persisted session, so completed nodes are kept."""
+        ep = store.episode(ep_id)
+        if ep is None or self.busy(ep_id):
+            return
+        self._graphs.pop(ep_id, None)  # force a rebuild from the session on disk
+        self._model = None  # the usual cause is an unreachable provider; re-resolve it
+        self._tasks[ep_id] = asyncio.create_task(self._run_graph(ep_id, graph_task(ep)))
+
     async def run_followup(self, ep_id: str) -> None:
         if self.busy(ep_id) or self.busy(ep_id + ":followup"):
             return

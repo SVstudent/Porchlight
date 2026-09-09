@@ -213,7 +213,8 @@ def get_checkin_status(tool_context: ToolContext) -> dict:
             "status": c.status, "minutes_since_sent": mins, "note": c.note,
             "has_emergency_contact": bool(m and m.emergency_contact_phone),
         })
-    return {"episode_id": ep.id, "grace_minutes": settings.FOLLOWUP_GRACE_MINUTES, "members": out}
+    grace = store.get_setting("followup_grace_minutes", settings.FOLLOWUP_GRACE_MINUTES)
+    return {"episode_id": ep.id, "grace_minutes": grace, "members": out}
 
 
 # ---------------------------------------------------------------- action tools (gated)

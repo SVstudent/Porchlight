@@ -66,13 +66,25 @@ export default function EpisodePanel({ episode, members, volunteers, resources, 
             {h.severity ? <span className="pill small">{h.severity}</span> : null}
             <span className="small muted">opened {timeAgo(ep.created_at)}</span>
             <span style={{ flex: 1 }} />
+            {ep.status === 'failed' ? (
+              <button className="btn amber sm" disabled={ep.busy}
+                      onClick={() => api.retryEpisode(ep.id).then(refresh).catch((e) => alert(e.message))}>
+                <RefreshCw size={13} /> Try again
+              </button>
+            ) : null}
             {['monitoring', 'escalating'].includes(ep.status) ? <button className="btn sm" onClick={() => api.followup(ep.id).then(refresh)} disabled={ep.busy}><RefreshCw size={13} /> Run follow-up now</button> : null}
             {['monitoring', 'escalating', 'closed'].includes(ep.status) ? <Link className="btn sm" to={`/episodes/${ep.id}/report`} title="Numbers for funders and emergency management"><FileText size={13} /> After-action report</Link> : null}
             {!['closed', 'stood_down', 'failed'].includes(ep.status) ? <button className="btn ghost sm" onClick={() => api.close(ep.id).then(refresh)}><Archive size={13} /> Close</button> : null}
           </div>
           <h2 style={{ marginTop: 8 }}>{h.event_name}</h2>
           <div className="small muted">{h.headline}</div>
-          {a ? <p className="summary">{a.plain_summary}</p> : <p className="summary muted">The sentinel agent is reading the alert and checking live conditions…</p>}
+          {a ? <p className="summary">{a.plain_summary}</p>
+            : ep.status === 'failed'
+              ? <p className="summary" style={{ color: 'var(--red)' }}>
+                  The agent run could not finish. The usual cause is that the model provider was unreachable.
+                  Check the model badge in the top bar, then press Try again.
+                </p>
+              : <p className="summary muted">The sentinel agent is reading the alert and checking live conditions…</p>}
           {a ? (
             <div className="row" style={{ marginTop: 8 }}>
               <span className={`pill ${a.activate ? 'red' : 'green'}`}>{a.activate ? `Activate · severity ${a.severity_score}/5` : 'Stand down'}</span>
@@ -85,7 +97,11 @@ export default function EpisodePanel({ episode, members, volunteers, resources, 
         </div>
       </section>
 
-      {pending.map((ap) => <ApprovalCard key={ap.id} approval={ap} members={members} volunteers={volunteers} onDecided={refresh} />)}
+      {pending.map((ap, i) => (
+        <div key={ap.id} className={i === 0 ? 'approval-slot' : undefined}>
+          <ApprovalCard approval={ap} members={members} volunteers={volunteers} onDecided={refresh} />
+        </div>
+      ))}
 
       {ck.length ? (
         <div className="kpis">

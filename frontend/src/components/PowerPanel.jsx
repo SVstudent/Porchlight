@@ -16,7 +16,7 @@ function BackupBar({ hours }) {
   );
 }
 
-export default function PowerPanel({ onEpisode }) {
+export default function PowerPanel({ onEpisode, embedded = false }) {
   const [data, refresh] = usePoll(api.electricityDependent, 60000);
   const [busy, setBusy] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -45,8 +45,9 @@ export default function PowerPanel({ onEpisode }) {
     }
   };
 
-  return (
-    <section className="panel">
+  const body = (
+    <>
+      {embedded ? null : (
       <div className="panel-h">
         <Zap size={15} />
         <h3>Electricity-dependent neighbors</h3>
@@ -54,6 +55,7 @@ export default function PowerPanel({ onEpisode }) {
           {data ? <span className={`pill small ${data.under_4h ? 'red' : ''}`}>{data.under_4h} under 4h backup</span> : null}
         </div>
       </div>
+      )}
       <div className="panel-b">
         {!data ? <div className="small muted">Loading…</div> : null}
         {data && members.length === 0 ? <div className="small muted">No one on the roster has a powered medical device recorded. Add devices on the Roster page.</div> : null}
@@ -97,6 +99,8 @@ export default function PowerPanel({ onEpisode }) {
           </div>
         ) : null}
       </div>
-    </section>
+    </>
   );
+
+  return embedded ? <div className="embedded">{body}</div> : <section className="panel">{body}</section>;
 }
