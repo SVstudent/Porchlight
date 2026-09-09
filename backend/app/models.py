@@ -52,6 +52,12 @@ class Member(BaseModel):
     emergency_contact_name: str = ""
     emergency_contact_phone: str = ""
     opted_in: bool = True
+    # Power-outage fields (optional): powered medical devices this neighbor depends on, how long their battery
+    # or backup lasts, which utility serves them, and what they plan to do when the power fails.
+    devices: list[str] = []  # oxygen_concentrator, ventilator, cpap, home_dialysis, powered_wheelchair, refrigerated_medication, nebulizer
+    backup_power_hours: float = 0
+    utility: str = ""  # e.g. APS, SRP
+    backup_plan: str = ""
 
 
 class Volunteer(BaseModel):

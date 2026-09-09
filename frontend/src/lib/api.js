@@ -45,6 +45,9 @@ export const api = {
     const res = await fetch(`${BASE}/api/roster/import`, { method: 'POST', body: fd });
     return res.json();
   },
+  // ---- outage ----
+  electricityDependent: () => req('/api/outage/electricity-dependent'),
+  reportOutage: (body) => req('/api/outage/report', { method: 'POST', body: JSON.stringify(body) }),
 };
 
 /** Subscribe to the live agent event stream. Returns [events, connected]. */

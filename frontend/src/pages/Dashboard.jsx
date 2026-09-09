@@ -3,6 +3,7 @@ import { useNavigate, useParams, Link } from 'react-router-dom';
 import { Layers } from 'lucide-react';
 import TopBar from '../components/TopBar.jsx';
 import SentinelPanel from '../components/SentinelPanel.jsx';
+import PowerPanel from '../components/PowerPanel.jsx';
 import EpisodePanel from '../components/EpisodePanel.jsx';
 import ActivityFeed from '../components/ActivityFeed.jsx';
 import { api, useEventStream, usePoll, timeAgo } from '../lib/api.js';
@@ -43,6 +44,7 @@ export default function Dashboard() {
       <main className="desk">
         <div className="col">
           <SentinelPanel onEpisode={onEpisode} health={health} refreshHealth={refreshHealth} />
+          <PowerPanel onEpisode={onEpisode} />
           <section className="panel">
             <div className="panel-h"><Layers size={15} /><h3>Episodes</h3></div>
             <div className="panel-b">

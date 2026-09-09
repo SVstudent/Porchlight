@@ -4,7 +4,8 @@ import TopBar from '../components/TopBar.jsx';
 import { api, usePoll } from '../lib/api.js';
 
 const RF = ['lives_alone', 'age_75_plus', 'no_air_conditioning', 'powered_medical_device', 'mobility_limited', 'cognitive_impairment', 'infant_or_young_child', 'outdoor_worker', 'pregnant', 'chronic_illness', 'no_transport', 'limited_english', 'unhoused'];
-const EMPTY = { name: '', phone: '', email: '', telegram_chat_id: '', preferred_channel: 'sms', language: 'en', address: '', lat: 33.49, lon: -112.18, risk_factors: [], notes: '', emergency_contact_name: '', emergency_contact_phone: '', opted_in: true };
+const DEVICES = ['oxygen_concentrator', 'ventilator', 'cpap', 'home_dialysis', 'powered_wheelchair', 'refrigerated_medication', 'nebulizer'];
+const EMPTY = { name: '', phone: '', email: '', telegram_chat_id: '', preferred_channel: 'sms', language: 'en', address: '', lat: 33.49, lon: -112.18, risk_factors: [], notes: '', emergency_contact_name: '', emergency_contact_phone: '', opted_in: true, devices: [], backup_power_hours: 0, utility: '', backup_plan: '' };
 
 export default function Roster() {
   const [health] = usePoll(api.health, 60000);
@@ -13,7 +14,7 @@ export default function Roster() {
   const [res] = usePoll(api.resources, 60000);
   const [form, setForm] = useState(null);
 
-  const save = async () => { await api.saveMember({ ...form, lat: Number(form.lat), lon: Number(form.lon) }); setForm(null); refresh(); };
+  const save = async () => { await api.saveMember({ ...form, lat: Number(form.lat), lon: Number(form.lon), backup_power_hours: Number(form.backup_power_hours) || 0, devices: form.devices || [] }); setForm(null); refresh(); };
   const upload = async (e) => { const f = e.target.files[0]; if (!f) return; const r = await api.importRoster(f); alert(`Imported ${r.imported} members`); refresh(); };
 
   return (
@@ -29,7 +30,7 @@ export default function Roster() {
           </div>
           <div className="panel-b" style={{ overflowX: 'auto' }}>
             <table>
-              <thead><tr><th>Name</th><th>Reach</th><th>Lang</th><th>Risk factors</th><th>Notes</th><th>Emergency contact</th><th></th></tr></thead>
+              <thead><tr><th>Name</th><th>Reach</th><th>Lang</th><th>Risk factors</th><th>Powered devices</th><th>Notes</th><th>Emergency contact</th><th></th></tr></thead>
               <tbody>
                 {(roster?.members || []).map((m) => (
                   <tr key={m.id}>
@@ -37,6 +38,10 @@ export default function Roster() {
                     <td className="mono small">{m.preferred_channel}<br />{m.phone || m.email || m.telegram_chat_id}</td>
                     <td>{m.language}</td>
                     <td><div className="tags">{m.risk_factors.map((r) => <span className="tag" key={r}>{r.replace(/_/g, ' ')}</span>)}</div></td>
+                    <td className="small">
+                      {(m.devices || []).length ? <div className="tags">{m.devices.map((d) => <span className="tag" key={d}>{d.replace(/_/g, ' ')}</span>)}</div> : <span className="muted">—</span>}
+                      {(m.devices || []).length ? <div className={`muted ${Number(m.backup_power_hours) < 4 ? 'backup-low' : ''}`}>{Number(m.backup_power_hours) > 0 ? `${m.backup_power_hours}h backup` : 'no backup power'}{m.utility ? ` · ${m.utility}` : ''}</div> : null}
+                    </td>
                     <td className="small">{m.notes}</td>
                     <td className="small">{m.emergency_contact_name}<br /><span className="mono">{m.emergency_contact_phone}</span></td>
                     <td><button className="btn ghost sm" onClick={() => setForm({ ...m })}>Edit</button></td>
@@ -44,7 +49,7 @@ export default function Roster() {
                 ))}
               </tbody>
             </table>
-            <div className="small muted" style={{ marginTop: 8 }}>CSV columns: name, phone, email, language, preferred_channel, address, lat, lon, risk_factors (semicolon-separated), notes, emergency_contact_name, emergency_contact_phone</div>
+            <div className="small muted" style={{ marginTop: 8 }}>CSV columns: name, phone, email, language, preferred_channel, address, lat, lon, risk_factors (semicolon-separated), notes, emergency_contact_name, emergency_contact_phone. Powered devices, backup hours, utility and backup plan are edited here after import.</div>
           </div>
         </section>
 
@@ -71,6 +76,18 @@ export default function Roster() {
                   </label>
                 ))}
               </div>
+              <div style={{ gridColumn: '1 / -1' }} className="tags">
+                <span className="eyebrow" style={{ marginRight: 8 }}>Powered devices</span>
+                {DEVICES.map((d) => (
+                  <label className="check" key={d} style={{ marginRight: 10 }}>
+                    <input type="checkbox" checked={(form.devices || []).includes(d)} onChange={(e) => setForm({ ...form, devices: e.target.checked ? [...(form.devices || []), d] : (form.devices || []).filter((x) => x !== d) })} />
+                    {d.replace(/_/g, ' ')}
+                  </label>
+                ))}
+              </div>
+              <input type="number" step="0.5" min="0" placeholder="Backup power (hours)" title="Hours of battery or backup power" value={form.backup_power_hours ?? 0} onChange={(e) => setForm({ ...form, backup_power_hours: e.target.value })} />
+              <input type="text" placeholder="Utility (APS, SRP…)" value={form.utility || ''} onChange={(e) => setForm({ ...form, utility: e.target.value })} />
+              <input type="text" placeholder="Backup plan when the power fails" value={form.backup_plan || ''} onChange={(e) => setForm({ ...form, backup_plan: e.target.value })} />
               <textarea style={{ gridColumn: '1 / -1' }} placeholder="Notes the agents should know (AC status, devices, who visits)" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
               <div className="row" style={{ gridColumn: '1 / -1' }}>
                 <button className="btn primary" onClick={save} disabled={!form.name}>Save</button>
