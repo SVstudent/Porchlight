@@ -39,7 +39,7 @@ export default function Report() {
     } catch (e) { setGenError(e.message); } finally { setBusy(false); }
   };
 
-  if (error) return <div className="shell"><TopBar health={health} connected /><main className="wide"><section className="panel"><div className="empty"><div className="big">Report not available</div><div>{error}</div><Link to="/" className="btn" style={{ marginTop: 12 }}>Back to the desk</Link></div></section></main></div>;
+  if (error && !data) return <div className="shell"><TopBar health={health} connected /><main className="wide"><section className="panel"><div className="empty"><div className="big">Report not available</div><div>{error}</div><Link to="/" className="btn" style={{ marginTop: 12 }}>Back to the desk</Link></div></section></main></div>;
   if (!data) return <div className="shell"><TopBar health={health} connected /><main className="wide"><div className="muted">Loading the report…</div></main></div>;
 
   const { episode: ep, hazard: h, metrics: m, narrative: n } = data;

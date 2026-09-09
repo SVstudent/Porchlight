@@ -38,6 +38,15 @@ class EpisodeRunner:
             self._model = build_model()
         return self._model
 
+    def _reset_session(self, ep_id: str) -> None:
+        """Delete the persisted graph session so the next run starts clean."""
+        import shutil
+
+        for name in (f"session_graph-{ep_id}", f"graph-{ep_id}"):
+            path = settings.SESSION_DIR / name
+            if path.exists():
+                shutil.rmtree(path, ignore_errors=True)
+
     def busy(self, ep_id: str) -> bool:
         t = self._tasks.get(ep_id)
         return bool(t and not t.done())
@@ -53,7 +62,7 @@ class EpisodeRunner:
         return ep
 
     # ------------------------------------------------------------ graph execution
-    async def _run_graph(self, ep_id: str, task_input: Any) -> None:
+    async def _run_graph(self, ep_id: str, task_input: Any, retry_from: Any = None) -> None:
         token = current_episode_id.set(ep_id)
         try:
             ep = store.episode(ep_id)
@@ -64,8 +73,23 @@ class EpisodeRunner:
                 graph = build_graph(ep, self.model())
                 self._graphs[ep_id] = graph
             final: Any = None
-            async for ev in graph.stream_async(task_input, invocation_state={"episode_id": ep_id}):
-                final = self._handle_graph_event(ep_id, ev) or final
+            try:
+                async for ev in graph.stream_async(task_input, invocation_state={"episode_id": ep_id}):
+                    final = self._handle_graph_event(ep_id, ev) or final
+            except (TypeError, KeyError) as e:
+                # The persisted interrupt state did not match the responses we offered (a stale or missing
+                # interrupt id). Start this episode's graph over from a clean session rather than dying.
+                if retry_from is None:
+                    raise
+                log.warning("resume mismatch for %s (%s); restarting the graph from scratch", ep_id, e)
+                bus.emit("status", "Could not resume the paused run; starting it over.", episode_id=ep_id)
+                self._reset_session(ep_id)
+                self._graphs.pop(ep_id, None)
+                graph = build_graph(store.episode(ep_id), self.model())
+                self._graphs[ep_id] = graph
+                final = None
+                async for ev in graph.stream_async(retry_from, invocation_state={"episode_id": ep_id}):
+                    final = self._handle_graph_event(ep_id, ev) or final
             await self._finish_graph(ep_id, final)
         except Exception as e:  # noqa: BLE001
             log.error("graph failed for %s: %s\n%s", ep_id, e, traceback.format_exc())
@@ -74,8 +98,14 @@ class EpisodeRunner:
                 ep.timeline.append(TimelineEntry(kind="error", text=f"Agent run failed: {e}"))
 
             store.mutate_episode(ep_id, _fail)
+            self._graphs.pop(ep_id, None)
+            # Let the sentinel find this alert again on the next scan instead of suppressing it forever.
+            ep = store.episode(ep_id)
+            if ep and ep.hazard.external_id:
+                store.unmark_alert_seen(ep.hazard.external_id)
             bus.emit("error", f"Agent run failed: {e}", episode_id=ep_id)
         finally:
+            self._tasks.pop(ep_id, None)
             current_episode_id.reset(token)
 
     def _handle_graph_event(self, ep_id: str, ev: dict[str, Any]) -> Any:
@@ -137,7 +167,8 @@ class EpisodeRunner:
         def _complete(e):
             if e.assessment and not e.assessment.activate:
                 e.status = "stood_down"
-            elif e.outreach:
+            elif e.outreach or e.logistics:
+                # Anything that reached a real person needs follow-up, even if only volunteers were dispatched.
                 e.status = "monitoring"
             else:
                 e.status = "closed"
@@ -154,6 +185,10 @@ class EpisodeRunner:
             reason = getattr(itp, "reason", {}) or {}
             existing = [a for a in store.approvals(ep.id) if a.interrupt_id == itp.id]
             if existing:
+                # A re-raised interrupt belongs to this pause, so move it onto the current batch.
+                if existing[0].status == "pending" and existing[0].batch_id != batch_id:
+                    existing[0].batch_id = batch_id
+                    store.put_approval(existing[0])
                 continue
             a = Approval(
                 episode_id=ep.id,
@@ -180,6 +215,13 @@ class EpisodeRunner:
         ep = store.episode(a.episode_id)
         if ep is None:
             raise KeyError(a.episode_id)
+        if ep.status in ("closed", "stood_down"):
+            a.status = "rejected"
+            a.resolved_at = now_iso()
+            a.decision_note = "This episode was closed before the decision was made, so nothing was sent."
+            store.put_approval(a)
+            bus.emit("decision", f"{a.title} was not carried out: the episode is closed.", episode_id=ep.id)
+            return a
         a.status = "approved" if decision.lower().startswith("appr") else "rejected"
         a.resolved_at = now_iso()
         a.decision_note = note
@@ -208,13 +250,37 @@ class EpisodeRunner:
 
     # ------------------------------------------------------------ follow-up agent
     async def retry(self, ep_id: str) -> None:
-        """Re-run a failed episode. The graph is rebuilt from its persisted session, so completed nodes are kept."""
+        """Re-run a failed episode.
+
+        The graph is rebuilt from its persisted session so completed nodes are kept. If the run died while the
+        graph was paused on an approval, it must be resumed with interrupt responses rather than a fresh task
+        string, or the SDK rejects the input.
+        """
         ep = store.episode(ep_id)
         if ep is None or self.busy(ep_id):
             return
         self._graphs.pop(ep_id, None)  # force a rebuild from the session on disk
         self._model = None  # the usual cause is an unreachable provider; re-resolve it
-        self._tasks[ep_id] = asyncio.create_task(self._run_graph(ep_id, graph_task(ep)))
+
+        # A retried run makes fresh model calls, so any interrupt it raises gets a new id. Old pending rows could
+        # never be answered and would block follow-up forever.
+        for stale in store.approvals(ep_id, status="pending"):
+            stale.status = "rejected"
+            stale.resolved_at = now_iso()
+            stale.decision_note = "Superseded by a retry of the agent run."
+            store.put_approval(stale)
+
+        decided = [a for a in store.approvals(ep_id) if a.scope == "graph" and a.status != "pending" and a.interrupt_id]
+        task: Any = graph_task(ep)
+        if decided:
+            # The persisted graph may still be mid-interrupt; hand back the decisions it is waiting for.
+            task = [
+                {"interruptResponse": {"interruptId": a.interrupt_id, "response": {
+                    "decision": "approve" if a.status == "approved" else "reject",
+                    "note": a.decision_note, "edits": a.edits or {}}}}
+                for a in decided
+            ]
+        self._tasks[ep_id] = asyncio.create_task(self._run_graph(ep_id, task, retry_from=graph_task(ep)))
 
     async def run_followup(self, ep_id: str) -> None:
         if self.busy(ep_id) or self.busy(ep_id + ":followup"):

@@ -97,7 +97,11 @@ export function useEventStream(onEvent) {
 export function usePoll(fetcher, ms, deps = []) {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
-  const refresh = useCallback(() => fetcher().then((d) => { setData(d); setError(null); }).catch((e) => setError(e.message)), deps); // eslint-disable-line
+  // Keep the last good payload on a transient failure; a blank screen mid-demo is worse than slightly stale data.
+  const refresh = useCallback(
+    () => fetcher().then((d) => { setData(d); setError(null); }).catch((e) => setError(e.message)),
+    deps,
+  ); // eslint-disable-line
   useEffect(() => {
     refresh();
     const t = setInterval(refresh, ms);

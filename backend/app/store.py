@@ -104,6 +104,10 @@ class Store:
     def mark_alert_seen(self, external_id: str, episode_id: str = "") -> None:
         self._put("seen_alerts", external_id, {"external_id": external_id, "episode_id": episode_id, "seen_at": now_iso()})
 
+    def unmark_alert_seen(self, external_id: str) -> None:
+        """Re-arm detection for one alert, after a run that failed before it could help anyone."""
+        self._delete("seen_alerts", external_id)
+
     def clear_seen_alerts(self) -> None:
         self._clear("seen_alerts")
 
@@ -164,6 +168,15 @@ class Store:
     def put_checkin(self, c: Checkin) -> Checkin:
         self._put("checkins", c.token, c.model_dump())
         return c
+
+    def mutate_checkin(self, token: str, fn) -> Optional[Checkin]:
+        """Atomic read-modify-write. A member's tap, a Telegram reply and an escalation can land together."""
+        with self._lock:
+            c = self.checkin(token)
+            if c is None:
+                return None
+            fn(c)
+            return self.put_checkin(c)
 
     # ---- settings (policy) ----
     def get_setting(self, key: str, default: Any = None) -> Any:

@@ -13,6 +13,28 @@ from ..config import settings
 
 log = logging.getLogger("porchlight.models")
 
+# Transport failures are the single most common way a run dies on a laptop or a flaky network. Strands retries
+# throttling out of the box but re-raises connection errors on the first attempt, which kills the whole episode.
+_TRANSIENT = ("connection", "timed out", "timeout", "temporarily unavailable", "connection reset",
+              "server error", "503", "502", "429")
+
+
+def transient_retry_strategy():
+    """A retry strategy that also survives a dropped connection. Falls back to the SDK default if unavailable."""
+    try:
+        from strands.event_loop._retry import ModelRetryStrategy
+    except Exception:  # noqa: BLE001 — never let a private-module move break startup
+        return None
+
+    class TransientRetryStrategy(ModelRetryStrategy):
+        def is_retryable(self, exception: Exception) -> bool:
+            if super().is_retryable(exception):
+                return True
+            msg = str(exception).lower()
+            return any(marker in msg for marker in _TRANSIENT)
+
+    return TransientRetryStrategy(max_attempts=4, initial_delay=2, max_delay=30)
+
 
 def _bedrock():
     from strands.models import BedrockModel

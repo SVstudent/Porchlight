@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { Layers, History, PlusCircle, Zap } from 'lucide-react';
 import TopBar from '../components/TopBar.jsx';
@@ -10,10 +10,13 @@ import Collapsible from '../components/Collapsible.jsx';
 import HazardPill from '../components/HazardPill.jsx';
 import { api, useEventStream, usePoll, timeAgo } from '../lib/api.js';
 
-const REFRESH_ON = new Set([
+// Events that change what the open episode looks like.
+const REFRESH_EPISODE = new Set([
   'status', 'approval', 'assessment', 'dispatch', 'checkin', 'escalation',
   'node_stop', 'decision', 'brief', 'error', 'policy',
 ]);
+// Events that change the episode list itself (a new episode, or a badge on one).
+const REFRESH_LIST = new Set(['status', 'approval', 'decision', 'error']);
 
 export default function Dashboard() {
   const { id } = useParams();
@@ -29,25 +32,44 @@ export default function Dashboard() {
   const activeId = id || list[0]?.id;
   const pendingTotal = list.reduce((n, e) => n + (e.pending_approvals || 0), 0);
 
+  // A 12-person dispatch emits one SSE event per neighbor. Without a debounce that is a burst of full
+  // episode fetches; without a sequence guard a slow early response can overwrite a newer one.
+  const seq = useRef(0);
+  const timer = useRef(null);
+
   const loadEpisode = useCallback(() => {
     if (!activeId) { setEpisode(null); return; }
-    api.episode(activeId).then(setEpisode).catch(() => setEpisode(null));
+    const mine = ++seq.current;
+    api.episode(activeId)
+      .then((d) => { if (mine === seq.current) setEpisode(d); })
+      .catch(() => { if (mine === seq.current) setEpisode((prev) => prev); });
   }, [activeId]);
 
+  const queueLoad = useCallback(() => {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => { timer.current = null; loadEpisode(); }, 350);
+  }, [loadEpisode]);
+
+  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
   useEffect(() => { loadEpisode(); }, [loadEpisode]);
 
   // Poll the open episode only while its agents are still working; SSE covers the rest.
   const working = !!episode?.busy || ['assessing', 'triaging', 'dispatching', 'escalating'].includes(episode?.status);
-  useEffect(() => {
-    if (!activeId || !working) return undefined;
-    const t = setInterval(loadEpisode, 6000);
-    return () => clearInterval(t);
-  }, [activeId, working, loadEpisode]);
 
   const [events, connected] = useEventStream((ev) => {
-    if (REFRESH_ON.has(ev.type)) { loadEpisode(); refreshEpisodes(); }
+    if (REFRESH_EPISODE.has(ev.type)) queueLoad();
+    if (REFRESH_LIST.has(ev.type)) refreshEpisodes();
     if (ev.type === 'scan') refreshHealth();
   });
+
+  // Poll while the agents are working, and always poll when the live stream is down.
+  useEffect(() => {
+    if (!activeId) return undefined;
+    if (!working && connected) return undefined;
+    const every = working ? 6000 : 15000;
+    const t = setInterval(loadEpisode, every);
+    return () => clearInterval(t);
+  }, [activeId, working, connected, loadEpisode]);
 
   const onEpisode = (epId) => { refreshEpisodes(); nav(`/episodes/${epId}`); };
   const members = roster?.members || [];

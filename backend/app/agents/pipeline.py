@@ -23,7 +23,7 @@ from ..models import Episode, HazardAssessment, TriageDecision, TriagePlan
 from ..store import store
 from .context import episode_id_from
 from .hooks import ApprovalGateHook, AuditHook
-from .model_factory import build_model
+from .model_factory import build_model, transient_retry_strategy
 from .playbooks import playbook_text
 from .tools import (
     assign_volunteers,
@@ -167,6 +167,9 @@ def _agent(name: str, prompt: str, tools: list[Any], model: Any, session_id: str
         callback_handler=None,
         trace_attributes={"porchlight.agent": name, "porchlight.community": settings.COMMUNITY_NAME},
     )
+    retry = transient_retry_strategy()
+    if retry is not None:
+        kwargs["retry_strategy"] = retry
     if session_id:
         kwargs["session_manager"] = FileSessionManager(session_id=session_id, storage_dir=str(settings.SESSION_DIR))
     kwargs.update(kw)

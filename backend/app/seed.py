@@ -62,14 +62,27 @@ VOLUNTEERS = [
 ]
 
 # Real public buildings in Maryvale that Maricopa County's Heat Relief Network has used as cooling sites.
-# Hours are intentionally left for the coordinator to confirm each season.
+# Every value below was verified in September 2026 against the operator's own page (phoenixpubliclibrary.org,
+# phoenix.gov Parks & Recreation, 211arizona.org) and coordinates against OpenStreetMap Nominatim.
+# Hours are deliberately left for the coordinator to confirm each season: they change year to year and a wrong
+# hour sends a vulnerable neighbor to a locked door.
 RESOURCES = [
-    Resource(id="res_paloverde", name="Palo Verde Library", kind="cooling_center", address="4402 N 51st Ave, Phoenix, AZ 85031",
-             lat=33.5039, lon=-112.1692, hours="Confirm current hours", phone="+16022622500", source="coordinator"),
-    Resource(id="res_maryvalecc", name="Maryvale Community Center", kind="cooling_center", address="4420 N 51st Ave, Phoenix, AZ 85031",
-             lat=33.5043, lon=-112.1690, hours="Confirm current hours", phone="+16024955760", source="coordinator"),
-    Resource(id="res_desertwest", name="Desert West Community Center", kind="cooling_center", address="6501 W Virginia Ave, Phoenix, AZ 85035",
-             lat=33.4816, lon=-112.1990, hours="Confirm current hours", phone="+16024955760", source="coordinator"),
-    Resource(id="res_211", name="Maricopa County 2-1-1 Heat Relief line", kind="hydration", address="Phone service", lat=33.4942, lon=-112.1770,
-             hours="9am-7pm daily during heat season", phone="211", source="coordinator", notes="Finds cooling centers, water, and transportation."),
+    Resource(id="res_paloverde", name="Palo Verde Library", kind="cooling_center",
+             address="4402 N 51st Ave, Phoenix, AZ 85031",
+             lat=33.5005, lon=-112.1698, hours="Confirm current hours",
+             phone="+16022624636",  # Phoenix Public Library call center; no branch-direct line is published
+             source="coordinator"),
+    Resource(id="res_maryvalecc", name="Maryvale Community Center", kind="cooling_center",
+             address="4420 N 51st Ave, Phoenix, AZ 85031",
+             lat=33.5009, lon=-112.1697, hours="Confirm current hours",
+             phone="+16022625030", source="coordinator"),
+    Resource(id="res_desertwest", name="Desert West Community Center", kind="cooling_center",
+             address="6501 W Virginia Ave, Phoenix, AZ 85035",
+             lat=33.4760, lon=-112.2012, hours="Confirm current hours",
+             phone="+16024953700", source="coordinator"),
+    Resource(id="res_211", name="2-1-1 Arizona", kind="hydration", address="Phone service, statewide",
+             lat=33.4942, lon=-112.1770,
+             hours="Confirm current hours; live operators during heat season",
+             phone="211", source="coordinator",
+             notes="Statewide information line run by Solari. Finds cooling centers, water, utility help and transportation. Also 877-211-8661."),
 ]

@@ -16,12 +16,23 @@ from .models import now_iso
 from .store import store
 
 log = logging.getLogger("porchlight.scheduler")
-scheduler = AsyncIOScheduler()
+_scan_lock = asyncio.Lock()  # the manual endpoint calls sentinel_job directly, outside the scheduler
+scheduler = AsyncIOScheduler(
+    job_defaults={"coalesce": True, "max_instances": 1, "misfire_grace_time": 300}
+)
 
 
 async def sentinel_job() -> None:
     if not store.get_setting("sentinel_enabled", settings.SENTINEL_ENABLED):
         return
+    if _scan_lock.locked():
+        log.info("a scan is already running; skipping this one")
+        return
+    async with _scan_lock:
+        await _sentinel_scan()
+
+
+async def _sentinel_scan() -> None:
     try:
         fresh = await asyncio.to_thread(new_hazards)  # blocking HTTP off the event loop
     except Exception as e:  # noqa: BLE001
@@ -30,12 +41,17 @@ async def sentinel_job() -> None:
     store.set_setting("last_scan_at", now_iso())
     bus.emit("scan", f"Sentinel scan complete: {len(fresh)} new hazard(s)", agent="sentinel", count=len(fresh))
     for h in fresh:
-        store.mark_alert_seen(h.external_id)
         active = [e for e in store.episodes() if e.status not in ("closed", "stood_down", "failed")]
         if any(e.hazard.hazard_type == h.hazard_type for e in active):
+            # Deliberately NOT marked seen: when the open episode closes, this alert must be able to open a new one.
             log.info("skipping %s: an episode for %s is already active", h.event_name, h.hazard_type)
             continue
-        ep = await runner.start(h)
+        try:
+            ep = await runner.start(h)
+        except Exception as e:  # noqa: BLE001  — one bad hazard must not abort the rest of the batch
+            log.error("could not open an episode for %s: %s", h.event_name, e)
+            continue
+        # Only now is the alert handled. A run that later fails re-arms detection (see runner._run_graph).
         store.mark_alert_seen(h.external_id, ep.id)
 
 
@@ -51,7 +67,7 @@ async def telegram_job() -> None:
         return
     offset = store.get_setting("telegram_offset")
     try:
-        updates = get_updates(offset)
+        updates = await asyncio.to_thread(get_updates, offset)
     except Exception as e:  # noqa: BLE001
         log.debug("telegram poll failed: %s", e)
         return
@@ -71,17 +87,22 @@ async def telegram_job() -> None:
         for c in store.checkins():
             ep = store.episode(c.episode_id)
             if c.member_id == member.id and ep and ep.status in ("monitoring", "escalating") and c.status in ("sent", "delivered"):
-                c.status = status
-                c.responded_at = now_iso()
-                c.note = f"telegram reply: {text[:80]}"
-                store.put_checkin(c)
+                def _reply(x, _s=status, _t=text):
+                    x.status = _s
+                    x.responded_at = now_iso()
+                    x.note = f"telegram reply: {_t[:80]}"
+
+                store.mutate_checkin(c.token, _reply)
                 bus.emit("checkin", f"{member.name} replied via Telegram: {status.replace('_', ' ')}", episode_id=ep.id, member_id=member.id, status=status)
 
 
 def start() -> None:
     scheduler.add_job(sentinel_job, "interval", minutes=settings.SENTINEL_INTERVAL_MINUTES, id="sentinel",
                       next_run_time=datetime.now() + timedelta(seconds=20))  # first scan shortly after startup
-    followup_minutes = store.get_setting("followup_interval_minutes", settings.FOLLOWUP_INTERVAL_MINUTES)
+    try:
+        followup_minutes = max(1, int(store.get_setting("followup_interval_minutes", settings.FOLLOWUP_INTERVAL_MINUTES)))
+    except (TypeError, ValueError):
+        followup_minutes = settings.FOLLOWUP_INTERVAL_MINUTES
     scheduler.add_job(followup_job, "interval", minutes=followup_minutes, id="followup")
     scheduler.add_job(telegram_job, "interval", seconds=8, id="telegram")
     scheduler.start()

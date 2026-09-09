@@ -46,8 +46,29 @@ async def _startup() -> None:
     bus.bind_loop(asyncio.get_running_loop())
     if store.seed_if_empty(MEMBERS, VOLUNTEERS, RESOURCES):
         log.info("seeded demo roster for %s", settings.COMMUNITY_NAME)
+    _setup_telemetry()
     sched.start()
     log.info("Porchlight ready. Model candidates: %s. Channels: %s", candidate_names(), available_channels())
+
+
+def _setup_telemetry() -> None:
+    """Turn the per-agent trace_attributes into real spans when an OTLP endpoint or console tracing is configured."""
+    import os
+
+    try:
+        from strands.telemetry import StrandsTelemetry
+    except Exception as e:  # noqa: BLE001
+        log.debug("telemetry unavailable: %s", e)
+        return
+    try:
+        if os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT"):
+            StrandsTelemetry().setup_otlp_exporter()
+            log.info("tracing to %s", os.environ["OTEL_EXPORTER_OTLP_ENDPOINT"])
+        elif os.getenv("TRACE_CONSOLE", "").lower() in {"1", "true", "yes"}:
+            StrandsTelemetry().setup_console_exporter()
+            log.info("tracing to the console")
+    except Exception as e:  # noqa: BLE001
+        log.warning("could not start tracing: %s", e)
 
 
 @app.on_event("shutdown")
@@ -290,9 +311,27 @@ def episode_close(episode_id: str) -> dict[str, Any]:
     ep = store.episode(episode_id)
     if not ep:
         raise HTTPException(404, "unknown episode")
+    # Stop any work in flight, then void decisions that can no longer be carried out.
+    for key in (episode_id, episode_id + ":followup"):
+        task = runner._tasks.pop(key, None)
+        if task and not task.done():
+            task.cancel()
+    runner._graphs.pop(episode_id, None)
+    runner._followups.pop(episode_id, None)
+    voided = 0
+    for a in store.approvals(episode_id, status="pending"):
+        a.status = "rejected"
+        a.resolved_at = now_iso()
+        a.decision_note = "The coordinator closed this episode before deciding."
+        store.put_approval(a)
+        voided += 1
+
     def _close(e):
         e.status = "closed"
-        e.timeline.append(TimelineEntry(kind="closed", text="Closed by coordinator"))
+        e.timeline.append(TimelineEntry(
+            kind="closed",
+            text="Closed by coordinator" + (f"; {voided} pending decision(s) cancelled" if voided else ""),
+        ))
 
     ep = store.mutate_episode(episode_id, _close)
     bus.emit("status", "Episode closed by coordinator", episode_id=ep.id, status="closed")
@@ -348,10 +387,12 @@ async def checkin_post(token: str, body: CheckinIn) -> dict[str, Any]:
         raise HTTPException(404, "unknown check-in link")
     if body.status not in ("ok", "needs_help"):
         raise HTTPException(400, "status must be ok or needs_help")
-    c.status = body.status  # type: ignore[assignment]
-    c.responded_at = now_iso()
-    c.note = body.note[:300]
-    store.put_checkin(c)
+    def _record(x):
+        x.status = body.status  # type: ignore[assignment]
+        x.responded_at = now_iso()
+        x.note = body.note[:300]
+
+    c = store.mutate_checkin(token, _record) or c
     m = store.member(c.member_id)
     ep = store.episode(c.episode_id)
     name = m.name if m else c.member_id

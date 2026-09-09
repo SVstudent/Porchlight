@@ -378,9 +378,11 @@ def escalate_member_impl(episode_id: str, member_id: str, action: str, reason: s
         return {"error": f"unknown action {action}"}
     for c in store.checkins(ep.id):
         if c.member_id == m.id:
-            c.status = "escalated"
-            c.note = f"{action}: {reason}"
-            store.put_checkin(c)
+            def _esc(x, _a=action, _r=reason):
+                x.status = "escalated"
+                x.note = f"{_a}: {_r}"
+
+            store.mutate_checkin(c.token, _esc)
     def _esc(e):
         e.status = "escalating"
         e.stats["escalations"] = e.stats.get("escalations", 0) + 1
