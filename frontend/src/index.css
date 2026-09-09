@@ -246,6 +246,7 @@ th { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: 
 .lang button.on { background: var(--ink); color: #fff; border-color: var(--ink); }
 
 /* ---- report ---- */
+a.btn { text-decoration: none; }
 .report { max-width: 1000px; }
 .report-sheet { border-left: 6px solid var(--amber); }
 .report-head h1 { font-family: var(--font-display); font-weight: 600; font-size: 30px; margin: 2px 0 6px; letter-spacing: -0.01em; line-height: 1.15; text-wrap: balance; }

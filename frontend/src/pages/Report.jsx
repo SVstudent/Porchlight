@@ -34,7 +34,7 @@ export default function Report() {
     setBusy(true); setGenError('');
     try {
       const r = await api.reportNarrative(id);
-      if (!r.narrative) setGenError(r.narrative_reason || 'The narrative could not be written.');
+      if (r.narrative_reason) setGenError(r.narrative_reason);  // "" on success; set even when an older narrative is still cached
       refresh();
     } catch (e) { setGenError(e.message); } finally { setBusy(false); }
   };
@@ -66,7 +66,7 @@ export default function Report() {
             <h1>{h.event_name}</h1>
             <div className="report-sub">
               <span><b>{ep.community}</b> · coordinated by {ep.coordinator}</span>
-              <span>{h.source === 'replay' ? 'Replay of a real NWS alert' : h.source === 'nws' ? 'Live NWS alert' : h.source === 'open-meteo' ? 'Live conditions threshold' : `${h.source} hazard`}{h.severity ? ` · ${h.severity}` : ''}{h.area ? ` · ${h.area}` : ''}</span>
+              <span>{h.source === 'replay' ? 'Replay of a real NWS alert' : h.source === 'nws' ? 'Live NWS alert' : h.source === 'open-meteo' ? 'Live conditions threshold' : `${h.source} hazard`}{h.severity ? ` · ${h.severity}` : ''}{h.area ? ` · ${h.area.length > 120 ? `${h.area.slice(0, 120)}…` : h.area}` : ''}</span>
               <span>Detected {fmtDT(t.detected_at)}{t.closed_at ? ` · closed ${fmtDT(t.closed_at)}` : ` · status: ${words(ep.status)}`}{t.duration_minutes != null ? ` · ${mins(t.duration_minutes)} total` : ''}</span>
               {h.headline ? <span className="muted">{h.headline}</span> : null}
               {ep.assessment?.plain_summary ? <span>{ep.assessment.plain_summary}</span> : null}
