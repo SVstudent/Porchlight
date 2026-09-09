@@ -1,7 +1,27 @@
+import { useEffect, useState } from 'react';
+import { api } from '../lib/api.js';
+
 const STATUS_LABEL = { sent: 'Message sent · waiting', delivered: 'Delivered · waiting', ok: "Replied: I'm OK", needs_help: 'Replied: NEEDS HELP', no_response: 'No response', escalated: 'Escalated' };
 const RF_LABEL = { lives_alone: 'lives alone', age_75_plus: '75+', no_air_conditioning: 'no AC', powered_medical_device: 'medical device', mobility_limited: 'limited mobility', cognitive_impairment: 'memory issues', infant_or_young_child: 'young kids', outdoor_worker: 'works outdoors', pregnant: 'pregnant', chronic_illness: 'chronic illness', no_transport: 'no car', limited_english: 'limited English', unhoused: 'unhoused' };
 
+function historyHint(h) {
+  const last = h?.last;
+  if (!last) return null;
+  if (last.outcome === 'ok') return `Replied last time${last.minutes_to_reply != null ? ` in ${last.minutes_to_reply}m` : ''}`;
+  if (last.outcome === 'needs_help') return 'Asked for help last time';
+  if (last.outcome === 'no_reply') return `No reply last time${last.escalated ? ' · escalated' : ''}`;
+  if (last.outcome === 'not_reached') return "Couldn't be reached last time";
+  return null;
+}
+
 export default function RosterStatus({ members, episode }) {
+  const [history, setHistory] = useState({});
+  const episodeId = episode?.id;
+  useEffect(() => {
+    let live = true;
+    api.rosterHistory(episodeId).then((d) => { if (live) setHistory(d.members || {}); }).catch(() => {});
+    return () => { live = false; };
+  }, [episodeId]);
   const decisions = Object.fromEntries((episode?.triage?.decisions || []).map((d) => [d.member_id, d]));
   const checkins = Object.fromEntries((episode?.checkins || []).map((c) => [c.member_id, c]));
   const list = [...members].sort((a, b) => {
@@ -25,6 +45,7 @@ export default function RosterStatus({ members, episode }) {
             {c ? <div className="st">{STATUS_LABEL[c.status] || c.status}{c.note && c.status !== 'sent' ? <span className="why"> — {c.note}</span> : null}</div>
               : d && d.tier > 0 ? <div className="st muted">Planned · {d.channel}{d.needs_visit ? ' · needs visit' : ''}</div> : null}
             {d?.reason ? <div className="why">{d.reason}</div> : null}
+            {historyHint(history[m.id]) ? <div className="hist-hint" title={history[m.id].insight}>{historyHint(history[m.id])}</div> : null}
           </div>
         );
       })}

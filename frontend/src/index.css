@@ -244,3 +244,19 @@ th { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: 
 .lang { align-self: flex-end; }
 .lang button { border: 1px solid var(--line-strong); background: var(--surface); padding: 4px 10px; border-radius: 999px; font-size: 13px; }
 .lang button.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+/* ---- memory ---- */
+.mtile .hist-hint { font-size: 11px; color: var(--amber-ink); }
+.row-actions { white-space: nowrap; }
+.row-actions .btn + .btn { margin-left: 4px; }
+.row-actions .btn.on { background: var(--amber-soft); color: var(--amber-ink); }
+.hist-row td { background: var(--surface-2); padding: 10px 12px 12px; }
+.hist { display: flex; flex-direction: column; gap: 8px; }
+.hist-insight { font-weight: 600; font-size: 13px; }
+.hist-pills { flex-wrap: wrap; gap: 6px; }
+.hist-table { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; }
+.hist-table th, .hist-table td { padding: 5px 8px; }
+.hist-lesson { color: var(--amber-ink); font-style: italic; }
+.hist-memories ul { margin: 4px 0 0; padding-left: 18px; }
+.hist-lesson-form { gap: 6px; }
+.hist-lesson-form input { flex: 1; min-width: 0; }

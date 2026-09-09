@@ -38,6 +38,7 @@ from .tools import (
     list_volunteers,
     record_coordinator_brief,
 )
+from .tools_memory import get_community_history, get_neighbor_history
 
 
 @tool(context=True)
@@ -98,6 +99,7 @@ member a tier:
   0 = no action (not affected; e.g. healthy and offered to help)
 Pick each member's channel: their preferred channel, but use "sms" instead of "voice" if the message is short,
 and "email" only if they have no phone. Set needs_visit for tier 1 members who cannot get themselves to safety.
+For tier 1 candidates, call get_neighbor_history and use past reply behaviour to pick the channel and whether a visit is needed.
 Then call submit_triage_plan exactly once with every decision, and finish with a two-sentence summary.
 """
 
@@ -137,6 +139,7 @@ Role: FOLLOW-UP. Outreach already went out. Call get_episode_context and get_che
   or notify_emergency_contact if no volunteer is available.
 - Tier 2 members past twice the grace period: notify_emergency_contact if they have one, otherwise leave as is.
 - Everyone else: no action.
+Use get_neighbor_history before escalating: if a member has never replied to messages but their emergency contact has, notify the emergency contact first.
 Call escalate_member once per member that needs it, most urgent first, at most two per cycle (each call pauses
 for approval unless policy allows it); the next cycle handles the rest.
 Finish with one or two sentences summarising what you did and who is still unaccounted for.
@@ -162,12 +165,12 @@ def _agent(name: str, prompt: str, tools: list[Any], model: Any, session_id: str
 def build_graph(ep: Episode, model: Any | None = None):
     """Build the per-episode Strands Graph. Session-managed so an interrupted run can resume after a restart."""
     model = model or build_model()
-    sentinel = _agent("sentinel", SENTINEL_PROMPT, [get_area_conditions, get_episode_context], model,
+    sentinel = _agent("sentinel", SENTINEL_PROMPT, [get_area_conditions, get_episode_context, get_community_history], model,
                       structured_output_model=HazardAssessment)
-    triage = _agent("triage", TRIAGE_PROMPT, [get_episode_context, get_roster, get_member_conditions, submit_triage_plan], model)
+    triage = _agent("triage", TRIAGE_PROMPT, [get_episode_context, get_roster, get_member_conditions, get_neighbor_history, submit_triage_plan], model)
     outreach = _agent("outreach", OUTREACH_PROMPT, [get_episode_context, get_roster, find_nearby_cooled_places, dispatch_outreach], model)
     logistics = _agent("logistics", LOGISTICS_PROMPT, [get_episode_context, list_volunteers, list_community_resources, find_nearby_cooled_places, assign_volunteers], model)
-    brief = _agent("briefing", BRIEF_PROMPT, [get_episode_context, get_checkin_status, record_coordinator_brief], model)
+    brief = _agent("briefing", BRIEF_PROMPT, [get_episode_context, get_checkin_status, get_community_history, record_coordinator_brief], model)
 
     def activated(state: GraphState) -> bool:
         node = state.results.get("assess")
@@ -200,7 +203,7 @@ def build_graph(ep: Episode, model: Any | None = None):
 def build_followup_agent(ep: Episode, model: Any | None = None) -> Agent:
     model = model or build_model()
     return _agent("followup", FOLLOWUP_PROMPT,
-                  [get_episode_context, get_checkin_status, list_volunteers, escalate_member], model,
+                  [get_episode_context, get_checkin_status, list_volunteers, get_neighbor_history, escalate_member], model,
                   session_id=f"followup-{ep.id}")
 
 

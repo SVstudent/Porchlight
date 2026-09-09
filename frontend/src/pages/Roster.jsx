@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { Upload, UserPlus } from 'lucide-react';
 import TopBar from '../components/TopBar.jsx';
+import MemberHistory from '../components/MemberHistory.jsx';
 import { api, usePoll } from '../lib/api.js';
 
 const RF = ['lives_alone', 'age_75_plus', 'no_air_conditioning', 'powered_medical_device', 'mobility_limited', 'cognitive_impairment', 'infant_or_young_child', 'outdoor_worker', 'pregnant', 'chronic_illness', 'no_transport', 'limited_english', 'unhoused'];
@@ -12,6 +13,7 @@ export default function Roster() {
   const [vols] = usePoll(api.volunteers, 30000);
   const [res] = usePoll(api.resources, 60000);
   const [form, setForm] = useState(null);
+  const [historyFor, setHistoryFor] = useState(null);
 
   const save = async () => { await api.saveMember({ ...form, lat: Number(form.lat), lon: Number(form.lon) }); setForm(null); refresh(); };
   const upload = async (e) => { const f = e.target.files[0]; if (!f) return; const r = await api.importRoster(f); alert(`Imported ${r.imported} members`); refresh(); };
@@ -32,15 +34,18 @@ export default function Roster() {
               <thead><tr><th>Name</th><th>Reach</th><th>Lang</th><th>Risk factors</th><th>Notes</th><th>Emergency contact</th><th></th></tr></thead>
               <tbody>
                 {(roster?.members || []).map((m) => (
-                  <tr key={m.id}>
+                  <Fragment key={m.id}>
+                  <tr>
                     <td><b>{m.name}</b><div className="small muted">{m.address}</div></td>
                     <td className="mono small">{m.preferred_channel}<br />{m.phone || m.email || m.telegram_chat_id}</td>
                     <td>{m.language}</td>
                     <td><div className="tags">{m.risk_factors.map((r) => <span className="tag" key={r}>{r.replace(/_/g, ' ')}</span>)}</div></td>
                     <td className="small">{m.notes}</td>
                     <td className="small">{m.emergency_contact_name}<br /><span className="mono">{m.emergency_contact_phone}</span></td>
-                    <td><button className="btn ghost sm" onClick={() => setForm({ ...m })}>Edit</button></td>
+                    <td className="row-actions"><button className="btn ghost sm" onClick={() => setForm({ ...m })}>Edit</button><button className={`btn ghost sm${historyFor === m.id ? ' on' : ''}`} onClick={() => setHistoryFor(historyFor === m.id ? null : m.id)}>History</button></td>
                   </tr>
+                  {historyFor === m.id ? <tr className="hist-row"><td colSpan={7}><MemberHistory member={m} /></td></tr> : null}
+                  </Fragment>
                 ))}
               </tbody>
             </table>
