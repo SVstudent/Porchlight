@@ -35,7 +35,7 @@ The coordinator sees all of it on one screen: live agent activity, a decision ca
 
 - **`GraphBuilder` multi-agent pipeline** (`backend/app/agents/pipeline.py`): five agents with distinct system prompts and tool sets, a conditional edge (`assess -> triage` only when the assessment says activate), and parallel branches (`outreach` and `logistics`) that join at `brief`.
 - **Human-in-the-loop with interrupts** (`backend/app/agents/hooks.py`): `ApprovalGateHook` registers on `BeforeToolCallEvent` and calls `event.interrupt()` for every world-changing tool. The graph stops with `Status.INTERRUPTED`; the API turns each interrupt into an approval card; the coordinator's decision is fed back as an `interruptResponse` and the graph resumes exactly where it paused. A declined action sets `event.cancel_tool` with a message the agent can reason about. Edited messages are written back into `tool_use["input"]`.
-- **Session persistence**: every graph and the follow-up agent use `FileSessionManager`, so an approval that arrives after a restart still resumes the right run.
+- **Session persistence**: every graph and the follow-up agent use `FileSessionManager`; the runner rebuilds a paused graph from its session when an approval arrives after a restart.
 - **Structured output**: the sentinel agent returns a Pydantic `HazardAssessment` via `structured_output_model`; the graph edge condition reads it.
 - **Tools with context**: `@tool(context=True)` tools read the episode id from `invocation_state`, so one tool module serves every agent in every episode.
 - **Hooks for observability**: `AuditHook` mirrors `BeforeModelCallEvent`, `BeforeToolCallEvent`, `AfterToolCallEvent` and `MessageAddedEvent` into a server-sent event stream and the episode timeline, which is what the dashboard's live feed shows.
@@ -83,6 +83,16 @@ npm run dev                     # http://localhost:5173  (proxies /api to the ba
 Open the desk, press **Replay this alert** (a real Extreme Heat Warning from NWS Phoenix, archived in `backend/app/data/fixtures/`), and watch the agents work. When the decision card appears, edit a message if you like and press **Approve & send**. Open one of the check-in links printed in the activity feed (or the SMS if a channel is configured) and tap **I need help**; the follow-up agent escalates.
 
 Or point the roster somewhere with weather right now: edit `backend/app/seed.py` coordinates, reset the database, and press **Scan now**.
+
+### Bedrock preflight
+
+Model access is the most common blocker. Before the first run, confirm your account can invoke the configured model:
+
+```bash
+aws bedrock list-foundation-models --region us-east-1 --by-provider anthropic --query 'modelSummaries[].modelId'
+python -c "from strands import Agent; print(Agent(model='global.anthropic.claude-sonnet-4-6', callback_handler=None)('Say ready.'))"
+```
+If the model id is not enabled for your account, request access in the Bedrock console (Model access) or set `BEDROCK_MODEL_ID` to one that is.
 
 ### Model configuration (`backend/.env`)
 

@@ -14,7 +14,7 @@ from strands.multiagent.base import Status
 
 from ..config import settings
 from ..events import bus
-from ..models import Approval, Episode, HazardAssessment, HazardEvent, TimelineEntry, now_iso
+from ..models import Approval, Episode, HazardAssessment, HazardEvent, TimelineEntry, new_id, now_iso
 from ..store import store
 from .context import current_episode_id
 from .hooks import APPROVAL_INTERRUPT
@@ -69,11 +69,11 @@ class EpisodeRunner:
             await self._finish_graph(ep_id, final)
         except Exception as e:  # noqa: BLE001
             log.error("graph failed for %s: %s\n%s", ep_id, e, traceback.format_exc())
-            ep = store.episode(ep_id)
-            if ep:
+            def _fail(ep):
                 ep.status = "failed"
                 ep.timeline.append(TimelineEntry(kind="error", text=f"Agent run failed: {e}"))
-                store.put_episode(ep)
+
+            store.mutate_episode(ep_id, _fail)
             bus.emit("error", f"Agent run failed: {e}", episode_id=ep_id)
         finally:
             current_episode_id.reset(token)
@@ -82,10 +82,8 @@ class EpisodeRunner:
         t = ev.get("type")
         if t == "multiagent_node_start":
             bus.emit("node_start", f"{ev.get('node_id')} started", episode_id=ep_id, agent=ev.get("node_id", ""))
-            ep = store.episode(ep_id)
-            if ep and ev.get("node_id") == "assess":
-                ep.status = "assessing"
-                store.put_episode(ep)
+            if ev.get("node_id") == "assess":
+                store.mutate_episode(ep_id, lambda ep: setattr(ep, "status", "assessing"))
         elif t == "multiagent_node_stream":
             inner = ev.get("event", {})
             if "data" in inner and inner["data"]:
@@ -107,21 +105,21 @@ class EpisodeRunner:
         return None
 
     def _persist_node_result(self, ep_id: str, node_id: str, nr: Any) -> None:
-        ep = store.episode(ep_id)
-        if ep is None or nr is None:
+        if nr is None or node_id != "assess":
             return
         res = getattr(nr, "result", None)
         so = getattr(res, "structured_output", None)
-        if node_id == "assess" and isinstance(so, HazardAssessment):
-            ep.assessment = so
-            ep.status = "triaging" if so.activate else "stood_down"
-            ep.timeline.append(TimelineEntry(kind="assessment", text=("ACTIVATE: " if so.activate else "Stand down: ") + so.plain_summary, data=so.model_dump()))
+        if isinstance(so, HazardAssessment):
+            def _apply(ep):
+                ep.assessment = so
+                ep.status = "triaging" if so.activate else "stood_down"
+                ep.timeline.append(TimelineEntry(kind="assessment", text=("ACTIVATE: " if so.activate else "Stand down: ") + so.plain_summary, data=so.model_dump()))
+
+            store.mutate_episode(ep_id, _apply)
             bus.emit("assessment", so.plain_summary, episode_id=ep_id, agent="sentinel", activate=so.activate, severity=so.severity_score)
-        elif node_id == "assess":
-            # structured output missing: try to parse the text as a last resort
+        else:
             text = str(getattr(res, "message", "") or res)
-            ep.timeline.append(TimelineEntry(kind="assessment", text=text[:500]))
-        store.put_episode(ep)
+            store.mutate_episode(ep_id, lambda ep: ep.timeline.append(TimelineEntry(kind="assessment", text=text[:500])))
 
     async def _finish_graph(self, ep_id: str, result: Any) -> None:
         ep = store.episode(ep_id)
@@ -130,27 +128,28 @@ class EpisodeRunner:
         status = getattr(result, "status", None)
         if status == Status.INTERRUPTED:
             self._register_approvals(ep, getattr(result, "interrupts", []) or [], scope="graph")
-            ep.status = "awaiting_approval"
-            store.put_episode(ep)
-            bus.emit("status", "Waiting for coordinator approval", episode_id=ep.id, status=ep.status)
+            store.mutate_episode(ep_id, lambda e: setattr(e, "status", "awaiting_approval"))
+            bus.emit("status", "Waiting for coordinator approval", episode_id=ep.id, status="awaiting_approval")
             return
         if status == Status.FAILED:
-            ep.status = "failed"
-            store.put_episode(ep)
+            store.mutate_episode(ep_id, lambda e: setattr(e, "status", "failed"))
             bus.emit("error", "Graph reported failure", episode_id=ep.id)
             return
-        # completed
-        if ep.assessment and not ep.assessment.activate:
-            ep.status = "stood_down"
-        elif ep.outreach:
-            ep.status = "monitoring"
-        else:
-            ep.status = "closed"
-        store.put_episode(ep)
+
+        def _complete(e):
+            if e.assessment and not e.assessment.activate:
+                e.status = "stood_down"
+            elif e.outreach:
+                e.status = "monitoring"
+            else:
+                e.status = "closed"
+
+        ep = store.mutate_episode(ep_id, _complete) or ep
         self._graphs.pop(ep_id, None)
         bus.emit("status", f"Pipeline complete: {ep.status}", episode_id=ep.id, status=ep.status)
 
     def _register_approvals(self, ep: Episode, interrupts: list[Any], scope: str) -> None:
+        batch_id = new_id("batch")
         for itp in interrupts:
             if getattr(itp, "name", "") != APPROVAL_INTERRUPT:
                 continue
@@ -167,10 +166,10 @@ class EpisodeRunner:
                 interrupt_id=itp.id,
                 agent_name=reason.get("agent", ""),
                 scope=scope,
+                batch_id=batch_id,
             )
             store.put_approval(a)
-            ep.timeline.append(TimelineEntry(kind="approval_requested", text=a.title, data={"approval_id": a.id}))
-            store.put_episode(ep)
+            store.mutate_episode(ep.id, lambda e: e.timeline.append(TimelineEntry(kind="approval_requested", text=a.title, data={"approval_id": a.id})))
             bus.emit("approval", a.title, episode_id=ep.id, agent=a.agent_name, approval_id=a.id, kind=a.kind)
 
     # ------------------------------------------------------------ decisions
@@ -186,25 +185,24 @@ class EpisodeRunner:
         a.status = "approved" if decision.lower().startswith("appr") else "rejected"
         a.resolved_at = now_iso()
         a.decision_note = note
+        a.edits = edits or {}
         store.put_approval(a)
-        ep.timeline.append(TimelineEntry(kind="approval_" + a.status, text=f"{a.title}: {a.status}" + (f" — {note}" if note else "")))
-        store.put_episode(ep)
-        response = {"decision": "approve" if a.status == "approved" else "reject", "note": note, "edits": edits or {}}
-        responses = [{"interruptResponse": {"interruptId": a.interrupt_id, "response": response}}]
+        store.mutate_episode(ep.id, lambda e: e.timeline.append(TimelineEntry(kind="approval_" + a.status, text=f"{a.title}: {a.status}" + (f" — {note}" if note else ""))))
 
-        # Resume only when every pending approval for this runnable has a decision.
-        pending = [p for p in store.approvals(ep.id, status="pending") if p.scope == a.scope]
-        if pending:
+        # Resume only when every interrupt raised in the same pause has a decision.
+        if a.batch_id:
+            batch = [p for p in store.approvals(ep.id) if p.batch_id == a.batch_id]
+        else:  # legacy rows without a batch id: everything unresolved in the same scope was raised together
+            batch = [p for p in store.approvals(ep.id) if p.scope == a.scope and (p.status == "pending" or p.id == a.id)]
+        if any(p.status == "pending" for p in batch):
+            bus.emit("status", f"{a.title}: {a.status}. Waiting on {sum(1 for p in batch if p.status == 'pending')} more decision(s) before resuming.", episode_id=ep.id)
             return a
-        siblings = [p for p in store.approvals(ep.id) if p.scope == a.scope and p.resolved_at and p.status != "pending"]
-        # include decisions for sibling interrupts raised in the same pause (same batch)
-        batch = [p for p in siblings if p.created_at == a.created_at and p.id != a.id]
-        for p in batch:
-            responses.append({"interruptResponse": {"interruptId": p.interrupt_id, "response": {"decision": "approve" if p.status == "approved" else "reject", "note": p.decision_note, "edits": {}}}})
-
+        responses = [
+            {"interruptResponse": {"interruptId": p.interrupt_id, "response": {"decision": "approve" if p.status == "approved" else "reject", "note": p.decision_note, "edits": p.edits or {}}}}
+            for p in batch
+        ]
         if a.scope == "graph":
-            ep.status = "dispatching"
-            store.put_episode(ep)
+            store.mutate_episode(ep.id, lambda e: setattr(e, "status", "dispatching"))
             self._tasks[ep.id] = asyncio.create_task(self._run_graph(ep.id, responses))
         else:
             self._tasks[ep.id + ":followup"] = asyncio.create_task(self._run_followup(ep.id, responses))
@@ -235,11 +233,7 @@ class EpisodeRunner:
                 bus.emit("status", "Follow-up is waiting for coordinator approval", episode_id=ep_id, agent="followup")
                 return
             text = str(result)
-            ep = store.episode(ep_id) or ep
-            ep.timeline.append(TimelineEntry(kind="followup", text=text[:800]))
-            if ep.status == "escalating":
-                pass
-            store.put_episode(ep)
+            store.mutate_episode(ep_id, lambda e: e.timeline.append(TimelineEntry(kind="followup", text=text[:800])))
             bus.emit("node_stop", "follow-up finished", episode_id=ep_id, agent="followup")
         except Exception as e:  # noqa: BLE001
             log.error("follow-up failed for %s: %s\n%s", ep_id, e, traceback.format_exc())

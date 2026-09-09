@@ -25,7 +25,7 @@
   <!-- Strands graph -->
   <rect x="340" y="260" width="740" height="330" rx="14" fill="#ffffff" stroke="#1e2a2b" stroke-width="2"/>
   <text x="360" y="290" font-size="16" font-weight="700" fill="#1e2a2b">Strands Agents SDK — GraphBuilder pipeline (one graph per episode)</text>
-  <text x="360" y="308" font-size="12" fill="#5f6b6c">FileSessionManager persists messages + interrupt state · AuditHook streams every model/tool call · ApprovalGateHook interrupts gated tools</text>
+  <text x="360" y="308" font-size="12" fill="#5f6b6c">FileSessionManager persists state · AuditHook streams every model/tool call · ApprovalGateHook interrupts gated tools</text>
 
   <g font-size="13">
     <rect x="360" y="330" width="130" height="86" rx="10" fill="#dce8f0" stroke="#3a6a8a"/><text x="372" y="352" font-weight="700" fill="#1e2a2b">assess</text><text x="372" y="370" fill="#5f6b6c">sentinel agent</text><text x="372" y="386" fill="#5f6b6c">structured output</text><text x="372" y="402" fill="#5f6b6c">HazardAssessment</text>
@@ -44,8 +44,8 @@
 
   <rect x="360" y="440" width="300" height="130" rx="10" fill="#fff7e8" stroke="#e39a2f"/>
   <text x="372" y="462" font-size="13" font-weight="700" fill="#7a4d0a">Tools (@tool)</text>
-  <text x="372" y="482" font-size="12" fill="#1e2a2b">get_roster · get_member_conditions · get_area_conditions</text>
-  <text x="372" y="500" font-size="12" fill="#1e2a2b">find_nearby_cooled_places · list_volunteers · list_resources</text>
+  <text x="372" y="482" font-size="11.5" fill="#1e2a2b">get_roster · get_member_conditions · get_area_conditions</text>
+  <text x="372" y="500" font-size="11.5" fill="#1e2a2b">find_nearby_cooled_places · list_volunteers · list_resources</text>
   <text x="372" y="518" font-size="12" fill="#1e2a2b">get_checkin_status · submit_triage_plan</text>
   <text x="372" y="540" font-size="12" font-weight="600" fill="#7a4d0a">⏸ gated: dispatch_outreach · assign_volunteers · escalate_member</text>
   <text x="372" y="558" font-size="11" fill="#5f6b6c">gated = BeforeToolCallEvent → event.interrupt() → coordinator decides → resume</text>

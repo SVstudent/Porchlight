@@ -160,6 +160,8 @@ class Approval(BaseModel):
     interrupt_id: str = ""
     agent_name: str = ""
     scope: str = "graph"  # graph | followup  (which runnable to resume)
+    batch_id: str = ""  # interrupts raised in the same pause share a batch and are resumed together
+    edits: dict[str, Any] = {}  # coordinator edits applied to the tool input on approval
     status: Literal["pending", "approved", "rejected"] = "pending"
     created_at: str = Field(default_factory=now_iso)
     resolved_at: str = ""
@@ -170,7 +172,7 @@ class Checkin(BaseModel):
     token: str
     episode_id: str
     member_id: str
-    status: Literal["sent", "delivered", "ok", "needs_help", "no_response", "escalated"] = "sent"
+    status: Literal["sent", "delivered", "failed", "ok", "needs_help", "no_response", "escalated"] = "sent"
     channel: str = ""
     sent_at: str = Field(default_factory=now_iso)
     responded_at: str = ""

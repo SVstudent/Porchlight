@@ -285,9 +285,11 @@ def episode_close(episode_id: str) -> dict[str, Any]:
     ep = store.episode(episode_id)
     if not ep:
         raise HTTPException(404, "unknown episode")
-    ep.status = "closed"
-    ep.timeline.append(TimelineEntry(kind="closed", text="Closed by coordinator"))
-    store.put_episode(ep)
+    def _close(e):
+        e.status = "closed"
+        e.timeline.append(TimelineEntry(kind="closed", text="Closed by coordinator"))
+
+    ep = store.mutate_episode(episode_id, _close)
     bus.emit("status", "Episode closed by coordinator", episode_id=ep.id, status="closed")
     return _episode_view(ep)
 
@@ -351,9 +353,11 @@ async def checkin_post(token: str, body: CheckinIn) -> dict[str, Any]:
     bus.emit("checkin", f"{name} checked in: {'OK' if body.status == 'ok' else 'NEEDS HELP'}" + (f" — {body.note[:120]}" if body.note else ""),
              episode_id=c.episode_id, member_id=c.member_id, status=body.status, note=body.note[:300])
     if ep:
-        ep.timeline.append(TimelineEntry(kind="checkin", text=f"{name}: {body.status}", data={"note": body.note[:300]}))
-        ep.stats["responses"] = ep.stats.get("responses", 0) + 1
-        store.put_episode(ep)
+        def _rec(e):
+            e.timeline.append(TimelineEntry(kind="checkin", text=f"{name}: {body.status}", data={"note": body.note[:300]}))
+            e.stats["responses"] = e.stats.get("responses", 0) + 1
+
+        store.mutate_episode(ep.id, _rec)
         if body.status == "needs_help":
             await runner.run_followup(ep.id)
     return {"recorded": True, "status": c.status}

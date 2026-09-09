@@ -122,6 +122,16 @@ class Store:
         self._put("episodes", e.id, e.model_dump())
         return e
 
+    def mutate_episode(self, id: str, fn) -> Optional[Episode]:
+        """Atomic read-modify-write. Parallel graph branches and hooks all update the same episode row, so
+        every update goes through here to avoid a stale write clobbering another branch's fields."""
+        with self._lock:
+            ep = self.episode(id)
+            if ep is None:
+                return None
+            fn(ep)
+            return self.put_episode(ep)
+
     # ---- approvals ----
     def approvals(self, episode_id: str | None = None, status: str | None = None) -> list[Approval]:
         out = [Approval(**d) for d in self._all("approvals")]

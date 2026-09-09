@@ -82,10 +82,8 @@ class AuditHook(HookProvider):
         status = result.get("status", "success") if isinstance(result, dict) else "success"
         bus.emit("tool_result", _short(text, 400), episode_id=ep_id, agent=_agent_name(event.agent), tool=name, status=status)
         if ep_id:
-            ep = store.episode(ep_id)
-            if ep is not None:
-                ep.timeline.append(TimelineEntry(kind="tool", text=f"{_agent_name(event.agent)} used {name}", data={"status": status, "input": _short(event.tool_use.get('input', {}), 300)}))
-                store.put_episode(ep)
+            entry = TimelineEntry(kind="tool", text=f"{_agent_name(event.agent)} used {name}", data={"status": status, "input": _short(event.tool_use.get('input', {}), 300)})
+            store.mutate_episode(ep_id, lambda e: e.timeline.append(entry))
 
     def message_added(self, event: MessageAddedEvent) -> None:
         msg = event.message

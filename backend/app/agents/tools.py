@@ -45,8 +45,7 @@ def _episode(tool_context: ToolContext):
 def _timeline(ep, kind: str, text: str, **data: Any) -> None:
     if ep is None:
         return
-    ep.timeline.append(TimelineEntry(kind=kind, text=text, data=data))
-    store.put_episode(ep)
+    store.mutate_episode(ep.id, lambda e: e.timeline.append(TimelineEntry(kind=kind, text=text, data=data)))
 
 
 def _community_centroid() -> tuple[float, float]:
@@ -241,9 +240,12 @@ def dispatch_outreach(tool_context: ToolContext, messages: list[dict], coordinat
     except Exception as e:  # noqa: BLE001
         return {"error": f"invalid messages: {e}"}
     messages = plan.messages
-    ep.outreach = plan
-    ep.status = "dispatching"
-    store.put_episode(ep)
+
+    def _start(e):
+        e.outreach = plan
+        e.status = "dispatching"
+
+    store.mutate_episode(ep.id, _start)
     report = []
     for msg in messages:
         m = store.member(msg.member_id)
@@ -256,15 +258,18 @@ def dispatch_outreach(tool_context: ToolContext, messages: list[dict], coordinat
             body = f"{body}\nCheck in: {_checkin_link(token)}"
         res = deliver(m, body, preferred=msg.channel, subject=f"{settings.COMMUNITY_NAME}: please check in")
         store.put_checkin(Checkin(token=token, episode_id=ep.id, member_id=m.id, channel=res.channel,
-                                  status="sent" if res.ok else "sent", note="" if res.ok else res.detail))
+                                  status="sent" if res.ok else "failed", note="" if res.ok else res.detail))
         bus.emit("dispatch", f"{'Sent' if res.ok else 'FAILED'} {res.channel} to {m.name}: {res.detail}",
                  episode_id=ep.id, agent="outreach", member_id=m.id, ok=res.ok, channel=res.channel, body=body, token=token)
         report.append({"member_id": m.id, "name": m.name, "ok": res.ok, "channel": res.channel, "detail": res.detail, "checkin_link": _checkin_link(token)})
     sent = sum(1 for r in report if r["ok"])
-    ep.status = "monitoring"
-    ep.stats["messages_sent"] = sent
-    ep.stats["messages_failed"] = len(report) - sent
-    store.put_episode(ep)
+
+    def _done(e):
+        e.status = "monitoring"
+        e.stats["messages_sent"] = sent
+        e.stats["messages_failed"] = len(report) - sent
+
+    store.mutate_episode(ep.id, _done)
     _timeline(ep, "dispatch", f"Outreach dispatched: {sent} sent, {len(report) - sent} failed", report=report)
     return {"sent": sent, "failed": len(report) - sent, "deliveries": report}
 
@@ -288,8 +293,7 @@ def assign_volunteers(tool_context: ToolContext, assignments: list[dict], recomm
     except Exception as e:  # noqa: BLE001
         return {"error": f"invalid assignments: {e}"}
     assignments = plan.assignments
-    ep.logistics = plan
-    store.put_episode(ep)
+    store.mutate_episode(ep.id, lambda e: setattr(e, "logistics", plan))
     report = []
     for a in assignments:
         v = store.volunteer(a.volunteer_id)
@@ -304,8 +308,7 @@ def assign_volunteers(tool_context: ToolContext, assignments: list[dict], recomm
         bus.emit("dispatch", f"Volunteer {v.name} -> {m.name} ({a.task}): {res.detail}", episode_id=ep.id, agent="logistics",
                  volunteer_id=v.id, member_id=m.id, ok=res.ok, task=a.task)
         report.append({"volunteer": v.name, "member": m.name, "task": a.task, "ok": res.ok, "detail": res.detail})
-    ep.stats["volunteer_assignments"] = len(assignments)
-    store.put_episode(ep)
+    store.mutate_episode(ep.id, lambda e: e.stats.__setitem__("volunteer_assignments", len(assignments)))
     _timeline(ep, "logistics", f"{len(assignments)} volunteer assignment(s) made; {len(gaps)} gap(s) flagged", report=report, gaps=gaps)
     return {"assigned": len(assignments), "notifications": report, "gaps": gaps}
 
@@ -355,9 +358,11 @@ def escalate_member(tool_context: ToolContext, member_id: str, action: str, reas
             c.status = "escalated"
             c.note = f"{action}: {reason}"
             store.put_checkin(c)
-    ep.status = "escalating"
-    ep.stats["escalations"] = ep.stats.get("escalations", 0) + 1
-    store.put_episode(ep)
+    def _esc(e):
+        e.status = "escalating"
+        e.stats["escalations"] = e.stats.get("escalations", 0) + 1
+
+    store.mutate_episode(ep.id, _esc)
     bus.emit("escalation", f"{m.name}: {detail}", episode_id=ep.id, agent="followup", member_id=m.id, action=action)
     _timeline(ep, "escalation", f"{m.name} escalated ({action}): {reason}", detail=detail)
     return {"member": m.name, "action": action, "detail": detail}
@@ -372,8 +377,7 @@ def record_coordinator_brief(tool_context: ToolContext, brief: str) -> dict:
     ep_id, ep = _episode(tool_context)
     if ep is None:
         return {"error": "no active episode"}
-    ep.stats["brief"] = brief
-    store.put_episode(ep)
+    store.mutate_episode(ep.id, lambda e: e.stats.__setitem__("brief", brief))
     _timeline(ep, "brief", brief)
     bus.emit("brief", brief, episode_id=ep.id, agent="briefing")
     return {"saved": True}

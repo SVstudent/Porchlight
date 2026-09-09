@@ -54,9 +54,11 @@ def submit_triage_plan(tool_context: ToolContext, decisions: list[dict], summary
         plan = TriagePlan(decisions=[TriageDecision(**d) for d in decisions], summary=summary)
     except Exception as e:  # noqa: BLE001
         return {"error": f"invalid decisions: {e}"}
-    ep.triage = plan
-    ep.status = "triaging"
-    store.put_episode(ep)
+    def _apply(e):
+        e.triage = plan
+        e.status = "triaging"
+
+    store.mutate_episode(ep.id, _apply)
     tiers = {t: sum(1 for d in plan.decisions if d.tier == t) for t in (1, 2, 3, 0)}
     return {"saved": True, "counts_by_tier": tiers}
 
@@ -134,7 +136,8 @@ Role: FOLLOW-UP. Outreach already went out. Call get_episode_context and get_che
   or notify_emergency_contact if no volunteer is available.
 - Tier 2 members past twice the grace period: notify_emergency_contact if they have one, otherwise leave as is.
 - Everyone else: no action.
-Call escalate_member once per member that needs it (each call pauses for approval unless policy allows it).
+Call escalate_member once per member that needs it, most urgent first, at most two per cycle (each call pauses
+for approval unless policy allows it); the next cycle handles the rest.
 Finish with one or two sentences summarising what you did and who is still unaccounted for.
 """
 
