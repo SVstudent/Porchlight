@@ -114,7 +114,17 @@ export default function EpisodePanel({ episode, members, volunteers, resources, 
 
       <section className="panel">
         <div className="panel-h"><Users size={15} /><h3>Neighbors</h3><div className="right small muted">{ep.triage ? ep.triage.summary : 'Triage pending'}</div></div>
-        <div className="panel-b"><RosterStatus members={members} episode={ep} /></div>
+        <div className="panel-b">
+          {/* The outreach agent writes this for the coordinator. Showing it is the difference between
+              "12 messages were sent" and knowing why these twelve. */}
+          {ep.outreach?.coordinator_note ? (
+            <p className="agent-note">
+              <span className="eyebrow">What the outreach agent wants you to know</span>
+              {ep.outreach.coordinator_note}
+            </p>
+          ) : null}
+          <RosterStatus members={members} episode={ep} />
+        </div>
       </section>
 
       <section className="panel">

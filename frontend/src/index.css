@@ -429,3 +429,16 @@ a.btn { text-decoration: none; }
 .ep-main .t { font-weight: 600; font-size: 13px; line-height: 1.3; overflow-wrap: anywhere; white-space: normal; }
 .ep-meta { display: flex; gap: 6px; align-items: center; margin-top: 3px; flex-wrap: wrap; }
 .approval-slot { position: sticky; top: 60px; z-index: 15; }
+
+
+/* An agent's own note to the coordinator: set apart from data, but not shouting. */
+.agent-note {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-left: 3px solid var(--amber, #d98324);
+  background: color-mix(in srgb, var(--amber, #d98324) 7%, transparent);
+  border-radius: 0 6px 6px 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.agent-note .eyebrow { display: block; margin-bottom: 4px; }
