@@ -300,6 +300,6 @@ def playbook_text(hazard_type: str) -> str:
 
 
 def playbook_summary(hazard_type: str) -> dict[str, Any]:
-    """JSON-friendly copy for the API/UI."""
+    """JSON-friendly copy of a playbook, for the API and for tests that assert every hazard has one."""
     pb = get_playbook(hazard_type)
     return {"hazard_type": hazard_type if hazard_type in PLAYBOOKS else "other", **pb}

@@ -414,6 +414,3 @@ def record_coordinator_brief_impl(episode_id: str, brief: str) -> dict:
     bus.emit("brief", brief, episode_id=ep.id, agent="briefing")
     return {"saved": True}
 
-
-READ_TOOLS = [get_episode_context, get_roster, get_area_conditions, get_member_conditions, find_nearby_cooled_places,
-              list_community_resources, list_volunteers, get_checkin_status]

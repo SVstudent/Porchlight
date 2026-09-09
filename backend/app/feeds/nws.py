@@ -24,8 +24,7 @@ _EVENT_MAP: list[tuple[str, HazardType]] = [
     ("winter", "winter"),
     ("ice", "winter"),
     ("snow", "winter"),
-    ("flood", "flood"),
-    ("flash flood", "flood"),
+    ("flood", "flood"),  # also matches "flash flood"; order matters, so keep specific terms above general ones
     ("hurricane", "storm"),
     ("tropical", "storm"),
     ("tornado", "storm"),

@@ -157,6 +157,12 @@ Finish with one or two sentences summarising what you did and who is still unacc
 """
 
 
+def graph_session_id(ep: Episode) -> str:
+    """The name of the persisted session for an episode's graph. Stored on the episode so a reader of the
+    database can find the session on disk, and so nothing has to re-derive the convention."""
+    return ep.session_id or f"graph-{ep.id}"
+
+
 def _agent(name: str, prompt: str, tools: list[Any], model: Any, session_id: str | None = None, **kw: Any) -> Agent:
     kwargs: dict[str, Any] = dict(
         name=name,
@@ -210,7 +216,7 @@ def build_graph(ep: Episode, model: Any | None = None):
     b.set_entry_point("assess")
     b.set_execution_timeout(int(os.getenv("GRAPH_TIMEOUT_S", "1800")))
     b.set_node_timeout(int(os.getenv("NODE_TIMEOUT_S", "900")))
-    b.set_session_manager(FileSessionManager(session_id=f"graph-{ep.id}", storage_dir=str(settings.SESSION_DIR)))
+    b.set_session_manager(FileSessionManager(session_id=graph_session_id(ep), storage_dir=str(settings.SESSION_DIR)))
     return b.build()
 
 

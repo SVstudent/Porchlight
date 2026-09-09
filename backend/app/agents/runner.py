@@ -19,7 +19,7 @@ from ..store import store
 from .context import current_episode_id
 from .hooks import APPROVAL_INTERRUPT
 from .model_factory import build_model
-from .pipeline import build_followup_agent, build_graph, graph_task
+from .pipeline import build_followup_agent, build_graph, graph_session_id, graph_task
 
 log = logging.getLogger("porchlight.runner")
 
@@ -42,7 +42,11 @@ class EpisodeRunner:
         """Delete the persisted graph session so the next run starts clean."""
         import shutil
 
-        for name in (f"session_graph-{ep_id}", f"graph-{ep_id}"):
+        ep = store.episode(ep_id)
+        stored = ep.session_id if ep and ep.session_id else ""
+        names = {f"session_{stored}", stored} if stored else set()
+        names |= {f"session_graph-{ep_id}", f"graph-{ep_id}"}
+        for name in names:
             path = settings.SESSION_DIR / name
             if path.exists():
                 shutil.rmtree(path, ignore_errors=True)
@@ -54,7 +58,8 @@ class EpisodeRunner:
     # ------------------------------------------------------------ start
     async def start(self, hazard: HazardEvent) -> Episode:
         store.put_hazard(hazard)
-        ep = Episode(hazard=hazard, session_id=f"graph-{hazard.id}")
+        ep = Episode(hazard=hazard)
+        ep.session_id = graph_session_id(ep)  # the id is generated at construction, so name the session after it
         ep.timeline.append(TimelineEntry(kind="detected", text=f"{hazard.event_name} detected via {hazard.source}", data={"headline": hazard.headline}))
         store.put_episode(ep)
         bus.emit("status", f"Episode opened for {hazard.event_name}", episode_id=ep.id, agent="sentinel", status=ep.status)
