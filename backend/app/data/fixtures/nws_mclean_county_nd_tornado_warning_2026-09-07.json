@@ -1,0 +1,132 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.04478a1ce10bf95912cf294cd313578c87807601.001.1",
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -101.03,
+              47.62
+            ],
+            [
+              -101.05,
+              47.68
+            ],
+            [
+              -100.77,
+              47.83
+            ],
+            [
+              -100.68,
+              47.6
+            ],
+            [
+              -101.03,
+              47.62
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.04478a1ce10bf95912cf294cd313578c87807601.001.1",
+        "@type": "wx:Alert",
+        "id": "urn:oid:2.49.0.1.840.0.04478a1ce10bf95912cf294cd313578c87807601.001.1",
+        "areaDesc": "McLean, ND",
+        "geocode": {
+          "SAME": [
+            "038055"
+          ],
+          "UGC": [
+            "NDC055"
+          ]
+        },
+        "affectedZones": [
+          "https://api.weather.gov/zones/county/NDC055"
+        ],
+        "references": [],
+        "sent": "2026-09-07T18:28:00-05:00",
+        "effective": "2026-09-07T18:28:00-05:00",
+        "onset": "2026-09-07T18:28:00-05:00",
+        "expires": "2026-09-07T19:15:00-05:00",
+        "ends": "2026-09-07T19:15:00-05:00",
+        "status": "Actual",
+        "messageType": "Alert",
+        "category": "Met",
+        "severity": "Extreme",
+        "certainty": "Observed",
+        "urgency": "Immediate",
+        "event": "Tornado Warning",
+        "sender": "w-nws.webmaster@noaa.gov",
+        "senderName": "NWS Bismarck ND",
+        "headline": "Tornado Warning issued September 7 at 6:28PM CDT until September 7 at 7:15PM CDT by NWS Bismarck ND",
+        "description": "TORBIS\n\nThe National Weather Service in Bismarck has issued a\n\n* Tornado Warning for...\nNortheastern McLean County in south central North Dakota...\n\n* Until 715 PM CDT.\n\n* At 628 PM CDT, a severe thunderstorm capable of producing a tornado\nwas located 11 miles south of Ruso City, or 22 miles east of\nGarrison, moving northeast at 15 mph.\n\nHAZARD...Tornado and golf ball size hail.\n\nSOURCE...Radar indicated rotation.\n\nIMPACT...Flying debris will be dangerous to those caught without\nshelter. Mobile homes will be damaged or destroyed. Damage\nto roofs, windows and vehicles will occur. Tree damage is\nlikely.\n\n* Locations impacted include...\nStrawberry Lake.",
+        "instruction": "Move to an interior room on the lowest floor of a well-built building\naway from windows. If you are outdoors, in a mobile home, or in a\nvehicle, move to the closest substantial shelter and protect yourself\nfrom flying debris.",
+        "response": "Shelter",
+        "note": null,
+        "parameters": {
+          "AWIPSidentifier": [
+            "TORBIS"
+          ],
+          "WMOidentifier": [
+            "WFUS53 KBIS 072328"
+          ],
+          "eventMotionDescription": [
+            "2026-09-07T23:28:00-00:00...storm...236DEG...11KT...47.68,-100.96"
+          ],
+          "maxHailSize": [
+            "1.75"
+          ],
+          "tornadoDetection": [
+            "RADAR INDICATED"
+          ],
+          "BLOCKCHANNEL": [
+            "EAS",
+            "NWEM"
+          ],
+          "EAS-ORG": [
+            "WXR"
+          ],
+          "VTEC": [
+            "/O.NEW.KBIS.TO.W.0020.260907T2328Z-260908T0015Z/"
+          ],
+          "eventEndingTime": [
+            "2026-09-07T19:15:00-05:00"
+          ],
+          "WEAHandling": [
+            "Imminent Threat"
+          ],
+          "CMAMtext": [
+            "NWS: TORNADO WARNING in this area til 7:15 PM CDT. Take shelter now. Check media."
+          ],
+          "CMAMlongtext": [
+            "National Weather Service: TORNADO WARNING in this area until 7:15 PM CDT. Take shelter now in a basement or an interior room on the lowest floor of a sturdy building. If you are outdoors, in a mobile home, or in a vehicle, move to the closest substantial shelter and protect yourself from flying debris. Check media."
+          ]
+        },
+        "scope": "Public",
+        "code": "IPAWSv1.0",
+        "language": "en-US",
+        "web": "http://www.weather.gov",
+        "eventCode": {
+          "SAME": [
+            "TOR"
+          ],
+          "NationalWeatherService": [
+            "TOW"
+          ]
+        },
+        "replacedBy": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.3301020fc4755b658db79830623b910ab3bfbf8f.001.1",
+        "replacedAt": "2026-09-07T18:44:00-05:00"
+      }
+    }
+  ],
+  "porchlight": {
+    "retrieved": "2026-09-09T04:34:31Z",
+    "source": "api.weather.gov alerts archive",
+    "source_url": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.04478a1ce10bf95912cf294cd313578c87807601.001.1",
+    "place": "McLean County, ND"
+  }
+}

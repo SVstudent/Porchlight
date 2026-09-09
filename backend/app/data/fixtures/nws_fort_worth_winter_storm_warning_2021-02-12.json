@@ -1,0 +1,554 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "id": "202102122049-KFWD-WWUS44-WSWFWD",
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "id": "202102122049-KFWD-WWUS44-WSWFWD",
+        "areaDesc": "Montague; Cooke; Grayson; Fannin; Lamar; Young; Jack; Wise; Denton; Collin; Hunt; Delta; Hopkins; Stephens; Palo Pinto; Parker; Tarrant; Dallas; Rockwall; Kaufman; Van Zandt; Rains; Eastland; Erath; Hood; Somervell; Johnson; Ellis; Henderson; Comanche; Mills; Hamilton; Bosque; Hill; Navarro; Freestone; Anderson; Lampasas; Coryell; Bell; McLennan; Falls; Limestone; Leon; Milam; Robertson",
+        "geocode": {
+          "UGC": [
+            {
+              "ugc": "TXZ118",
+              "name": "Tarrant",
+              "status": "EXP",
+              "hvtec_nwsli": null,
+              "utc_product_issue": "2021-02-12T20:49:00Z",
+              "utc_issue": "2021-02-13T12:00:00Z",
+              "utc_init_expire": "2021-02-16T00:00:00Z",
+              "utc_expire": "2021-02-15T15:00:00Z",
+              "utc_updated": "2021-02-15T15:00:00Z"
+            },
+            {
+              "ugc": "TXZ161",
+              "name": "Limestone",
+              "status": "EXP",
+              "hvtec_nwsli": null,
+              "utc_product_issue": "2021-02-12T20:49:00Z",
+              "utc_issue": "2021-02-13T12:00:00Z",
+              "utc_init_expire": "2021-02-16T00:00:00Z",
+              "utc_expire": "2021-02-15T15:00:00Z",
+              "utc_updated": "2021-02-15T15:00:00Z"
+            },
+            {
+              "ugc": "TXZ119",
+              "name": "Dallas",
+              "status": "EXP",
+              "hvtec_nwsli": null,
+              "utc_product_issue": "2021-02-12T20:49:00Z",
+              "utc_issue": "2021-02-13T12:00:00Z",
+              "utc_init_expire": "2021-02-16T00:00:00Z",
+              "utc_expire": "2021-02-15T15:00:00Z",
+              "utc_updated": "2021-02-15T15:00:00Z"
+            },
+            {
+              "ugc": "TXZ158",
+              "name": "Bell",
+              "status": "EXP",
+              "hvtec_nwsli": null,
+              "utc_product_issue": "2021-02-12T20:49:00Z",
+              "utc_issue": "2021-02-13T12:00:00Z",
+              "utc_init_expire": "2021-02-16T00:00:00Z",
+              "utc_expire": "2021-02-15T15:00:00Z",
+              "utc_updated": "2021-02-15T15:00:00Z"
+            },
+            {
+              "ugc": "TXZ159",
+              "name": "McLennan",
+              "status": "EXP",
+              "hvtec_nwsli": null,
+              "utc_product_issue": "2021-02-12T20:49:00Z",
+              "utc_issue": "2021-02-13T12:00:00Z",
+              "utc_init_expire": "2021-02-16T00:00:00Z",
+              "utc_expire": "2021-02-15T15:00:00Z",
+              "utc_updated": "2021-02-15T15:00:00Z"
+            },
+            {
+              "ugc": "TXZ123",
+              "name": "Rains",
+              "status": "EXP",
+              "hvtec_nwsli": null,
+              "utc_product_issue": "2021-02-12T20:49:00Z",
+              "utc_issue": "2021-02-13T12:00:00Z",
+              "utc_init_expire": "2021-02-16T00:00:00Z",
+              "utc_expire": "2021-02-15T15:00:00Z",
+              "utc_updated": "2021-02-15T15:00:00Z"
+            },
+            {
+              "ugc": "TXZ162",
+              "name": "Leon",
+              "status": "EXP",
+              "hvtec_nwsli": null,
+              "utc_product_issue": "2021-02-12T20:49:00Z",
+              "utc_issue": "2021-02-13T12:00:00Z",
+              "utc_init_expire": "2021-02-16T00:00:00Z",
+              "utc_expire": "2021-02-15T15:00:00Z",
+              "utc_updated": "2021-02-15T15:00:00Z"
+            },
+            {
+              "ugc": "TXZ116",
+              "name": "Palo Pinto",
+              "status": "EXP",
+              "hvtec_nwsli": null,
+              "utc_product_issue": "2021-02-12T20:49:00Z",
+              "utc_issue": "2021-02-13T12:00:00Z",
+              "utc_init_expire": "2021-02-16T00:00:00Z",
+              "utc_expire": "2021-02-15T15:00:00Z",
+              "utc_updated": "2021-02-15T15:00:00Z"
+            },
+            {
+              "ugc": "TXZ133",
+              "name": "Johnson",
+              "status": "EXP",
+              "hvtec_nwsli": null,
+              "utc_product_issue": "2021-02-12T20:49:00Z",
+              "utc_issue": "2021-02-13T12:00:00Z",
+              "utc_init_expire": "2021-02-16T00:00:00Z",
+              "utc_expire": "2021-02-15T15:00:00Z",
+              "utc_updated": "2021-02-15T15:00:00Z"
+            },
+            {
+              "ugc": "TXZ148",
+              "name": "Anderson",
+              "status": "EXP",
+              "hvtec_nwsli": null,
+              "utc_product_issue": "2021-02-12T20:49:00Z",
+              "utc_issue": "2021-02-13T12:00:00Z",
+              "utc_init_expire": "2021-02-16T00:00:00Z",
+              "utc_expire": "2021-02-15T15:00:00Z",
+              "utc_updated": "2021-02-15T15:00:00Z"
+            },
+            {
+              "ugc": "TXZ107",
+              "name": "Hopkins",
+              "status": "EXP",
+              "hvtec_nwsli": null,
+              "utc_product_issue": "2021-02-12T20:49:00Z",
+              "utc_issue": "2021-02-13T12:00:00Z",
+              "utc_init_expire": "2021-02-16T00:00:00Z",
+              "utc_expire": "2021-02-15T15:00:00Z",
+              "utc_updated": "2021-02-15T15:00:00Z"
+            },
+            {
+              "ugc": "TXZ115",
+              "name": "Stephens",
+              "status": "EXP",
+              "hvtec_nwsli": null,
+              "utc_product_issue": "2021-02-12T20:49:00Z",
+              "utc_issue": "2021-02-13T12:00:00Z",
+              "utc_init_expire": "2021-02-16T00:00:00Z",
+              "utc_expire": "2021-02-15T15:00:00Z",
+              "utc_updated": "2021-02-15T15:00:00Z"
+            },
+            {
+              "ugc": "TXZ144",
+              "name": "Bosque",
+              "status": "EXP",
+              "hvtec_nwsli": null,
+              "utc_product_issue": "2021-02-12T20:49:00Z",
+              "utc_issue": "2021-02-13T12:00:00Z",
+              "utc_init_expire": "2021-02-16T00:00:00Z",
+              "utc_expire": "2021-02-15T15:00:00Z",
+              "utc_updated": "2021-02-15T15:00:00Z"
+            },
+            {
+              "ugc": "TXZ105",
+              "name": "Hunt",
+              "status": "EXP",
+              "hvtec_nwsli": null,
+              "utc_product_issue": "2021-02-12T20:49:00Z",
+              "utc_issue": "2021-02-13T12:00:00Z",
+              "utc_init_expire": "2021-02-16T00:00:00Z",
+              "utc_expire": "2021-02-15T15:00:00Z",
+              "utc_updated": "2021-02-15T15:00:00Z"
+            },
+            {
+              "ugc": "TXZ143",
+              "name": "Hamilton",
+              "status": "EXP",
+              "hvtec_nwsli": null,
+              "utc_product_issue": "2021-02-12T20:49:00Z",
+              "utc_issue": "2021-02-13T12:00:00Z",
+              "utc_init_expire": "2021-02-16T00:00:00Z",
+              "utc_expire": "2021-02-15T15:00:00Z",
+              "utc_updated": "2021-02-15T15:00:00Z"
+            },
+            {
+              "ugc": "TXZ157",
+              "name": "Coryell",
+              "status": "EXP",
+              "hvtec_nwsli": null,
+              "utc_product_issue": "2021-02-12T20:49:00Z",
+              "utc_issue": "2021-02-13T12:00:00Z",
+              "utc_init_expire": "2021-02-16T00:00:00Z",
+              "utc_expire": "2021-02-15T15:00:00Z",
+              "utc_updated": "2021-02-15T15:00:00Z"
+            },
+            {
+              "ugc": "TXZ102",
+              "name": "Wise",
+              "status": "EXP",
+              "hvtec_nwsli": null,
+              "utc_product_issue": "2021-02-12T20:49:00Z",
+              "utc_issue": "2021-02-13T12:00:00Z",
+              "utc_init_expire": "2021-02-16T00:00:00Z",
+              "utc_expire": "2021-02-15T15:00:00Z",
+              "utc_updated": "2021-02-15T15:00:00Z"
+            },
+            {
+              "ugc": "TXZ101",
+              "name": "Jack",
+              "status": "EXP",
+              "hvtec_nwsli": null,
+              "utc_product_issue": "2021-02-12T20:49:00Z",
+              "utc_issue": "2021-02-13T12:00:00Z",
+              "utc_init_expire": "2021-02-16T00:00:00Z",
+              "utc_expire": "2021-02-15T15:00:00Z",
+              "utc_updated": "2021-02-15T15:00:00Z"
+            },
+            {
+              "ugc": "TXZ135",
+              "name": "Henderson",
+              "status": "EXP",
+              "hvtec_nwsli": null,
+              "utc_product_issue": "2021-02-12T20:49:00Z",
+              "utc_issue": "2021-02-13T12:00:00Z",
+              "utc_init_expire": "2021-02-16T00:00:00Z",
+              "utc_expire": "2021-02-15T15:00:00Z",
+              "utc_updated": "2021-02-15T15:00:00Z"
+            },
+            {
+              "ugc": "TXZ091",
+              "name": "Montague",
+              "status": "EXP",
+              "hvtec_nwsli": null,
+              "utc_product_issue": "2021-02-12T20:49:00Z",
+              "utc_issue": "2021-02-13T12:00:00Z",
+              "utc_init_expire": "2021-02-16T00:00:00Z",
+              "utc_expire": "2021-02-15T15:00:00Z",
+              "utc_updated": "2021-02-15T15:00:00Z"
+            },
+            {
+              "ugc": "TXZ145",
+              "name": "Hill",
+              "status": "EXP",
+              "hvtec_nwsli": null,
+              "utc_product_issue": "2021-02-12T20:49:00Z",
+              "utc_issue": "2021-02-13T12:00:00Z",
+              "utc_init_expire": "2021-02-16T00:00:00Z",
+              "utc_expire": "2021-02-15T15:00:00Z",
+              "utc_updated": "2021-02-15T15:00:00Z"
+            },
+            {
+              "ugc": "TXZ120",
+              "name": "Rockwall",
+              "status": "EXP",
+              "hvtec_nwsli": null,
+              "utc_product_issue": "2021-02-12T20:49:00Z",
+              "utc_issue": "2021-02-13T12:00:00Z",
+              "utc_init_expire": "2021-02-16T00:00:00Z",
+              "utc_expire": "2021-02-15T15:00:00Z",
+              "utc_updated": "2021-02-15T15:00:00Z"
+            },
+            {
+              "ugc": "TXZ160",
+              "name": "Falls",
+              "status": "EXP",
+              "hvtec_nwsli": null,
+              "utc_product_issue": "2021-02-12T20:49:00Z",
+              "utc_issue": "2021-02-13T12:00:00Z",
+              "utc_init_expire": "2021-02-16T00:00:00Z",
+              "utc_expire": "2021-02-15T15:00:00Z",
+              "utc_updated": "2021-02-15T15:00:00Z"
+            },
+            {
+              "ugc": "TXZ141",
+              "name": "Comanche",
+              "status": "EXP",
+              "hvtec_nwsli": null,
+              "utc_product_issue": "2021-02-12T20:49:00Z",
+              "utc_issue": "2021-02-13T12:00:00Z",
+              "utc_init_expire": "2021-02-16T00:00:00Z",
+              "utc_expire": "2021-02-15T15:00:00Z",
+              "utc_updated": "2021-02-15T15:00:00Z"
+            },
+            {
+              "ugc": "TXZ142",
+              "name": "Mills",
+              "status": "EXP",
+              "hvtec_nwsli": null,
+              "utc_product_issue": "2021-02-12T20:49:00Z",
+              "utc_issue": "2021-02-13T12:00:00Z",
+              "utc_init_expire": "2021-02-16T00:00:00Z",
+              "utc_expire": "2021-02-15T15:00:00Z",
+              "utc_updated": "2021-02-15T15:00:00Z"
+            },
+            {
+              "ugc": "TXZ121",
+              "name": "Kaufman",
+              "status": "EXP",
+              "hvtec_nwsli": null,
+              "utc_product_issue": "2021-02-12T20:49:00Z",
+              "utc_issue": "2021-02-13T12:00:00Z",
+              "utc_init_expire": "2021-02-16T00:00:00Z",
+              "utc_expire": "2021-02-15T15:00:00Z",
+              "utc_updated": "2021-02-15T15:00:00Z"
+            },
+            {
+              "ugc": "TXZ122",
+              "name": "Van Zandt",
+              "status": "EXP",
+              "hvtec_nwsli": null,
+              "utc_product_issue": "2021-02-12T20:49:00Z",
+              "utc_issue": "2021-02-13T12:00:00Z",
+              "utc_init_expire": "2021-02-16T00:00:00Z",
+              "utc_expire": "2021-02-15T15:00:00Z",
+              "utc_updated": "2021-02-15T15:00:00Z"
+            },
+            {
+              "ugc": "TXZ130",
+              "name": "Erath",
+              "status": "EXP",
+              "hvtec_nwsli": null,
+              "utc_product_issue": "2021-02-12T20:49:00Z",
+              "utc_issue": "2021-02-13T12:00:00Z",
+              "utc_init_expire": "2021-02-16T00:00:00Z",
+              "utc_expire": "2021-02-15T15:00:00Z",
+              "utc_updated": "2021-02-15T15:00:00Z"
+            },
+            {
+              "ugc": "TXZ100",
+              "name": "Young",
+              "status": "EXP",
+              "hvtec_nwsli": null,
+              "utc_product_issue": "2021-02-12T20:49:00Z",
+              "utc_issue": "2021-02-13T12:00:00Z",
+              "utc_init_expire": "2021-02-16T00:00:00Z",
+              "utc_expire": "2021-02-15T15:00:00Z",
+              "utc_updated": "2021-02-15T15:00:00Z"
+            },
+            {
+              "ugc": "TXZ094",
+              "name": "Fannin",
+              "status": "EXP",
+              "hvtec_nwsli": null,
+              "utc_product_issue": "2021-02-12T20:49:00Z",
+              "utc_issue": "2021-02-13T12:00:00Z",
+              "utc_init_expire": "2021-02-16T00:00:00Z",
+              "utc_expire": "2021-02-15T15:00:00Z",
+              "utc_updated": "2021-02-15T15:00:00Z"
+            },
+            {
+              "ugc": "TXZ095",
+              "name": "Lamar",
+              "status": "EXP",
+              "hvtec_nwsli": null,
+              "utc_product_issue": "2021-02-12T20:49:00Z",
+              "utc_issue": "2021-02-13T12:00:00Z",
+              "utc_init_expire": "2021-02-16T00:00:00Z",
+              "utc_expire": "2021-02-15T15:00:00Z",
+              "utc_updated": "2021-02-15T15:00:00Z"
+            },
+            {
+              "ugc": "TXZ093",
+              "name": "Grayson",
+              "status": "EXP",
+              "hvtec_nwsli": null,
+              "utc_product_issue": "2021-02-12T20:49:00Z",
+              "utc_issue": "2021-02-13T12:00:00Z",
+              "utc_init_expire": "2021-02-16T00:00:00Z",
+              "utc_expire": "2021-02-15T15:00:00Z",
+              "utc_updated": "2021-02-15T15:00:00Z"
+            },
+            {
+              "ugc": "TXZ092",
+              "name": "Cooke",
+              "status": "EXP",
+              "hvtec_nwsli": null,
+              "utc_product_issue": "2021-02-12T20:49:00Z",
+              "utc_issue": "2021-02-13T12:00:00Z",
+              "utc_init_expire": "2021-02-16T00:00:00Z",
+              "utc_expire": "2021-02-15T15:00:00Z",
+              "utc_updated": "2021-02-15T15:00:00Z"
+            },
+            {
+              "ugc": "TXZ175",
+              "name": "Robertson",
+              "status": "EXP",
+              "hvtec_nwsli": null,
+              "utc_product_issue": "2021-02-12T20:49:00Z",
+              "utc_issue": "2021-02-13T12:00:00Z",
+              "utc_init_expire": "2021-02-16T00:00:00Z",
+              "utc_expire": "2021-02-15T15:00:00Z",
+              "utc_updated": "2021-02-15T15:00:00Z"
+            },
+            {
+              "ugc": "TXZ134",
+              "name": "Ellis",
+              "status": "EXP",
+              "hvtec_nwsli": null,
+              "utc_product_issue": "2021-02-12T20:49:00Z",
+              "utc_issue": "2021-02-13T12:00:00Z",
+              "utc_init_expire": "2021-02-16T00:00:00Z",
+              "utc_expire": "2021-02-15T15:00:00Z",
+              "utc_updated": "2021-02-15T15:00:00Z"
+            },
+            {
+              "ugc": "TXZ132",
+              "name": "Somervell",
+              "status": "EXP",
+              "hvtec_nwsli": null,
+              "utc_product_issue": "2021-02-12T20:49:00Z",
+              "utc_issue": "2021-02-13T12:00:00Z",
+              "utc_init_expire": "2021-02-16T00:00:00Z",
+              "utc_expire": "2021-02-15T15:00:00Z",
+              "utc_updated": "2021-02-15T15:00:00Z"
+            },
+            {
+              "ugc": "TXZ103",
+              "name": "Denton",
+              "status": "EXP",
+              "hvtec_nwsli": null,
+              "utc_product_issue": "2021-02-12T20:49:00Z",
+              "utc_issue": "2021-02-13T12:00:00Z",
+              "utc_init_expire": "2021-02-16T00:00:00Z",
+              "utc_expire": "2021-02-15T15:00:00Z",
+              "utc_updated": "2021-02-15T15:00:00Z"
+            },
+            {
+              "ugc": "TXZ104",
+              "name": "Collin",
+              "status": "EXP",
+              "hvtec_nwsli": null,
+              "utc_product_issue": "2021-02-12T20:49:00Z",
+              "utc_issue": "2021-02-13T12:00:00Z",
+              "utc_init_expire": "2021-02-16T00:00:00Z",
+              "utc_expire": "2021-02-15T15:00:00Z",
+              "utc_updated": "2021-02-15T15:00:00Z"
+            },
+            {
+              "ugc": "TXZ106",
+              "name": "Delta",
+              "status": "EXP",
+              "hvtec_nwsli": null,
+              "utc_product_issue": "2021-02-12T20:49:00Z",
+              "utc_issue": "2021-02-13T12:00:00Z",
+              "utc_init_expire": "2021-02-16T00:00:00Z",
+              "utc_expire": "2021-02-15T15:00:00Z",
+              "utc_updated": "2021-02-15T15:00:00Z"
+            },
+            {
+              "ugc": "TXZ117",
+              "name": "Parker",
+              "status": "EXP",
+              "hvtec_nwsli": null,
+              "utc_product_issue": "2021-02-12T20:49:00Z",
+              "utc_issue": "2021-02-13T12:00:00Z",
+              "utc_init_expire": "2021-02-16T00:00:00Z",
+              "utc_expire": "2021-02-15T15:00:00Z",
+              "utc_updated": "2021-02-15T15:00:00Z"
+            },
+            {
+              "ugc": "TXZ147",
+              "name": "Freestone",
+              "status": "EXP",
+              "hvtec_nwsli": null,
+              "utc_product_issue": "2021-02-12T20:49:00Z",
+              "utc_issue": "2021-02-13T12:00:00Z",
+              "utc_init_expire": "2021-02-16T00:00:00Z",
+              "utc_expire": "2021-02-15T15:00:00Z",
+              "utc_updated": "2021-02-15T15:00:00Z"
+            },
+            {
+              "ugc": "TXZ146",
+              "name": "Navarro",
+              "status": "EXP",
+              "hvtec_nwsli": null,
+              "utc_product_issue": "2021-02-12T20:49:00Z",
+              "utc_issue": "2021-02-13T12:00:00Z",
+              "utc_init_expire": "2021-02-16T00:00:00Z",
+              "utc_expire": "2021-02-15T15:00:00Z",
+              "utc_updated": "2021-02-15T15:00:00Z"
+            },
+            {
+              "ugc": "TXZ131",
+              "name": "Hood",
+              "status": "EXP",
+              "hvtec_nwsli": null,
+              "utc_product_issue": "2021-02-12T20:49:00Z",
+              "utc_issue": "2021-02-13T12:00:00Z",
+              "utc_init_expire": "2021-02-16T00:00:00Z",
+              "utc_expire": "2021-02-15T15:00:00Z",
+              "utc_updated": "2021-02-15T15:00:00Z"
+            },
+            {
+              "ugc": "TXZ129",
+              "name": "Eastland",
+              "status": "EXP",
+              "hvtec_nwsli": null,
+              "utc_product_issue": "2021-02-12T20:49:00Z",
+              "utc_issue": "2021-02-13T12:00:00Z",
+              "utc_init_expire": "2021-02-16T00:00:00Z",
+              "utc_expire": "2021-02-15T15:00:00Z",
+              "utc_updated": "2021-02-15T15:00:00Z"
+            },
+            {
+              "ugc": "TXZ174",
+              "name": "Milam",
+              "status": "EXP",
+              "hvtec_nwsli": null,
+              "utc_product_issue": "2021-02-12T20:49:00Z",
+              "utc_issue": "2021-02-13T12:00:00Z",
+              "utc_init_expire": "2021-02-16T00:00:00Z",
+              "utc_expire": "2021-02-15T15:00:00Z",
+              "utc_updated": "2021-02-15T15:00:00Z"
+            },
+            {
+              "ugc": "TXZ156",
+              "name": "Lampasas",
+              "status": "EXP",
+              "hvtec_nwsli": null,
+              "utc_product_issue": "2021-02-12T20:49:00Z",
+              "utc_issue": "2021-02-13T12:00:00Z",
+              "utc_init_expire": "2021-02-16T00:00:00Z",
+              "utc_expire": "2021-02-15T15:00:00Z",
+              "utc_updated": "2021-02-15T15:00:00Z"
+            }
+          ]
+        },
+        "sent": "2021-02-12T20:49:00Z",
+        "effective": "2021-02-12T20:49:00Z",
+        "onset": "2021-02-13T12:00:00+00:00",
+        "expires": "2021-02-16T00:00:00+00:00",
+        "ends": "2021-02-16T00:00:00+00:00",
+        "status": "Actual",
+        "messageType": "Alert",
+        "category": "Met",
+        "severity": "",
+        "certainty": "",
+        "urgency": "",
+        "event": "Winter Storm Warning",
+        "senderName": "NWS Fort Worth TX",
+        "headline": "WINTER STORM WARNING IN EFFECT FROM 6 AM SATURDAY TO 6 PM CST MONDAY",
+        "description": "...HISTORIC WINTER STORM POISED TO IMPACT THE REGION SUNDAY AND\nMONDAY...\n\nImpacts will begin as early as Saturday morning with patchy \nfreezing drizzle developing late tonight into Saturday morning, \nwhich will lead to a light glaze of ice in some locations. After a\nbrief break in precipitation on Saturday, conditions will begin \nto deteriorate late Saturday evening, with precipitation \ntransitioning from a sleet and freezing rain mix to all snow by \nSunday. The heaviest snow can be expected on Sunday and Monday. \nHigh winds will lead to blowing and drifting snow with wind chills\nfalling to below zero by late Sunday. Snow will come to an end \nduring the day Monday, but extremely cold temperatures will \npersist through mid-week. The heavy snow and forecast long \nduration of extremely cold temperatures will likely lead to major \nstress on the region's infrastructure as well as crippling travel\nfor several days.\n\n* WHAT...Heavy mixed precipitation expected. Total snow\n  accumulations of 3 to 6 inches and ice accumulations of a light\n  glaze. Strong winds will lead to blowing and drifting snow\n  reducing visibility to less than one mile at times. Wind chill\n  factors below zero are forecast on Sunday, continuing into\n  Monday and Tuesday.\n\n* WHERE...Much of North and Central Texas.\n\n* WHEN...From 6 AM Saturday to 6 PM CST Monday.\n\n* IMPACTS...Travel will be dangerous. Hazardous conditions will\n  persist for several days given the expected prolonged duration\n  of extremely cold temperatures. The cold wind chills as low as\n  15 below zero could result in hypothermia if precautions are not\n  taken.",
+        "instruction": "Travel is highly discouraged on Sunday and Monday. If you must \ntravel, keep tools necessary for survival in extreme cold in your\nvehicle.\n\nThe latest road conditions for Texas can be found at\ndrivetexas.org.",
+        "parameters": {
+          "VTEC": [
+            "/O.NEW.KFWD.WS.W.0003.210213T1200Z-210216T0000Z/"
+          ],
+          "rawText": "893 \nWWUS44 KFWD 122049\nWSWFWD\n\nURGENT - WINTER WEATHER MESSAGE\nNational Weather Service Fort Worth TX\n249 PM CST Fri Feb 12 2021\n\n...HISTORIC WINTER STORM POISED TO IMPACT THE REGION SUNDAY AND\nMONDAY...\n\nImpacts will begin as early as Saturday morning with patchy \nfreezing drizzle developing late tonight into Saturday morning, \nwhich will lead to a light glaze of ice in some locations. After a\nbrief break in precipitation on Saturday, conditions will begin \nto deteriorate late Saturday evening, with precipitation \ntransitioning from a sleet and freezing rain mix to all snow by \nSunday. The heaviest snow can be expected on Sunday and Monday. \nHigh winds will lead to blowing and drifting snow with wind chills\nfalling to below zero by late Sunday. Snow will come to an end \nduring the day Monday, but extremely cold temperatures will \npersist through mid-week. The heavy snow and forecast long \nduration of extremely cold temperatures will likely lead to major \nstress on the region's infrastructure as well as crippling travel\nfor several days.\n\nTXZ091>095-100>107-115>123-129>135-141>148-156>162-174-175-130500-\n/O.UPG.KFWD.WS.A.0002.210214T0600Z-210216T0000Z/\n/O.NEW.KFWD.WS.W.0003.210213T1200Z-210216T0000Z/\nMontague-Cooke-Grayson-Fannin-Lamar-Young-Jack-Wise-Denton-Collin-\nHunt-Delta-Hopkins-Stephens-Palo Pinto-Parker-Tarrant-Dallas-\nRockwall-Kaufman-Van Zandt-Rains-Eastland-Erath-Hood-Somervell-\nJohnson-Ellis-Henderson-Comanche-Mills-Hamilton-Bosque-Hill-\nNavarro-Freestone-Anderson-Lampasas-Coryell-Bell-McLennan-Falls-\nLimestone-Leon-Milam-Robertson-\nIncluding the cities of Bowie, Nocona, Gainesville, Sherman, \nDenison, Bonham, Paris, Graham, Olney, Jacksboro, Decatur, \nBridgeport, Carrollton, Denton, Lewisville, Flower Mound, Plano, \nMcKinney, Allen, Frisco, Greenville, Commerce, Cooper, \nSulphur Springs, Breckenridge, Mineral Wells, Weatherford, Briar,\nFort Worth, Arlington, Dallas, Rockwall, Heath, Terrell, Kaufman,\nForney, Canton, Grand Saline, Wills Point, Van, Edgewood, Emory, \nEast Tawakoni, Point, Cisco, Eastland, Ranger, Gorman, \nStephenville, Dublin, Granbury, Oak Trail Shores, Glen Rose, \nCleburne, Burleson, Waxahachie, Ennis, Midlothian, Athens, \nGun Barrel City, Comanche, De Leon, Goldthwaite, Hamilton, Hico, \nClifton, Meridian, Valley Mills, Hillsboro, Corsicana, Teague, \nFairfield, Wortham, Palestine, Lampasas, Copperas Cove, \nGatesville, Killeen, Temple, Fort Hood, Waco, Marlin, Mexia, \nGroesbeck, Buffalo, Centerville, Jewett, Normangee, Oakwood, \nCameron, Rockdale, Hearne, Franklin, and Calvert\n249 PM CST Fri Feb 12 2021\n\n...WINTER STORM WARNING IN EFFECT FROM 6 AM SATURDAY TO 6 PM CST\nMONDAY...\n\n* WHAT...Heavy mixed precipitation expected. Total snow\n  accumulations of 3 to 6 inches and ice accumulations of a light\n  glaze. Strong winds will lead to blowing and drifting snow\n  reducing visibility to less than one mile at times. Wind chill\n  factors below zero are forecast on Sunday, continuing into\n  Monday and Tuesday.\n\n* WHERE...Much of North and Central Texas.\n\n* WHEN...From 6 AM Saturday to 6 PM CST Monday.\n\n* IMPACTS...Travel will be dangerous. Hazardous conditions will\n  persist for several days given the expected prolonged duration\n  of extremely cold temperatures. The cold wind chills as low as\n  15 below zero could result in hypothermia if precautions are not\n  taken.\n\nPRECAUTIONARY/PREPAREDNESS ACTIONS...\n\nTravel is highly discouraged on Sunday and Monday. If you must \ntravel, keep tools necessary for survival in extreme cold in your\nvehicle.\n\nThe latest road conditions for Texas can be found at\ndrivetexas.org.\n\n&&\n\n$$\n\nGodwin\n"
+        }
+      }
+    }
+  ],
+  "porchlight": {
+    "retrieved": "2026-09-09T04:34:31Z",
+    "source": "Iowa Environmental Mesonet NWS VTEC archive",
+    "source_url": "https://mesonet.agron.iastate.edu/json/vtec_event.py?wfo=FWD&year=2021&phenomena=WS&significance=W&etn=3",
+    "browse_url": "https://mesonet.agron.iastate.edu/vtec/?year=2021&wfo=KFWD&phenomena=WS&significance=W&eventid=0003",
+    "place": "North and Central Texas (Dallas-Fort Worth)",
+    "note": "CAP fields derived mechanically from the raw WSWFWD text product: headline/description/instruction are verbatim slices; onset/expires from the P-VTEC line; sent from the product timestamp. severity/certainty/urgency are not present in the raw text and are left blank."
+  }
+}

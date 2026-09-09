@@ -1,0 +1,53 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "id": "202306072048-KOKX-AEUS71-AQAOKX",
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "id": "202306072048-KOKX-AEUS71-AQAOKX",
+        "areaDesc": "Western Passaic; Eastern Passaic; Hudson; Western Bergen; Eastern Bergen; Western Essex; Eastern Essex; Western Union; Eastern Union",
+        "geocode": {
+          "UGC": [
+            "NJZ002",
+            "NJZ004",
+            "NJZ006",
+            "NJZ103",
+            "NJZ104",
+            "NJZ105",
+            "NJZ106",
+            "NJZ107",
+            "NJZ108"
+          ]
+        },
+        "sent": "2023-06-07T16:48:00-04:00",
+        "effective": "2023-06-07T16:48:00-04:00",
+        "onset": "2023-06-07T16:48:00-04:00",
+        "expires": "2023-06-09T00:00:00-04:00",
+        "ends": "2023-06-09T00:00:00-04:00",
+        "status": "Actual",
+        "messageType": "Alert",
+        "category": "Env",
+        "severity": "Unknown",
+        "certainty": "Unknown",
+        "urgency": "Unknown",
+        "event": "Air Quality Alert",
+        "senderName": "NWS New York NY",
+        "headline": "AIR QUALITY ALERT IN EFFECT UNTIL MIDNIGHT EDT THURSDAY NIGHT",
+        "description": "The New Jersey Department of Environmental Protection has issued an\nAir Quality Action Day for the following counties:\n\nBergen, Passaic, Hudson, Essex, Union.\n\nuntil midnight EDT Thursday Night.\n\nAn Air Quality Action day for Particulate Matter has been declared\nfor Wednesday, June 7th and Thursday, June 8th. Sensitive \nindividuals, including those with heart or lung disease, the\nelderly, and the young should limit strenuous activities and the \namount of time active outdoors. Levels of fine particulates will\nrise into unhealthy for sensitive groups category statewide today \nand Thursday and likely last into the evening hours both days due to\nwildfire smoke transport from eastern Canadian wildfires. In \nAddition, ozone is forecast to reach the moderate category on \nWednesday as sunny skies, light winds, and warm temperatures are \nforecast for the Garden State. \n\nFor additional information, please visit the New Jersey Department\nof Environmental Protection Web site at http://www.njaqinow.net",
+        "instruction": "",
+        "parameters": {
+          "rawText": "AEUS71 KOKX 072048\nAQAOKX\n\nAir Quality Alert Message\nRelayed by National Weather Service New York NY\n448 PM EDT Wed Jun 7 2023\n\nNYZ067>075-078>081-176>179-082100-\nOrange-Putnam-Rockland-Northern Westchester-Southern Westchester-\nNew York (Manhattan)-Bronx-Richmond (Staten Island)-Kings (Brooklyn)-\nNorthwest Suffolk-Northeast Suffolk-Southwest Suffolk-\nSoutheast Suffolk-Northern Queens-Northern Nassau-Southern Queens-\nSouthern Nassau-\n448 PM EDT Wed Jun 7 2023\n\n...AIR QUALITY ALERT IN EFFECT UNTIL MIDNIGHT EDT THURSDAY NIGHT...\n\nThe New York State Department of Environmental Conservation has\nissued an Air Quality Health Advisory for the following counties:\n\nNew York, Bronx, Kings, Queens, Richmond, Nassau, Suffolk, \nWestchester, Rockland, Orange, Putnam.\n\nuntil midnight EDT Thursday Night.\n\nAir quality levels in outdoor air are predicted to be greater than\nan Air Quality Index value of 100 for the pollutant of Fine\nParticulates. The Air Quality Index, or AQI, was created as an easy\nway to correlate levels of different pollutants to one scale. The\nhigher the AQI value, the greater the health concern.\n\nWhen pollution levels are elevated, the New York State Department of\nHealth recommends that individuals consider limiting strenuous\noutdoor physical activity to reduce the risk of adverse health\neffects. People who may be especially sensitive to the effects of\nelevated levels of pollutants include the very young, and those with\npreexisting respiratory problems such as asthma or heart disease.\nThose with symptoms should consider consulting their personal\nphysician.\n\nA toll free air quality hotline has been established so New York\nresidents can stay informed on the air quality situation. The toll\nfree number is 1 800 5 3 5, 1 3 4 5.\n\n$$\n\nCTZ005>012-082100-\nNorthern Fairfield-Northern New Haven-Northern Middlesex-\nNorthern New London-Southern Fairfield-Southern New Haven-\nSouthern Middlesex-Southern New London-\n448 PM EDT Wed Jun 7 2023\n\n...AIR QUALITY ALERT IN EFFECT UNTIL MIDNIGHT EDT THURSDAY NIGHT...\n\nThe Connecticut Department of Energy and Environmental Protection\nhas issued an Air Quality Action Day for the following counties:\n\nFairfield, New Haven, Middlesex, New London.\n\nuntil midnight EDT Thursday Night.\n\nAn Air Quality Action Day means that Fine Particulates within the\nregion may approach or exceed unhealthy standards. For additional\ninformation, please visit the Connecticut Department of Energy and\nEnvironmental Protection Web site at http://www.ct.gov/deep/aqi\n\n$$\n\nNJZ002-004-006-103>108-082100-\nWestern Passaic-Eastern Passaic-Hudson-Western Bergen-Eastern Bergen-\nWestern Essex-Eastern Essex-Western Union-Eastern Union-\n448 PM EDT Wed Jun 7 2023\n\n...AIR QUALITY ALERT IN EFFECT UNTIL MIDNIGHT EDT THURSDAY NIGHT...\n\nThe New Jersey Department of Environmental Protection has issued an\nAir Quality Action Day for the following counties:\n\nBergen, Passaic, Hudson, Essex, Union.\n\nuntil midnight EDT Thursday Night.\n\nAn Air Quality Action day for Particulate Matter has been declared\nfor Wednesday, June 7th and Thursday, June 8th. Sensitive \nindividuals, including those with heart or lung disease, the\nelderly, and the young should limit strenuous activities and the \namount of time active outdoors. Levels of fine particulates will\nrise into unhealthy for sensitive groups category statewide today \nand Thursday and likely last into the evening hours both days due to\nwildfire smoke transport from eastern Canadian wildfires. In \nAddition, ozone is forecast to reach the moderate category on \nWednesday as sunny skies, light winds, and warm temperatures are \nforecast for the Garden State. \n\nFor additional information, please visit the New Jersey Department\nof Environmental Protection Web site at http://www.njaqinow.net\n\n$$"
+        }
+      }
+    }
+  ],
+  "porchlight": {
+    "retrieved": "2026-09-09T04:34:31Z",
+    "source": "Iowa Environmental Mesonet NWS text product archive (AFOS)",
+    "source_url": "https://mesonet.agron.iastate.edu/cgi-bin/afos/retrieve.py?pil=AQAOKX&sdate=2023-06-06&edate=2023-06-09&fmt=text&limit=50",
+    "place": "Northern New Jersey (Newark / Jersey City)",
+    "note": "New Jersey segment of the AQAOKX product relayed by NWS New York NY at 448 PM EDT Jun 7 2023 during the Canadian wildfire smoke event. headline/description/areaDesc are verbatim slices of the product; sent/expires read from its timestamps. Air Quality Alerts carry severity Unknown in the NWS API; no instruction section exists in the product, so it is blank."
+  }
+}

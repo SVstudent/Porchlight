@@ -24,6 +24,7 @@ from ..store import store
 from .context import episode_id_from
 from .hooks import ApprovalGateHook, AuditHook
 from .model_factory import build_model
+from .playbooks import playbook_text
 from .tools import (
     assign_volunteers,
     dispatch_outreach,
@@ -86,12 +87,15 @@ Activate for Extreme Heat Warnings, Excessive Heat Warnings, Heat Advisories whe
 is at or above 105 F, Air Quality alerts at AQI 151+, Freeze/Wind Chill/Winter Storm warnings, Flash Flood
 Warnings, Tornado/Hurricane warnings, and power outages in extreme temperatures. Do not activate for routine
 advisories with no vulnerable-population impact.
+The task includes the playbook for this hazard: take elevated_risk_factors and recommended_actions from it
+(adjusted to the actual alert and live conditions), not from heat habits.
 """
 
 TRIAGE_PROMPT = COMMON_RULES + """
 Role: TRIAGE. Call get_episode_context, then get_roster. For members whose risk factors match the hazard, call
-get_member_conditions for the highest-risk ones (you do not need to check everyone). Assign every opted-in
-member a tier:
+get_member_conditions for the highest-risk ones (you do not need to check everyone). Which risk factors count
+as "elevated" comes from the assessment and the playbook for this hazard (a flood endangers different people
+than a heat wave). Assign every opted-in member a tier:
   1 = contact within the hour and probably needs an in-person visit or a ride (multiple elevated risk factors,
       no air conditioning or powered medical device, lives alone, cognitive impairment)
   2 = contact today (one or two elevated risk factors)
@@ -108,9 +112,11 @@ OUTREACH_PROMPT = COMMON_RULES + """
 Role: OUTREACH. Call get_episode_context to read the assessment and triage. Write one message for every member
 with tier 1, 2, or 3 (skip tier 0). Requirements for each message:
 - In the member's language ("es" = Spanish, "en" = English). Warm, plain, personal; use their first name.
-- Under 320 characters. Say what the danger is, one concrete action for their situation (from the assessment
-  and their notes, e.g. no AC -> nearest cooling center by name; oxygen device -> what to do if power fails),
+- Under 320 characters. Say what the danger is, one concrete action for their situation (from the assessment,
+  the playbook for this hazard and their notes, e.g. no AC -> nearest cooling center by name; smoke -> windows
+  closed, N95 if going out; flood -> higher ground; oxygen device -> what to do if power fails),
   and end with the literal placeholder {checkin_link} so they can tap "I'm OK" or "I need help".
+- The playbook's Spanish phrases show the right terms (e.g. "centro de enfriamiento"); do not translate literally.
 - For members whose channel is voice, also fill call_script (what a volunteer should say on the phone).
 Then call dispatch_outreach ONCE with all messages and a coordinator_note that lists who is being contacted
 and why in 2-3 sentences. The coordinator will approve or edit before anything is sent.
@@ -118,7 +124,9 @@ and why in 2-3 sentences. The coordinator will approve or edit before anything i
 
 LOGISTICS_PROMPT = COMMON_RULES + """
 Role: LOGISTICS. Call get_episode_context, list_volunteers, list_community_resources. For each tier 1 member
-(especially needs_visit), call find_nearby_cooled_places to identify the closest real option. Match volunteers
+(especially needs_visit), call find_nearby_cooled_places to identify the closest real option. The playbook for
+this hazard says what "safe place" means (cooling center, warming center, clean-air space, higher ground, storm
+shelter) and which volunteer tasks matter; assign those tasks, not heat-specific ones. Match volunteers
 to members by skill (Spanish speakers to Spanish-speaking members, drivers for rides, medical for members with
 devices or illness), proximity, and load (respect max_assignments). Do not assign a member to themselves.
 Then call assign_volunteers ONCE with the assignments, the resource ids you recommend, and any gaps (needs
@@ -214,6 +222,7 @@ def graph_task(ep: Episode) -> str:
         f"Source: {h.source}. Event: {h.event_name}. Severity: {h.severity}. Area: {h.area}.\n"
         f"Headline: {h.headline}\nOnset: {h.onset}  Expires: {h.expires}\n"
         f"Description:\n{h.description[:2500]}\n\nInstruction:\n{h.instruction[:1200]}\n\n"
-        f"Metrics: {h.metrics}\n"
+        f"Metrics: {h.metrics}\n\n"
+        f"{playbook_text(h.hazard_type)}\n\n"
         "Assess whether to activate neighbor outreach; if so, triage the roster, draft outreach, arrange logistics, and brief the coordinator."
     )

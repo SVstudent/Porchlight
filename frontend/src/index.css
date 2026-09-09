@@ -299,3 +299,28 @@ a.btn { text-decoration: none; }
 .voice-script { margin-bottom: 8px; padding: 8px 10px; border-radius: 10px; background: var(--surface-2); border-left: 3px solid var(--amber, #e39a2f); }
 .voice-script .eyebrow { margin-bottom: 4px; }
 .voice-script textarea { width: 100%; min-height: 72px; font-size: 14px; }
+/* ---- multi-hazard ---- */
+/* Hazard-type pills: one loop, any hazard. Heat=red, smoke/air=grey-purple, winter/cold=blue, flood=teal, storm=amber. */
+.pill.hz { gap: 4px; border-color: transparent; font-weight: 600; }
+.pill.hz svg { flex: none; }
+.pill.hz-heat { background: var(--red-soft); color: var(--red); }
+.pill.hz-air_quality { background: #e6e1ec; color: #5b4f70; }
+.pill.hz-winter, .pill.hz-cold { background: var(--blue-soft); color: var(--blue); }
+.pill.hz-flood { background: #d6ebe9; color: #1f6b66; }
+.pill.hz-storm { background: var(--amber-soft); color: var(--amber-ink); }
+.pill.hz-outage { background: var(--warn-soft); color: var(--warn); }
+.pill.hz-other { background: var(--surface-2); color: var(--ink-2); }
+/* Hazard card accent follows the hazard type (falls back to the existing red). */
+.hazard-card.hz-card-air_quality { border-left-color: #6f6386; }
+.hazard-card.hz-card-winter, .hazard-card.hz-card-cold { border-left-color: var(--blue); }
+.hazard-card.hz-card-flood { border-left-color: #1f6b66; }
+.hazard-card.hz-card-storm { border-left-color: var(--amber); }
+.hazard-card.hz-card-outage { border-left-color: var(--warn); }
+.hazard-card.stood_down { border-left-color: var(--line-strong); }
+/* Compact replay list */
+.fixture-row { display: flex; align-items: center; gap: 8px; padding: 7px 0; border-top: 1px solid var(--line); }
+.fixture-row:first-of-type { border-top: 0; }
+.fixture-row .fx-main { flex: 1; min-width: 0; }
+.fixture-row .fx-t { font-weight: 600; font-size: 13px; line-height: 1.2; }
+.fixture-row .fx-d { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fixture-row .btn { flex: none; }

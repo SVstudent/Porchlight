@@ -1,0 +1,122 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.319a9a149000bf63eaeb7c7a4f65bc7c0dcc8bd6.001.1",
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -81.48,
+              28.64
+            ],
+            [
+              -81.57,
+              28.58
+            ],
+            [
+              -81.53,
+              28.49
+            ],
+            [
+              -81.37,
+              28.54
+            ],
+            [
+              -81.42,
+              28.62
+            ],
+            [
+              -81.48,
+              28.64
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.319a9a149000bf63eaeb7c7a4f65bc7c0dcc8bd6.001.1",
+        "@type": "wx:Alert",
+        "id": "urn:oid:2.49.0.1.840.0.319a9a149000bf63eaeb7c7a4f65bc7c0dcc8bd6.001.1",
+        "areaDesc": "Orange, FL",
+        "geocode": {
+          "SAME": [
+            "012095"
+          ],
+          "UGC": [
+            "FLC095"
+          ]
+        },
+        "affectedZones": [
+          "https://api.weather.gov/zones/county/FLC095"
+        ],
+        "references": [],
+        "sent": "2026-09-07T17:56:00-04:00",
+        "effective": "2026-09-07T17:56:00-04:00",
+        "onset": "2026-09-07T17:56:00-04:00",
+        "expires": "2026-09-07T19:30:00-04:00",
+        "ends": "2026-09-07T19:30:00-04:00",
+        "status": "Actual",
+        "messageType": "Alert",
+        "category": "Met",
+        "severity": "Severe",
+        "certainty": "Likely",
+        "urgency": "Immediate",
+        "event": "Flash Flood Warning",
+        "sender": "w-nws.webmaster@noaa.gov",
+        "senderName": "NWS Melbourne FL",
+        "headline": "Flash Flood Warning issued September 7 at 5:56PM EDT until September 7 at 7:30PM EDT by NWS Melbourne FL",
+        "description": "FFWMLB\n\nThe National Weather Service in Melbourne has issued a\n\n* Flash Flood Warning for...\nWest Central Orange County in east central Florida...\n\n* Until 730 PM EDT.\n\n* At 556 PM EDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 2 and 3 inches of rain\nhave fallen. Additional rainfall amounts up to 1 inch are possible\nin the warned area. Flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nOrlando, Ocoee, Windermere, Pine Hills, Lockhart, Orlovista,\nClarcona, Gotha and Lake Butler.",
+        "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.",
+        "response": "Avoid",
+        "note": null,
+        "parameters": {
+          "AWIPSidentifier": [
+            "FFWMLB"
+          ],
+          "WMOidentifier": [
+            "WGUS52 KMLB 072156"
+          ],
+          "flashFloodDetection": [
+            "RADAR INDICATED"
+          ],
+          "BLOCKCHANNEL": [
+            "EAS",
+            "NWEM",
+            "CMAS"
+          ],
+          "EAS-ORG": [
+            "WXR"
+          ],
+          "VTEC": [
+            "/O.NEW.KMLB.FF.W.0006.260907T2156Z-260907T2330Z/"
+          ],
+          "eventEndingTime": [
+            "2026-09-07T19:30:00-04:00"
+          ]
+        },
+        "scope": "Public",
+        "code": "IPAWSv1.0",
+        "language": "en-US",
+        "web": "http://www.weather.gov",
+        "eventCode": {
+          "SAME": [
+            "FFW"
+          ],
+          "NationalWeatherService": [
+            "FFW"
+          ]
+        },
+        "replacedBy": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.030212b5276b8b224fe93a4201434ca478540001.001.1",
+        "replacedAt": "2026-09-07T19:22:00-04:00"
+      }
+    }
+  ],
+  "porchlight": {
+    "retrieved": "2026-09-09T04:34:31Z",
+    "source": "api.weather.gov alerts archive",
+    "source_url": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.319a9a149000bf63eaeb7c7a4f65bc7c0dcc8bd6.001.1",
+    "place": "Orange County (Orlando), FL"
+  }
+}
