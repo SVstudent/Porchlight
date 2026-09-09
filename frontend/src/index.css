@@ -259,3 +259,37 @@ th { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: 
 .backup-h { font-size: 11px; color: var(--ink-2); }
 .backup-h.low { color: var(--red); font-weight: 600; }
 .backup-low { color: var(--red); font-weight: 600; }
+/* ---- report ---- */
+.report { max-width: 1000px; }
+.report-sheet { border-left: 6px solid var(--amber); }
+.report-head h1 { font-family: var(--font-display); font-weight: 600; font-size: 30px; margin: 2px 0 6px; letter-spacing: -0.01em; line-height: 1.15; text-wrap: balance; }
+.report-sub { display: flex; flex-direction: column; gap: 3px; font-size: 13px; }
+.report-kpis { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; padding: 12px 14px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.report-kpis .kpi .v { font-size: 24px; }
+@media (max-width: 720px) { .report-kpis { grid-template-columns: repeat(2, 1fr); } }
+.report-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 720px) { .report-grid { grid-template-columns: 1fr; } }
+.report-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 820px) { .report-cols { grid-template-columns: 1fr; } }
+.report-dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; margin: 6px 0 0; font-size: 13px; }
+.report-dl dt { color: var(--ink-2); }
+.report-dl dd { margin: 0; }
+.report-list { margin: 4px 0 0; padding-left: 18px; line-height: 1.5; }
+.report-table td, .report-table th { white-space: nowrap; }
+.report-table td:first-child { white-space: normal; min-width: 160px; }
+.report-note { padding: 8px 12px; border-radius: 8px; font-size: 13px; }
+.report-note.warn { background: var(--warn-soft); color: var(--warn); }
+.report-narrative { border-left: 6px solid var(--green); }
+.report-narrative p { margin: 4px 0 10px; line-height: 1.55; max-width: 72ch; }
+.report-funder { background: var(--surface-2); padding: 10px 12px; border-radius: 8px; }
+.report-foot { padding: 4px 0 20px; }
+@media print {
+  .topbar, .no-print { display: none !important; }
+  body { background: #fff; font-size: 12px; }
+  .report { max-width: none; padding: 0; gap: 10px; }
+  .panel { border-color: #bbb; box-shadow: none; break-inside: avoid; }
+  .report-sheet, .report-narrative { border-left-width: 4px; }
+  .report-kpis .kpi { background: #f3f1ec; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .pill, .tier { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  a { text-decoration: none; }
+}
