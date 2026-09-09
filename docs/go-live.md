@@ -12,7 +12,7 @@ Without a model provider the pipeline cannot run. Pick one.
 
 | Variable | Value | Notes |
 |---|---|---|
-| `MODEL_PROVIDER` | `bedrock` | Or `auto` to fall back Bedrock → Anthropic → Ollama |
+| `MODEL_PROVIDER` | `bedrock` | Or `auto` to fall back Bedrock → Anthropic |
 | `BEDROCK_MODEL_ID` | a Claude model id enabled in your account | Confirm with the preflight below |
 | `AWS_REGION` | `us-east-1` | Must be a region where the model is enabled |
 
@@ -28,7 +28,7 @@ aws bedrock list-foundation-models --region us-east-1 --by-provider anthropic \
 
 If the list is empty or your chosen id is missing, request access in the Bedrock console under Model access. Then set `BEDROCK_MODEL_ID` to an id that appeared.
 
-Alternatives that need no AWS at all: `MODEL_PROVIDER=anthropic` with `ANTHROPIC_API_KEY`, or `MODEL_PROVIDER=ollama` with `OLLAMA_HOST` and `OLLAMA_MODEL` (use a 7B or larger model; a 3B model times out on triage).
+An alternative that needs no AWS: `MODEL_PROVIDER=anthropic` with `ANTHROPIC_API_KEY`.
 
 ---
 
@@ -120,7 +120,7 @@ cd backend && python scripts/create_agentcore_memory.py --region us-east-1   # p
 
 ## Everything else has a working default
 
-Identity: `COMMUNITY_NAME`, `COORDINATOR_NAME`. Detection: `NWS_USER_AGENT` (set it to a real contact address, which the National Weather Service asks for), `SENTINEL_INTERVAL_MINUTES`, `SENTINEL_ENABLED`, `HEAT_INDEX_ACTIVATE_F`, `AQI_ACTIVATE`, `COLD_ACTIVATE_F`. Follow-up: `FOLLOWUP_INTERVAL_MINUTES`, `FOLLOWUP_GRACE_MINUTES`. Policy: `AUTO_APPROVE_ESCALATIONS`. Server: `HOST`, `PORT`, `CORS_ORIGINS`, `DATA_DIR`. Model tuning: `MODEL_TEMPERATURE`, `GRAPH_TIMEOUT_S`, `NODE_TIMEOUT_S`, `OLLAMA_NUM_CTX`.
+Identity: `COMMUNITY_NAME`, `COORDINATOR_NAME`. Detection: `NWS_USER_AGENT` (set it to a real contact address, which the National Weather Service asks for), `SENTINEL_INTERVAL_MINUTES`, `SENTINEL_ENABLED`, `HEAT_INDEX_ACTIVATE_F`, `AQI_ACTIVATE`, `COLD_ACTIVATE_F`. Follow-up: `FOLLOWUP_INTERVAL_MINUTES`, `FOLLOWUP_GRACE_MINUTES`. Policy: `AUTO_APPROVE_ESCALATIONS`. Server: `HOST`, `PORT`, `CORS_ORIGINS`, `DATA_DIR`. Model tuning: `MODEL_TEMPERATURE`, `GRAPH_TIMEOUT_S`, `NODE_TIMEOUT_S`.
 
 ---
 

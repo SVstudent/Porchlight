@@ -28,14 +28,12 @@ class Settings:
     PUBLIC_BASE_URL = os.getenv("PUBLIC_BASE_URL", "http://localhost:5173").rstrip("/")
 
     # --- model provider ---
-    # auto | bedrock | anthropic | ollama
+    # auto | bedrock | anthropic
     MODEL_PROVIDER = os.getenv("MODEL_PROVIDER", "auto").lower()
     BEDROCK_MODEL_ID = os.getenv("BEDROCK_MODEL_ID", "global.anthropic.claude-sonnet-4-6")
     AWS_REGION = os.getenv("AWS_REGION", os.getenv("AWS_DEFAULT_REGION", "us-east-1"))
     ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
     ANTHROPIC_MODEL_ID = os.getenv("ANTHROPIC_MODEL_ID", "claude-sonnet-4-6")
-    OLLAMA_HOST = os.getenv("OLLAMA_HOST", "")
-    OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:3b")
     MODEL_TEMPERATURE = float(os.getenv("MODEL_TEMPERATURE", "0.2"))
 
     # --- feeds ---

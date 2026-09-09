@@ -1,7 +1,7 @@
 """Build the Strands model for every agent.
 
 Primary: Amazon Bedrock. Fallbacks (via strands ModelRouter) let the same code run on the Anthropic API or a
-local Ollama model for development without AWS credentials.
+Anthropic API key as a fallback when Bedrock is not reachable.
 """
 from __future__ import annotations
 
@@ -57,14 +57,6 @@ def _anthropic():
     )
 
 
-def _ollama():
-    from strands.models.ollama import OllamaModel
-
-    # Ollama defaults to a 4k context; the triage prompt alone (roster + alert) is ~4k tokens.
-    return OllamaModel(host=settings.OLLAMA_HOST, model_id=settings.OLLAMA_MODEL, temperature=settings.MODEL_TEMPERATURE,
-                       options={"num_ctx": int(os.getenv("OLLAMA_NUM_CTX", "16384"))})
-
-
 def candidate_names() -> list[str]:
     names: list[str] = []
     p = settings.MODEL_PROVIDER
@@ -72,8 +64,6 @@ def candidate_names() -> list[str]:
         names.append(f"bedrock:{settings.BEDROCK_MODEL_ID}")
     if p in ("anthropic", "auto") and settings.ANTHROPIC_API_KEY:
         names.append(f"anthropic:{settings.ANTHROPIC_MODEL_ID}")
-    if p in ("ollama", "auto") and settings.OLLAMA_HOST:
-        names.append(f"ollama:{settings.OLLAMA_MODEL}")
     return names
 
 
@@ -84,10 +74,9 @@ def build_model() -> Any:
         candidates.append(_bedrock())
     if p in ("anthropic", "auto") and settings.ANTHROPIC_API_KEY:
         candidates.append(_anthropic())
-    if p in ("ollama", "auto") and settings.OLLAMA_HOST:
-        candidates.append(_ollama())
     if not candidates:
-        raise RuntimeError("No model provider configured. Set AWS credentials, ANTHROPIC_API_KEY, or OLLAMA_HOST in backend/.env")
+        raise RuntimeError("No model provider configured. Set AWS credentials for Bedrock, "
+                           "or ANTHROPIC_API_KEY, in backend/.env")
     if len(candidates) == 1:
         log.info("model provider: %s", candidate_names()[0])
         return candidates[0]

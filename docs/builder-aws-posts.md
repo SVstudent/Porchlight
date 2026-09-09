@@ -45,10 +45,10 @@ Two lessons for anyone building "background" agents on Strands: put the determin
 
 ## Post 3 — "Agents for Humans: one model config from a $0 laptop to Bedrock and AgentCore"
 
-We built Porchlight on a 2017 laptop with no AWS credentials for the first day. Strands made that painless. A `ModelRouter` with the default fallback strategy tries Amazon Bedrock first, then the Anthropic API, then a local Ollama model:
+An episode that dies because a provider hiccuped is worse than one that never started: the coordinator is left with half a plan and no idea which neighbours were reached. A `ModelRouter` with the default fallback strategy tries Amazon Bedrock first and the Anthropic API second, so a transient failure does not end a run:
 
 ```python
-ModelRouter(models=[BedrockModel(model_id=..., region_name=...), AnthropicModel(...), OllamaModel(host=..., model_id="qwen2.5:3b")])
+ModelRouter(models=[BedrockModel(model_id=..., region_name=...), AnthropicModel(...)])
 ```
 
 Our smoke tests run the exact Strands features we depend on (interrupt, resume from a fresh Graph built from the session, coordinator edits reaching the tool, structured output) against whatever provider is configured; they pass on the 3B local model, slowly. The full five-agent pipeline needs a real model: the 3B model on a laptop CPU timed out on triage. [FINALIZE AFTER FIRST BEDROCK RUN: add timings and a screenshot of the decision card.] Deploying the same graph to Amazon Bedrock AgentCore Runtime is a `BedrockAgentCoreApp` entrypoint that streams graph events and resumes on interrupt responses.

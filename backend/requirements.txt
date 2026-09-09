@@ -1,4 +1,4 @@
-strands-agents[anthropic,ollama,otel]>=1.55.0
+strands-agents[anthropic,otel]>=1.55.0
 bedrock-agentcore>=1.22.0
 fastapi>=0.115.0
 uvicorn[standard]>=0.30.0

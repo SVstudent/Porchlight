@@ -74,7 +74,7 @@ The coordinator sees all of it on one screen: live agent activity, a decision ca
 - **Tools with context**: `@tool(context=True)` tools read the episode id from `invocation_state`, so one tool module serves every agent in every episode.
 - **Hooks for observability**: `AuditHook` mirrors `BeforeModelCallEvent`, `BeforeToolCallEvent`, `AfterToolCallEvent` and `MessageAddedEvent` into a server-sent event stream and the episode timeline, which is what the dashboard's live feed shows.
 - **Streaming**: `graph.stream_async()` node events drive the pipeline stepper; `agent.stream_async()` text deltas are forwarded live.
-- **`ModelRouter` with fallback**: Amazon Bedrock first, then the Anthropic API, then a local Ollama model, so the same code runs offline during development.
+- **`ModelRouter` with fallback**: Amazon Bedrock first, then the Anthropic API, so a provider outage does not end an episode mid-run.
 - **AgentCore Runtime entrypoint** (`backend/agentcore_app.py`): `BedrockAgentCoreApp` with a streaming `@app.entrypoint` that runs the identical graph and resumes on interrupt responses.
 - **Deterministic guardrails outside the LLM**: thresholds, alert filtering and de-duplication live in `sentinel.py`; the model never decides whether to poll, only what to do once a real hazard exists.
 
@@ -98,7 +98,7 @@ docker-compose.yml        backend + nginx-served frontend
 
 ## Run it locally
 
-Prerequisites: Python 3.11+, Node 20+, and one model provider (AWS credentials with Bedrock model access, or an Anthropic API key, or Ollama).
+Prerequisites: Python 3.11+, Node 20+, and AWS credentials with Amazon Bedrock model access (an Anthropic API key also works as a fallback).
 
 ```bash
 # backend
@@ -132,10 +132,9 @@ If the model id is not enabled for your account, request access in the Bedrock c
 
 | Setting | Purpose |
 |---|---|
-| `MODEL_PROVIDER=auto` | Bedrock, then Anthropic, then Ollama, through `strands.models.ModelRouter` |
+| `MODEL_PROVIDER=auto` | Bedrock, then Anthropic, through `strands.models.ModelRouter` |
 | `BEDROCK_MODEL_ID`, `AWS_REGION` | Bedrock model; credentials come from the standard AWS chain or `AWS_BEARER_TOKEN_BEDROCK` |
 | `ANTHROPIC_API_KEY` | optional fallback |
-| `OLLAMA_HOST`, `OLLAMA_MODEL` | optional offline fallback (tested with `qwen2.5:3b`; use a 7B+ model for good triage) |
 
 ### Real messages
 

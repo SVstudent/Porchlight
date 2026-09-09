@@ -35,7 +35,9 @@ graph through both pauses and out the other side, using a scripted `Model` in pl
 the Testing section of the top-level README for why a test double is the honest way to show this and what it
 deliberately does not claim.
 
-Line numbers quoted in the reports refer to the tree as it was on 2026-09-08 and have since drifted.
+Line numbers quoted in the reports refer to the tree as it was on 2026-09-08 and have since drifted, and
+the reports mention a local-model provider that has since been removed: Porchlight targets Amazon Bedrock,
+with the Anthropic API as a fallback.
 
 ## What is still open
 

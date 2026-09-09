@@ -5,7 +5,6 @@ import { timeAgo } from '../lib/api.js';
 function modelLabel(id = '') {
   if (id.startsWith('bedrock:')) return `Bedrock · ${id.split(':').slice(1).join(':').split('.').pop()}`;
   if (id.startsWith('anthropic:')) return `Anthropic · ${id.split(':')[1]}`;
-  if (id.startsWith('ollama:')) return `Ollama · ${id.split(':').slice(1).join(':')}`;
   return id;
 }
 
