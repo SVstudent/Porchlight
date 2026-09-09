@@ -168,13 +168,30 @@ Console mode logs every message instead of sending it, so the whole product is t
 
 ## Testing
 
+`backend/scripts/verify.sh` runs every test below and builds the frontend. Individually:
+
 ```bash
 cd backend
-python -m tests.test_deterministic   # no model, no network: alert classification, fixture parsing, atomic store updates
-python -m tests.smoke_strands        # needs a model provider
-python -m tests.smoke_resume         # resume a paused graph from a new Graph object; coordinator edits reach the tool
+python -m tests.test_deterministic       # alert classification, fixture parsing, atomic store updates
+python -m tests.test_pipeline_mechanics  # the whole graph, both approval pauses, with no model provider
+python -m tests.test_recovery            # what happens after a run has already gone wrong
+python -m tests.smoke_strands            # needs a model provider
+python -m tests.smoke_resume             # resume a paused graph from a new Graph object
 ```
-The smoke test exercises, on the configured model: a `BeforeToolCallEvent` interrupt, resume from a `FileSessionManager` session in a fresh `Agent`, tool execution after approval, `structured_output_model`, and a `Graph` whose node interrupts and then resumes to completion.
+
+`test_pipeline_mechanics` is the one worth reading. It runs the real `Graph`, the real approval hook and
+the real tools, with `tests/scripted_model.py` — a `Model` subclass that emits a fixed sequence of tool
+calls — in place of a language model. In a few seconds it shows the graph pausing twice for coordinator
+approval, resuming after each decision, sending the messages, and producing the check-in links.
+
+**That file is a test double, and the distinction matters.** It is imported only by tests and never runs
+in the product; nothing a user or a judge sees comes from it. It proves the machinery around the agents
+is real. It deliberately proves nothing about the agents' judgement — every plan it emits is hard-coded,
+so the quality of an assessment, a triage or a message is left entirely to the model, where it belongs.
+
+The smoke tests exercise the same path on a real model provider: a `BeforeToolCallEvent` interrupt, resume
+from a `FileSessionManager` session in a fresh `Agent`, tool execution after approval, `structured_output_model`,
+and a `Graph` whose node interrupts and then resumes to completion.
 
 ## Safety and privacy
 

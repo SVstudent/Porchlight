@@ -26,6 +26,14 @@ contact data" — and in the commits after it. In particular:
 - **The retry path** tries the ordinary task first and resumes with stored approvals only when the SDK says the
   graph is actually paused; `backend/tests/test_recovery.py` covers all three branches.
 - **The dashboard** debounces episode reloads and drops responses that arrive out of order.
+- **Check-in links pointed at the wrong port**, where a different application was listening. The dev server
+  port is pinned, and the readiness list now fetches `PUBLIC_BASE_URL` and confirms Porchlight answers.
+
+The authenticity report's sharpest observation was that no run had ever completed, so the approval pause
+existed only in the code. That is no longer true: `backend/tests/test_pipeline_mechanics.py` drives the real
+graph through both pauses and out the other side, using a scripted `Model` in place of a language model. See
+the Testing section of the top-level README for why a test double is the honest way to show this and what it
+deliberately does not claim.
 
 Line numbers quoted in the reports refer to the tree as it was on 2026-09-08 and have since drifted.
 
