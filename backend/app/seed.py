@@ -15,10 +15,12 @@ MEMBERS = [
     Member(id="mem_walter", name="Walter Boyd", phone="+16025550103", language="en", preferred_channel="voice",
            address="5106 N 43rd Dr", lat=33.5085, lon=-112.1505,
            risk_factors=["age_75_plus", "powered_medical_device", "mobility_limited"],
-           notes="Home oxygen concentrator; loses it during outages.", emergency_contact_name="Denise Boyd", emergency_contact_phone="+16025550104"),
+           notes="Home oxygen concentrator; loses it during outages.", emergency_contact_name="Denise Boyd", emergency_contact_phone="+16025550104",
+           devices=["oxygen_concentrator"], backup_power_hours=2, utility="APS", backup_plan="Portable oxygen tank lasts about 2 hours; Denise can drive him to Banner Estrella."),
     Member(id="mem_thanh", name="Thanh Nguyen", phone="+16025550105", language="en", preferred_channel="sms",
            address="4742 N 47th Ave", lat=33.5062, lon=-112.1594,
-           risk_factors=["chronic_illness", "no_transport"], notes="Dialysis Tue/Thu; needs rides when it's over 105."),
+           risk_factors=["chronic_illness", "no_transport"], notes="Dialysis Tue/Thu; needs rides when it's over 105.",
+           devices=["home_dialysis"], backup_power_hours=0, utility="SRP", backup_plan="No backup power; clinic can take him in if a ride is arranged."),
     Member(id="mem_gloria", name="Gloria Mendoza", phone="+16025550106", language="es", preferred_channel="sms",
            address="3918 W Indian School Rd", lat=33.4947, lon=-112.1450,
            risk_factors=["infant_or_young_child", "no_air_conditioning"], notes="Two kids under 4. AC broke in July."),
@@ -48,7 +50,8 @@ MEMBERS = [
            risk_factors=["outdoor_worker"], notes="Roofing crew; starts 5am."),
     Member(id="mem_helen", name="Helen Park", phone="+16025550117", language="en", preferred_channel="email", email="helen.park@example.com",
            address="4436 N 55th Ave", lat=33.5030, lon=-112.1785,
-           risk_factors=["chronic_illness", "lives_alone"], notes="COPD; sensitive to smoke and dust."),
+           risk_factors=["chronic_illness", "lives_alone"], notes="COPD; sensitive to smoke and dust.",
+           devices=["cpap", "nebulizer"], backup_power_hours=6, utility="APS", backup_plan="CPAP battery pack lasts one night."),
 ]
 
 VOLUNTEERS = [

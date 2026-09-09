@@ -80,8 +80,11 @@ def new_hazards() -> list[HazardEvent]:
     """Everything active right now that we have not already opened an episode for."""
     hazards = scan_nws()
     active_types = {h.hazard_type for h in hazards}
-    hazards += [h for h in scan_thresholds() if h.hazard_type not in active_types]
-    fresh = [h for h in hazards if not store.alert_seen(h.external_id)]
+    # An outage is never deduplicated here: it compounds heat/cold rather than duplicating it, and it is
+    # life-threatening for neighbors on powered medical devices. (The scheduler still refuses to open a second
+    # outage episode while one is active.)
+    hazards += [h for h in scan_thresholds() if h.hazard_type == "outage" or h.hazard_type not in active_types]
+    fresh = [h for h in hazards if h.hazard_type == "outage" or not store.alert_seen(h.external_id)]
     return fresh
 
 

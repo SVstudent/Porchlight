@@ -38,6 +38,7 @@ from .tools import (
     list_volunteers,
     record_coordinator_brief,
 )
+from .tools_outage import get_electricity_dependent_members
 
 
 @tool(context=True)
@@ -98,6 +99,8 @@ member a tier:
   0 = no action (not affected; e.g. healthy and offered to help)
 Pick each member's channel: their preferred channel, but use "sms" instead of "voice" if the message is short,
 and "email" only if they have no phone. Set needs_visit for tier 1 members who cannot get themselves to safety.
+For an outage or a compound hazard (an outage during heat or cold), call get_electricity_dependent_members: every
+member with a powered medical device is tier 1, and needs_visit when their backup runtime is under 4 hours.
 Then call submit_triage_plan exactly once with every decision, and finish with a two-sentence summary.
 """
 
@@ -164,9 +167,9 @@ def build_graph(ep: Episode, model: Any | None = None):
     model = model or build_model()
     sentinel = _agent("sentinel", SENTINEL_PROMPT, [get_area_conditions, get_episode_context], model,
                       structured_output_model=HazardAssessment)
-    triage = _agent("triage", TRIAGE_PROMPT, [get_episode_context, get_roster, get_member_conditions, submit_triage_plan], model)
+    triage = _agent("triage", TRIAGE_PROMPT, [get_episode_context, get_roster, get_member_conditions, get_electricity_dependent_members, submit_triage_plan], model)
     outreach = _agent("outreach", OUTREACH_PROMPT, [get_episode_context, get_roster, find_nearby_cooled_places, dispatch_outreach], model)
-    logistics = _agent("logistics", LOGISTICS_PROMPT, [get_episode_context, list_volunteers, list_community_resources, find_nearby_cooled_places, assign_volunteers], model)
+    logistics = _agent("logistics", LOGISTICS_PROMPT, [get_episode_context, list_volunteers, list_community_resources, find_nearby_cooled_places, get_electricity_dependent_members, assign_volunteers], model)
     brief = _agent("briefing", BRIEF_PROMPT, [get_episode_context, get_checkin_status, record_coordinator_brief], model)
 
     def activated(state: GraphState) -> bool:
@@ -200,7 +203,7 @@ def build_graph(ep: Episode, model: Any | None = None):
 def build_followup_agent(ep: Episode, model: Any | None = None) -> Agent:
     model = model or build_model()
     return _agent("followup", FOLLOWUP_PROMPT,
-                  [get_episode_context, get_checkin_status, list_volunteers, escalate_member], model,
+                  [get_episode_context, get_checkin_status, list_volunteers, get_electricity_dependent_members, escalate_member], model,
                   session_id=f"followup-{ep.id}")
 
 
