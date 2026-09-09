@@ -6,6 +6,8 @@ lessons), so it works without a model or AWS. When Amazon Bedrock AgentCore Memo
 """
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
+
 import logging
 import re
 import statistics
@@ -246,21 +248,33 @@ def community_history(limit: int = 5, exclude_episode_id: str = "") -> dict[str,
 # ---------------------------------------------------------------- Strands tools
 
 @tool(context=True)
-def get_neighbor_history(tool_context: ToolContext, member_id: str) -> dict:
-    """What happened with this neighbor in past episodes: for each earlier hazard the tier, channel used, whether
-    they replied (ok / needs_help / no reply) and how many minutes it took, any escalations (volunteer visit,
-    emergency contact notified), and coordinator notes. Includes a reliability summary and an "insight" line.
-    Use it to pick the channel that has worked before, decide whether a visit is likely needed, and whether to go
-    to the emergency contact first.
+def get_neighbor_history(tool_context: ToolContext, member_ids: list[str]) -> dict:
+    """What happened with these neighbors in past episodes: for each earlier hazard the tier, channel used,
+    whether they replied (ok / needs_help / no reply) and how many minutes it took, any escalations (volunteer
+    visit, emergency contact notified), and coordinator notes. Includes a reliability summary and an "insight"
+    line per neighbor. Use it to pick the channel that has worked before, decide whether a visit is likely
+    needed, and whether to go to the emergency contact first. Ask about everyone you care about in one call.
     Args:
-        member_id: id from get_roster or get_checkin_status
+        member_ids: ids from get_roster or get_checkin_status
     """
-    out = neighbor_history(member_id, exclude_episode_id=episode_id_from(tool_context.invocation_state))
-    if "error" in out:
+    if isinstance(member_ids, str):  # a model that sends one bare id instead of a list
+        member_ids = [member_ids]
+    if not member_ids:
+        return {"error": "give at least one member_id"}
+    exclude = episode_id_from(tool_context.invocation_state)
+
+    def one(member_id: str) -> dict:
+        out = neighbor_history(member_id, exclude_episode_id=exclude)
+        if "error" in out:
+            return out
+        # When AgentCore Memory is configured this is a network call, so do them side by side.
+        out["agentcore_memories"] = agentcore_memory.retrieve_member_memories(
+            member_id, query=f"{out['name']} check-in reply behaviour, emergency contact, visits, what helped")
         return out
-    out["agentcore_memories"] = agentcore_memory.retrieve_member_memories(
-        member_id, query=f"{out['name']} check-in reply behaviour, emergency contact, visits, what helped")
-    return out
+
+    ids = member_ids[:50]
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        return dict(zip(ids, pool.map(one, ids)))
 
 
 @tool(context=True)

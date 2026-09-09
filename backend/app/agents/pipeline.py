@@ -106,7 +106,8 @@ Pick each member's channel: their preferred channel, but use "sms" instead of "v
 and "email" only if they have no phone. Set needs_visit for tier 1 members who cannot get themselves to safety.
 For an outage or a compound hazard (an outage during heat or cold), call get_electricity_dependent_members: every
 member with a powered medical device is tier 1, and needs_visit when their backup runtime is under 4 hours.
-For tier 1 candidates, call get_neighbor_history and use past reply behaviour to pick the channel and whether a visit is needed.
+For tier 1 candidates, call get_neighbor_history once with all of their ids, and use past reply behaviour to pick
+the channel and whether a visit is needed.
 Then call submit_triage_plan exactly once with every decision, and finish with a two-sentence summary.
 """
 
@@ -150,7 +151,8 @@ Role: FOLLOW-UP. Outreach already went out. Call get_episode_context and get_che
   or notify_emergency_contact if no volunteer is available.
 - Tier 2 members past twice the grace period: notify_emergency_contact if they have one, otherwise leave as is.
 - Everyone else: no action.
-Use get_neighbor_history before escalating: if a member has never replied to messages but their emergency contact has, notify the emergency contact first.
+Use get_neighbor_history before escalating (one call, all the ids you care about): if a member has never replied
+to messages but their emergency contact has, notify the emergency contact first.
 Call escalate_member once per member that needs it, most urgent first, at most two per cycle (each call pauses
 for approval unless policy allows it); the next cycle handles the rest.
 Finish with one or two sentences summarising what you did and who is still unaccounted for.

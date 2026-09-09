@@ -113,7 +113,15 @@ def test_current_episode_excluded_and_compact():
     # The Strands tools expose the same data and hide the current episode via invocation_state
     assert get_neighbor_history.tool_name == "get_neighbor_history" and get_community_history.tool_name == "get_community_history"
     spec = get_neighbor_history.tool_spec
-    assert "member_id" in spec["inputSchema"]["json"]["properties"] and "tool_context" not in spec["inputSchema"]["json"]["properties"]
+    assert "member_ids" in spec["inputSchema"]["json"]["properties"] and "tool_context" not in spec["inputSchema"]["json"]["properties"]
+    # One call covers the whole shortlist, and an id with no history is reported rather than dropped.
+    fn = getattr(get_neighbor_history, "_tool_func", None) or get_neighbor_history
+    class _Ctx:
+        invocation_state = {"episode_id": cur.id}
+    many = fn(_Ctx(), ["mem_rosa", "mem_walter", "nobody"])
+    assert set(many) == {"mem_rosa", "mem_walter", "nobody"}, f"batch lost an id: {sorted(many)}"
+    assert "error" in many["nobody"]
+    assert many["mem_rosa"].get("name"), "a known neighbour should come back with their history"
 
 
 def test_lessons_endpoint_and_community_history():
