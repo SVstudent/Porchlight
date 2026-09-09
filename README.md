@@ -162,6 +162,10 @@ agentcore invoke '{"action": "resume", "episode_id": "<id>", "interrupt_response
 
 The runtime entrypoint streams graph events and interrupt payloads; the FastAPI service can be pointed at it instead of running the graph in-process. Observability: install `strands-agents[otel]` (already in requirements) and set `OTEL_EXPORTER_OTLP_ENDPOINT`, or enable CloudWatch GenAI Observability on the runtime.
 
+## Taking it live
+
+Console mode logs every message instead of sending it, so the whole product is testable with no accounts. To make the agent send real texts, calls, or emails, see [docs/go-live.md](docs/go-live.md) for the exact environment variables, tiered by what each one unlocks.
+
 ## Testing
 
 ```bash
