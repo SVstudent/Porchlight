@@ -9,13 +9,47 @@ When an Extreme Heat Warning, smoke event, freeze, or outage threatens a neighbo
 
 ## The problem
 
-Extreme heat kills more people in the United States than any other weather hazard, and the people who die are overwhelmingly older adults living alone, without air conditioning, who nobody checked on. Maricopa County (Phoenix) confirmed **645 heat-associated deaths in 2023** ([county report](https://www.maricopa.gov/1858/Heat-Surveillance)). During the 2021 Pacific Northwest heat dome most of the people who died in Multnomah County were older, lived alone, and had no working air conditioning ([county review](https://www.multco.us/multnomah-county/news/heat-related-deaths-multnomah-county-june-2021)). Public-health guidance during every heat wave is the same sentence: *check on your neighbors.*
+Heat is the leading cause of weather-related deaths in the United States ([NWS](https://www.weather.gov/wrn/summer-heat-sm)). On the National Weather Service's 30-year average, heat kills 180 people a year, more than floods (94), tornadoes (73) or hurricanes (50), and the 10-year average is 279 ([NWS hazard statistics](https://www.weather.gov/media/hazstat/81year_2025.pdf)). Maricopa County (Phoenix), where our demo roster lives, confirmed 645 heat-related deaths in 2023 and 608 in 2024 ([county report](https://www.maricopa.gov/ArchiveCenter/ViewFile/Item/5934)).
 
-That job falls on volunteers: block captains, church phone trees, senior-center staff, mutual-aid groups. Their "system" is a spreadsheet and a group text. During an event they are stuck doing the same thing, over and over: reading a weather alert, guessing who is at risk, typing individual texts in two languages, calling around for someone with a car, and then trying to remember who never wrote back.
+The people who die at home are the ones nobody reached in time:
+
+| Event | What the official review found | Source |
+|---|---|---|
+| Multnomah County (Portland), June 2021 heat dome | 69 deaths from the event. 78% were 60 or older. 71% lived alone. Almost none had working air conditioning. | [Multnomah County](https://www.multco.us/help-when-its-hot/news/2021-heat-killed-72-people-multnomah-county-most-were-older-lived-alone-had) |
+| Oregon statewide, same event | "Most lived alone in homes with no working air conditioning or fans." The state's after-action review concluded that "neighbors checking on neighbors saved lives." | [Oregon OEM after-action review](https://www.oregon.gov/oem/Documents/2021_June_Excessive_Heat_Event_AAR.pdf) |
+| Texas, February 2021 winter storm | 246 deaths across 77 counties. 161 from cold exposure, 107 of them people 60 or older. 25 from loss of dialysis, oxygen, or power to life-sustaining equipment. 19 from carbon monoxide. | [Texas DSHS final report](https://www.dshs.texas.gov/sites/default/files/news/updates/SMOC_FebWinterStorm_MortalitySurvReport_12-30-21.pdf) |
+| Chicago, July 1995 | 739 excess deaths in one week. People 65 and older were overrepresented; most died at home, alone. | [Whitman et al., AJPH 1997](https://pmc.ncbi.nlm.nih.gov/articles/PMC1380980/), [Klinenberg, Heat Wave](https://press.uchicago.edu/ucp/books/book/chicago/H/bo20809880.html) |
+
+Every agency says the same sentence. CDC: "Check on your family, friends, and neighbors, especially if they have chronic medical problems or live alone." ([CDC](https://www.cdc.gov/heat-health/about/index.html)). Ready.gov: "Check on family members, older adults and neighbors." ([Ready.gov](https://www.ready.gov/heat)). Maricopa County's own chief medical officer: "checking on vulnerable neighbors" ([Maricopa County](https://www.maricopa.gov/CivicAlerts.aspx?AID=3222)).
+
+The scale of "who to check on" is public. HHS emPOWER counts Medicare beneficiaries whose medical equipment needs electricity, by ZIP code. In Maricopa County alone that is 28,833 people, 6,535 of them on home oxygen ([HHS emPOWER](https://empowerprogram.hhs.gov/empowermap), county data as of Aug 2026; see [docs/sources.md](docs/sources.md)).
+
+Checking on them falls to volunteers: block captains, church phone trees, senior-building managers, mutual-aid groups. Their "system" is a spreadsheet and a group text. During an event they do the same thing over and over: read a weather alert, guess who is at risk, type individual texts in two languages, call around for someone with a car, and try to remember who never wrote back.
 
 ## Who it is for
 
-The one volunteer who holds a community's contact list together: a block captain, a parish coordinator, a senior-building resident manager, a mutual-aid dispatcher. Porchlight gives them an agent that does the repetitive part and surfaces only when a human should decide.
+The one volunteer who holds a community's contact list together: a block captain, a parish coordinator, a senior-building resident manager, a mutual-aid dispatcher, a "Be a Buddy" site lead. Porchlight gives them an agent that does the repetitive part and surfaces only when a human should decide.
+
+## How this compares to what exists today
+
+The manual version of Porchlight already exists and works. New York City's [Be a Buddy](https://www.nyc.gov/content/climate/pages/initiatives/be-a-buddy) program, launched in 2017 in the South Bronx (Hunts Point), pairs community organizations and volunteers with at-risk residents and, during heat or cold emergencies, has them "conduct telephone and, if necessary, door-to-door and building level checks on vulnerable individuals" ([Cool Neighborhoods NYC, 2017](https://www.nyc.gov/assets/orr/pdf/Cool_Neighborhoods_NYC_Report.pdf)). Relaunched in 2025, it conducted 1,942 wellness checks during extreme heat events between February and September 2025 ([NYC Health, 2026](https://www.nyc.gov/assets/doh/downloads/pdf/about/climate-health-strategy.pdf)). County heat relief networks, 2-1-1 lines, and church phone trees do the same job with the same tools: a list, a phone, and a volunteer's evening.
+
+Porchlight is the automation layer for those programs, not a replacement for them and not a replacement for 911:
+
+| Today | With Porchlight |
+|---|---|
+| A coordinator notices the heat warning | The sentinel notices it within 15 minutes, from the official NWS feed |
+| The coordinator guesses who is most at risk | The triage agent ranks every neighbor from their recorded risk factors and the conditions at their home |
+| The coordinator types texts one by one, in two languages | The outreach agent drafts one personal message per neighbor; the coordinator edits and approves them in one card |
+| The coordinator calls around for a driver | The logistics agent proposes volunteer matches by skill, distance and load; the coordinator approves |
+| The coordinator tries to remember who never answered | The follow-up agent tracks replies and escalates non-responders, with approval |
+| Nothing is written down afterwards | The brief and the timeline are the after-action record |
+
+The list stays the community's list. The decisions stay with the coordinator. The check-in page tells neighbors in distress to call 911.
+
+## Multi-hazard
+
+The loop is the same for every hazard: official alert in, triage, personal outreach, volunteers, follow-up. The sentinel maps National Weather Service event names deterministically to hazard types (heat, air quality including smoke and dust, cold, winter, flood, storm) in `backend/app/feeds/nws.py`, and threshold checks on live Open-Meteo conditions (feels-like at or above 105 F, US AQI at or above 151, air at or below 15 F) cover places without an active alert. For hazards no feed reports (a power outage, a water main break, a building evacuation) the sentinel panel has a manual report form; a coordinator-reported outage runs the same loop with hazard type `outage`. The prompts ask the agents to reason about the hazard they are given, so a freeze warning raises the oxygen-concentrator and no-heat neighbors while a smoke event raises the COPD and asthma neighbors. Archived NWS alerts for other hazards are being added as replay fixtures alongside the Phoenix Extreme Heat Warning.
 
 ## What the agent does
 
@@ -58,7 +92,7 @@ backend/                  Python 3.11+ · FastAPI · Strands Agents SDK
   .env.example            all configuration; copy to backend/.env (never committed)
 frontend/                 React 18 · Vite · Leaflet
   src/pages/              Dashboard (coordinator desk), Checkin (neighbor page), Roster
-docs/                     architecture diagram, demo script, builder.aws.com post drafts
+docs/                     architecture diagram, pitch one-pager, sources for every number, demo script, Devpost text, builder.aws.com post drafts
 docker-compose.yml        backend + nginx-served frontend
 ```
 
