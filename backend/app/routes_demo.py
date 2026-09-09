@@ -91,6 +91,38 @@ async def retry_episode(episode_id: str) -> dict[str, Any]:
 
 # --------------------------------------------------------------- readiness for recording
 
+# A check-in link is only as good as PUBLIC_BASE_URL. Probing it catches the case that quietly ruins a take:
+# the URL resolves, but to a different app on that port. Cached because readiness is polled every 20 seconds.
+_base_probe: dict[str, Any] = {"at": 0.0, "ok": False, "detail": "not checked yet"}
+
+
+def probe_public_base() -> tuple[bool, str]:
+    """Fetch PUBLIC_BASE_URL and report whether Porchlight is what answers."""
+    import time
+    import urllib.error
+    import urllib.request
+
+    now = time.time()
+    if now - _base_probe["at"] < 30:
+        return _base_probe["ok"], _base_probe["detail"]
+
+    url = settings.PUBLIC_BASE_URL
+    try:
+        with urllib.request.urlopen(url, timeout=2) as r:
+            body = r.read(4096).decode("utf-8", "replace")
+        if "Porchlight" in body:
+            ok, detail = True, f"{url} is serving Porchlight"
+        else:
+            ok, detail = False, f"{url} answered, but it is not Porchlight — a check-in link would open the wrong app"
+    except urllib.error.URLError as e:
+        ok, detail = False, f"{url} is not answering ({getattr(e, 'reason', e)}). Start the frontend, or fix PUBLIC_BASE_URL."
+    except Exception as e:  # noqa: BLE001
+        ok, detail = False, f"{url} could not be checked: {e}"
+
+    _base_probe.update({"at": now, "ok": ok, "detail": detail})
+    return ok, detail
+
+
 @router.get("/api/demo/readiness")
 def readiness() -> dict[str, Any]:
     """Everything a person needs to confirm before hitting record, in one call."""
@@ -102,6 +134,9 @@ def readiness() -> dict[str, Any]:
     hazards_shown = sorted({e.hazard.hazard_type for e in completed})
     channels = available_channels()
     live_channels = [k for k, v in channels.items() if v and k != "console"]
+
+    base_ok, base_detail = probe_public_base()
+    local_base = settings.PUBLIC_BASE_URL.startswith(("http://localhost", "http://127.0.0.1"))
 
     checks = [
         {
@@ -130,12 +165,18 @@ def readiness() -> dict[str, Any]:
                        else "console mode — messages are logged, not sent. Set SEND_MODE=live and configure a channel."),
         },
         {
+            "id": "public_url_serves",
+            "label": "Check-in links open Porchlight",
+            "ok": base_ok,
+            "detail": base_detail,
+        },
+        {
             "id": "public_url",
             "label": "Check-in links reachable from a phone",
-            "ok": not settings.PUBLIC_BASE_URL.startswith(("http://localhost", "http://127.0.0.1")),
+            "ok": not local_base,
             "detail": settings.PUBLIC_BASE_URL + (
                 "  — localhost cannot be opened on a phone; run a tunnel and set PUBLIC_BASE_URL"
-                if settings.PUBLIC_BASE_URL.startswith(("http://localhost", "http://127.0.0.1")) else ""),
+                if local_base else ""),
         },
         {
             "id": "override",
