@@ -11,10 +11,12 @@ from .console import ConsoleProvider
 from .ses_email import SESEmailProvider
 from .telegram import TelegramProvider
 from .twilio_sms import TwilioSMSProvider
+from .twilio_voice import TwilioVoiceProvider, spoken_text, voice_for
 
 log = logging.getLogger("porchlight.channels")
 
 _PROVIDERS = {
+    "voice": TwilioVoiceProvider(),
     "sms": TwilioSMSProvider(),
     "telegram": TelegramProvider(),
     "email": SESEmailProvider(),
@@ -38,8 +40,12 @@ def _address(member: Member, channel: str) -> str:
 
 def deliver(member: Member, body: str, preferred: str | None = None, *, subject: str = "", meta: dict[str, Any] | None = None) -> DeliveryResult:
     """Try the preferred channel, then any other configured channel the member has an address for."""
-    order = [preferred or member.preferred_channel] + [c for c in ("sms", "telegram", "email") if c != (preferred or member.preferred_channel)]
-    order = ["sms" if c == "voice" else c for c in order]  # voice is delivered as SMS text with the call script in dev
+    first = preferred or member.preferred_channel
+    order = [first] + [c for c in ("sms", "telegram", "email") if c != first]
+    live_voice = settings.SEND_MODE == "live" and _PROVIDERS["voice"].configured()
+    if not live_voice:  # no voice line configured: the call script goes out as a text instead
+        order = ["sms" if c == "voice" else c for c in order]
+    order = list(dict.fromkeys(order))
     tried: list[str] = []
     for ch in order:
         provider = _PROVIDERS.get(ch)
@@ -54,7 +60,14 @@ def deliver(member: Member, body: str, preferred: str | None = None, *, subject:
             log.warning("delivery via %s failed for %s: %s", ch, member.name, res.detail)
     if settings.SEND_MODE != "live":
         addr = _address(member, order[0]) or member.name
-        res = _CONSOLE.send(addr, body, subject=subject, meta=meta)
-        res.extra["requested_channel"] = order[0]
+        if first == "voice":
+            m = meta or {}
+            script = spoken_text(body, str(m.get("call_script") or ""))
+            log.info("[console] VOICE CALL to %s (%s) would say: %s", addr, voice_for(m.get("language") or member.language), script)
+            res = DeliveryResult(ok=True, channel="console", detail=f"voice call logged (not placed) to {addr}; would say: \u201c{script[:160]}\u201d",
+                                 extra={"script": script})
+        else:
+            res = _CONSOLE.send(addr, body, subject=subject, meta=meta)
+        res.extra["requested_channel"] = first
         return res
     return DeliveryResult(ok=False, channel=order[0], detail=f"no configured channel could reach {member.name} (tried {tried or 'none'})")
