@@ -152,7 +152,8 @@ def compute_metrics(episode: Episode, checkins: list[Checkin], approvals: list[A
     # ---- per-member table (everyone contacted; triaged-but-not-contacted members are listed too)
     esc_by_member: dict[str, str] = {}
     for e in esc_actions:
-        esc_by_member[e["member_id"]] = e["action"]  # last escalation wins
+        if e["decision"] in ("approved", "policy"):  # a declined escalation never happened
+            esc_by_member[e["member_id"]] = e["action"]  # last real escalation wins
     rows = []
     for c in checkins:
         m = m_by_id.get(c.member_id)
