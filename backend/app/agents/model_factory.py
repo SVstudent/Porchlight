@@ -6,6 +6,7 @@ local Ollama model for development without AWS credentials.
 from __future__ import annotations
 
 import logging
+import os
 from typing import Any
 
 from ..config import settings
@@ -37,7 +38,9 @@ def _anthropic():
 def _ollama():
     from strands.models.ollama import OllamaModel
 
-    return OllamaModel(host=settings.OLLAMA_HOST, model_id=settings.OLLAMA_MODEL, temperature=settings.MODEL_TEMPERATURE)
+    # Ollama defaults to a 4k context; the triage prompt alone (roster + alert) is ~4k tokens.
+    return OllamaModel(host=settings.OLLAMA_HOST, model_id=settings.OLLAMA_MODEL, temperature=settings.MODEL_TEMPERATURE,
+                       options={"num_ctx": int(os.getenv("OLLAMA_NUM_CTX", "16384"))})
 
 
 def candidate_names() -> list[str]:
