@@ -41,6 +41,9 @@ export const api = {
   reset: () => req('/api/admin/reset', { method: 'POST' }),
   report: (id) => req(`/api/episodes/${id}/report`),
   reportNarrative: (id) => req(`/api/episodes/${id}/report/narrative`, { method: 'POST' }),
+  memberHistory: (id) => req(`/api/roster/${id}/history`),
+  rosterHistory: (excludeEpisodeId) => req(`/api/roster/history${excludeEpisodeId ? `?exclude=${excludeEpisodeId}` : ''}`),
+  addLesson: (episodeId, body) => req(`/api/episodes/${episodeId}/lessons`, { method: 'POST', body: JSON.stringify(body) }),
   importRoster: async (file) => {
     const fd = new FormData();
     fd.append('file', file);
