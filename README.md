@@ -35,7 +35,7 @@ The coordinator sees all of it on one screen: live agent activity, a decision ca
 
 - **`GraphBuilder` multi-agent pipeline** (`backend/app/agents/pipeline.py`): five agents with distinct system prompts and tool sets, a conditional edge (`assess -> triage` only when the assessment says activate), and parallel branches (`outreach` and `logistics`) that join at `brief`.
 - **Human-in-the-loop with interrupts** (`backend/app/agents/hooks.py`): `ApprovalGateHook` registers on `BeforeToolCallEvent` and calls `event.interrupt()` for every world-changing tool. The graph stops with `Status.INTERRUPTED`; the API turns each interrupt into an approval card; the coordinator's decision is fed back as an `interruptResponse` and the graph resumes exactly where it paused. A declined action sets `event.cancel_tool` with a message the agent can reason about. Edited messages are written back into `tool_use["input"]`.
-- **Session persistence**: every graph and the follow-up agent use `FileSessionManager`; the runner rebuilds a paused graph from its session when an approval arrives after a restart.
+- **Session persistence**: every graph and the follow-up agent use `FileSessionManager`. A paused graph is rebuilt from its session and resumed when an approval arrives after a restart (covered by `tests/smoke_resume.py`).
 - **Structured output**: the sentinel agent returns a Pydantic `HazardAssessment` via `structured_output_model`; the graph edge condition reads it.
 - **Tools with context**: `@tool(context=True)` tools read the episode id from `invocation_state`, so one tool module serves every agent in every episode.
 - **Hooks for observability**: `AuditHook` mirrors `BeforeModelCallEvent`, `BeforeToolCallEvent`, `AfterToolCallEvent` and `MessageAddedEvent` into a server-sent event stream and the episode timeline, which is what the dashboard's live feed shows.
@@ -134,6 +134,7 @@ The runtime entrypoint streams graph events and interrupt payloads; the FastAPI 
 cd backend
 python -m tests.test_deterministic   # no model, no network: alert classification, fixture parsing, atomic store updates
 python -m tests.smoke_strands        # needs a model provider
+python -m tests.smoke_resume         # resume a paused graph from a new Graph object; coordinator edits reach the tool
 ```
 The smoke test exercises, on the configured model: a `BeforeToolCallEvent` interrupt, resume from a `FileSessionManager` session in a fresh `Agent`, tool execution after approval, `structured_output_model`, and a `Graph` whose node interrupts and then resumes to completion.
 

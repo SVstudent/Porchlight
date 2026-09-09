@@ -9,6 +9,7 @@ Every world-changing tool is gated by ApprovalGateHook (a Strands interrupt) so 
 """
 from __future__ import annotations
 
+import os
 from typing import Any
 
 from strands import Agent, tool
@@ -190,8 +191,8 @@ def build_graph(ep: Episode, model: Any | None = None):
     b.add_edge("outreach", "brief")
     b.add_edge("logistics", "brief")
     b.set_entry_point("assess")
-    b.set_execution_timeout(1800)
-    b.set_node_timeout(900)
+    b.set_execution_timeout(int(os.getenv("GRAPH_TIMEOUT_S", "1800")))
+    b.set_node_timeout(int(os.getenv("NODE_TIMEOUT_S", "900")))
     b.set_session_manager(FileSessionManager(session_id=f"graph-{ep.id}", storage_dir=str(settings.SESSION_DIR)))
     return b.build()
 
