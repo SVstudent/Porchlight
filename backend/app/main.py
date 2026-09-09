@@ -46,6 +46,10 @@ async def _startup() -> None:
     bus.bind_loop(asyncio.get_running_loop())
     if store.seed_if_empty(MEMBERS, VOLUNTEERS, RESOURCES):
         log.info("seeded demo roster for %s", settings.COMMUNITY_NAME)
+    # Community resources are reference data maintained in seed.py, not coordinator input. Refresh them on every
+    # start so a corrected phone number or address reaches an existing database.
+    for r in RESOURCES:
+        store.put_resource(r)
     _setup_telemetry()
     sched.start()
     log.info("Porchlight ready. Model candidates: %s. Channels: %s", candidate_names(), available_channels())

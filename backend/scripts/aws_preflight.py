@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import subprocess
 import sys
@@ -68,11 +69,36 @@ def check_cli() -> None:
         record("AWS CLI installed", WARN, f"{out.split()[0]} — v2 is needed for `aws login`")
 
 
+def check_shadowing_keys() -> None:
+    """Static keys in ~/.aws/credentials win over a browser sign-in for the same profile.
+
+    This is the failure that looks like nothing at all: `aws login` reports success, and every call still
+    comes back InvalidClientTokenId, because the credential chain never reaches the session.
+    """
+    path = Path.home() / ".aws" / "credentials"
+    if not path.exists():
+        return
+    profile = os.environ.get("AWS_PROFILE", "default")
+    try:
+        text = path.read_text()
+    except OSError:
+        return
+    section = re.search(rf"^\[{re.escape(profile)}\]$(.*?)(?=^\[|\Z)", text, re.M | re.S)
+    if section and "aws_access_key_id" in section.group(1):
+        record(
+            "No stale keys shadowing the sign-in", WARN,
+            f"[{profile}] in ~/.aws/credentials has static keys that take priority over `aws login`. "
+            f"If sign-in appears to work but calls still fail: mv ~/.aws/credentials ~/.aws/credentials.bak",
+        )
+
+
 def check_identity() -> str | None:
     code, out = aws("sts", "get-caller-identity", "--output", "json")
     if code != 0:
         record("Credentials resolve", BAD, out.splitlines()[-1][:160])
-        print("\n  Sign in first:  aws login\n", flush=True)
+        check_shadowing_keys()
+        print("\n  Sign in first:  aws login", flush=True)
+        print("  If your account is IAM Identity Center:  aws configure sso\n", flush=True)
         return None
     ident = json.loads(out)
     record("Credentials resolve", OK, f"account {ident['Account']} as {ident['Arn'].split('/')[-1]}")

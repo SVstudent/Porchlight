@@ -1,5 +1,9 @@
 # Authenticity audit — "Nothing is faked."
 
+> **Status:** this is the original report, kept unedited. Everything it marks BLOCKER has been fixed;
+> see [README.md](README.md) for what changed and what is still open. Line numbers below refer to the
+> tree on 2026-09-08 and have since drifted.
+
 **Scope:** fabricated real-world facts, fixture integrity, claims vs implementation, simulation smells, unverified
 SDK usage, dead code.
 **Audited:** 2026-09-08, the **working tree** (not `HEAD`) at `/Users/sathvikvempati/Desktop/AWShack`.

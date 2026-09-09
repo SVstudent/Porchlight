@@ -62,7 +62,18 @@ class EpisodeRunner:
         return ep
 
     # ------------------------------------------------------------ graph execution
-    async def _run_graph(self, ep_id: str, task_input: Any, retry_from: Any = None) -> None:
+    def _stored_interrupt_responses(self, ep_id: str) -> list[dict[str, Any]]:
+        """The decisions a paused graph is still waiting for, in the shape the SDK expects."""
+        decided = [a for a in store.approvals(ep_id)
+                   if a.scope == "graph" and a.status != "pending" and a.interrupt_id]
+        return [
+            {"interruptResponse": {"interruptId": a.interrupt_id, "response": {
+                "decision": "approve" if a.status == "approved" else "reject",
+                "note": a.decision_note, "edits": a.edits or {}}}}
+            for a in decided
+        ]
+
+    async def _run_graph(self, ep_id: str, task_input: Any, allow_recovery: bool = False) -> None:
         token = current_episode_id.set(ep_id)
         try:
             ep = store.episode(ep_id)
@@ -76,20 +87,29 @@ class EpisodeRunner:
             try:
                 async for ev in graph.stream_async(task_input, invocation_state={"episode_id": ep_id}):
                     final = self._handle_graph_event(ep_id, ev) or final
-            except (TypeError, KeyError) as e:
-                # The persisted interrupt state did not match the responses we offered (a stale or missing
-                # interrupt id). Start this episode's graph over from a clean session rather than dying.
-                if retry_from is None:
+            except TypeError as e:
+                # The saved graph is still paused on an approval, so it will only accept interrupt responses.
+                if not allow_recovery or "interrupt" not in str(e).lower():
                     raise
-                log.warning("resume mismatch for %s (%s); restarting the graph from scratch", ep_id, e)
+                responses = self._stored_interrupt_responses(ep_id)
+                if not responses:
+                    raise
+                log.info("graph for %s is still paused; resuming with %d stored decision(s)", ep_id, len(responses))
+                try:
+                    final = await self._stream(ep_id, graph, responses)
+                except KeyError as stale:
+                    # One of the ids belongs to an interrupt the restored state no longer knows about.
+                    log.warning("stale interrupt for %s (%s); starting the graph over", ep_id, stale)
+                    bus.emit("status", "Could not resume the paused run; starting it over.", episode_id=ep_id)
+                    final = await self._stream(ep_id, self._rebuild_clean(ep_id), task_input)
+            except KeyError as e:
+                # A stale interrupt id the restored state does not know. Start this episode's graph clean.
+                if not allow_recovery:
+                    raise
+                log.warning("resume mismatch for %s (%s); starting the graph over", ep_id, e)
                 bus.emit("status", "Could not resume the paused run; starting it over.", episode_id=ep_id)
-                self._reset_session(ep_id)
-                self._graphs.pop(ep_id, None)
-                graph = build_graph(store.episode(ep_id), self.model())
-                self._graphs[ep_id] = graph
-                final = None
-                async for ev in graph.stream_async(retry_from, invocation_state={"episode_id": ep_id}):
-                    final = self._handle_graph_event(ep_id, ev) or final
+                graph = self._rebuild_clean(ep_id)
+                final = await self._stream(ep_id, graph, task_input)
             await self._finish_graph(ep_id, final)
         except Exception as e:  # noqa: BLE001
             log.error("graph failed for %s: %s\n%s", ep_id, e, traceback.format_exc())
@@ -107,6 +127,20 @@ class EpisodeRunner:
         finally:
             self._tasks.pop(ep_id, None)
             current_episode_id.reset(token)
+
+    async def _stream(self, ep_id: str, graph: Any, task: Any) -> Any:
+        final: Any = None
+        async for ev in graph.stream_async(task, invocation_state={"episode_id": ep_id}):
+            final = self._handle_graph_event(ep_id, ev) or final
+        return final
+
+    def _rebuild_clean(self, ep_id: str) -> Any:
+        """Throw away the persisted session and build a fresh graph for this episode."""
+        self._reset_session(ep_id)
+        self._graphs.pop(ep_id, None)
+        graph = build_graph(store.episode(ep_id), self.model())
+        self._graphs[ep_id] = graph
+        return graph
 
     def _handle_graph_event(self, ep_id: str, ev: dict[str, Any]) -> Any:
         t = ev.get("type")
@@ -270,17 +304,9 @@ class EpisodeRunner:
             stale.decision_note = "Superseded by a retry of the agent run."
             store.put_approval(stale)
 
-        decided = [a for a in store.approvals(ep_id) if a.scope == "graph" and a.status != "pending" and a.interrupt_id]
-        task: Any = graph_task(ep)
-        if decided:
-            # The persisted graph may still be mid-interrupt; hand back the decisions it is waiting for.
-            task = [
-                {"interruptResponse": {"interruptId": a.interrupt_id, "response": {
-                    "decision": "approve" if a.status == "approved" else "reject",
-                    "note": a.decision_note, "edits": a.edits or {}}}}
-                for a in decided
-            ]
-        self._tasks[ep_id] = asyncio.create_task(self._run_graph(ep_id, task, retry_from=graph_task(ep)))
+        # Start from the ordinary task. If the persisted graph turns out to still be paused on an approval, the
+        # SDK rejects a plain string and _run_graph retries with the decisions we already have.
+        self._tasks[ep_id] = asyncio.create_task(self._run_graph(ep_id, graph_task(ep), allow_recovery=True))
 
     async def run_followup(self, ep_id: str) -> None:
         if self.busy(ep_id) or self.busy(ep_id + ":followup"):

@@ -1,5 +1,9 @@
 # Backend audit — correctness, robustness, Strands agent design
 
+> **Status:** this is the original report, kept unedited. Everything it marks BLOCKER has been fixed;
+> see [README.md](README.md) for what changed and what is still open. Line numbers below refer to the
+> tree on 2026-09-08 and have since drifted.
+
 **Audited against:** HEAD `1257c5c` **plus uncommitted working-tree changes**, 2026-09-08 22:25 PDT.
 Uncommitted at audit time: `backend/app/agents/runner.py`, `backend/app/agents/tools.py`, `backend/app/main.py`,
 `backend/app/scheduler.py` (modified) and `backend/app/routes_demo.py`, `backend/scripts/aws_preflight.py` (untracked).

@@ -1,5 +1,9 @@
 # Frontend audit — correctness, demo readiness, IA, polish, a11y
 
+> **Status:** this is the original report, kept unedited. Everything it marks BLOCKER has been fixed;
+> see [README.md](README.md) for what changed and what is still open. Line numbers below refer to the
+> tree on 2026-09-08 and have since drifted.
+
 **Scope:** every file in `frontend/src` (17 files, ~1,750 lines at HEAD) plus `frontend/index.html`, read against the
 backend routes that feed them (`backend/app/main.py`, `routes_memory.py`, `routes_report.py`, `routes_outage.py`,
 `report.py`, `models.py`).
