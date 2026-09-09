@@ -14,6 +14,9 @@ function voiceLabel(c) {
   if (note.includes('pressed 2')) return 'Pressed 2: NEEDS HELP';
   if (note.includes('voice call logged')) return 'Call script logged (console mode)';
   if (c?.channel === 'voice' && c?.status === 'sent') return 'Calling · waiting';
+  return null;
+}
+
 function historyHint(h) {
   const last = h?.last;
   if (!last) return null;
