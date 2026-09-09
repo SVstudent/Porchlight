@@ -5,6 +5,7 @@ import './index.css';
 import Dashboard from './pages/Dashboard.jsx';
 import Checkin from './pages/Checkin.jsx';
 import Roster from './pages/Roster.jsx';
+import Report from './pages/Report.jsx';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
@@ -12,6 +13,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/episodes/:id" element={<Dashboard />} />
+        <Route path="/episodes/:id/report" element={<Report />} />
         <Route path="/roster" element={<Roster />} />
         <Route path="/checkin/:token" element={<Checkin />} />
       </Routes>

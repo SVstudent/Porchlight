@@ -1,4 +1,5 @@
 import { Flame, Users, MapPin, FileText, ClipboardList, RefreshCw, Archive } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import ApprovalCard from './ApprovalCard.jsx';
 import RosterStatus from './RosterStatus.jsx';
 import MapView from './MapView.jsx';
@@ -64,6 +65,7 @@ export default function EpisodePanel({ episode, members, volunteers, resources, 
             <span className="small muted">opened {timeAgo(ep.created_at)}</span>
             <span style={{ flex: 1 }} />
             {['monitoring', 'escalating'].includes(ep.status) ? <button className="btn sm" onClick={() => api.followup(ep.id).then(refresh)} disabled={ep.busy}><RefreshCw size={13} /> Run follow-up now</button> : null}
+            {['monitoring', 'escalating', 'closed'].includes(ep.status) ? <Link className="btn sm" to={`/episodes/${ep.id}/report`} title="Numbers for funders and emergency management"><FileText size={13} /> After-action report</Link> : null}
             {!['closed', 'stood_down', 'failed'].includes(ep.status) ? <button className="btn ghost sm" onClick={() => api.close(ep.id).then(refresh)}><Archive size={13} /> Close</button> : null}
           </div>
           <h2 style={{ marginTop: 8 }}>{h.event_name}</h2>

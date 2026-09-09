@@ -15,6 +15,7 @@ from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+from . import routes_report
 from . import scheduler as sched
 from .agents.model_factory import candidate_names
 from .agents.runner import runner
@@ -371,6 +372,8 @@ def admin_reset() -> dict[str, Any]:
     bus.emit("status", "Runtime data reset by coordinator")
     return {"reset": True}
 
+
+app.include_router(routes_report.router)
 
 # ------------------------------------------------------------------ static frontend (production build)
 

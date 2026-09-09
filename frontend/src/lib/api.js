@@ -39,6 +39,8 @@ export const api = {
   checkin: (token) => req(`/api/checkin/${token}`),
   submitCheckin: (token, body) => req(`/api/checkin/${token}`, { method: 'POST', body: JSON.stringify(body) }),
   reset: () => req('/api/admin/reset', { method: 'POST' }),
+  report: (id) => req(`/api/episodes/${id}/report`),
+  reportNarrative: (id) => req(`/api/episodes/${id}/report/narrative`, { method: 'POST' }),
   importRoster: async (file) => {
     const fd = new FormData();
     fd.append('file', file);
