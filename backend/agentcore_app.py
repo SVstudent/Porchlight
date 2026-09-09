@@ -56,7 +56,11 @@ async def invoke(payload: dict[str, Any]):
 
     if action == "resume":
         ep_id = payload["episode_id"]
-        graph = _graphs.get(ep_id) or build_graph(store.episode(ep_id))
+        ep = store.episode(ep_id)
+        if ep is None:
+            yield {"type": "error", "message": f"unknown episode {ep_id}"}
+            return
+        graph = _graphs.get(ep_id) or build_graph(ep)
         _graphs[ep_id] = graph
         task: Any = [{"interruptResponse": r} for r in payload.get("interrupt_responses", [])]
     else:

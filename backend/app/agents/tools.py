@@ -235,6 +235,13 @@ def dispatch_outreach(tool_context: ToolContext, messages: list[dict], coordinat
     ep_id, ep = _episode(tool_context)
     if ep is None:
         return {"error": "no active episode"}
+    return dispatch_outreach_impl(ep.id, messages, coordinator_note)
+
+
+def dispatch_outreach_impl(episode_id: str, messages: list[dict], coordinator_note: str) -> dict:
+    ep = store.episode(episode_id)
+    if ep is None:
+        return {"error": "no active episode"}
     try:
         plan = OutreachPlan(messages=[OutreachMessage(**m) for m in messages], coordinator_note=coordinator_note)
     except Exception as e:  # noqa: BLE001
@@ -288,6 +295,13 @@ def assign_volunteers(tool_context: ToolContext, assignments: list[dict], recomm
     ep_id, ep = _episode(tool_context)
     if ep is None:
         return {"error": "no active episode"}
+    return assign_volunteers_impl(ep.id, assignments, recommended_resource_ids, gaps)
+
+
+def assign_volunteers_impl(episode_id: str, assignments: list[dict], recommended_resource_ids: list[str], gaps: list[str]) -> dict:
+    ep = store.episode(episode_id)
+    if ep is None:
+        return {"error": "no active episode"}
     try:
         plan = LogisticsPlan(assignments=[VolunteerAssignment(**a) for a in assignments], recommended_resource_ids=recommended_resource_ids, gaps=gaps)
     except Exception as e:  # noqa: BLE001
@@ -326,6 +340,13 @@ def escalate_member(tool_context: ToolContext, member_id: str, action: str, reas
         volunteer_id: required for volunteer_visit
     """
     ep_id, ep = _episode(tool_context)
+    if ep is None:
+        return {"error": "no active episode"}
+    return escalate_member_impl(ep.id, member_id, action, reason, volunteer_id)
+
+
+def escalate_member_impl(episode_id: str, member_id: str, action: str, reason: str, volunteer_id: str = "") -> dict:
+    ep = store.episode(episode_id)
     if ep is None:
         return {"error": "no active episode"}
     m = store.member(member_id)
@@ -375,6 +396,13 @@ def record_coordinator_brief(tool_context: ToolContext, brief: str) -> dict:
         brief: 4-8 short lines, no jargon
     """
     ep_id, ep = _episode(tool_context)
+    if ep is None:
+        return {"error": "no active episode"}
+    return record_coordinator_brief_impl(ep.id, brief)
+
+
+def record_coordinator_brief_impl(episode_id: str, brief: str) -> dict:
+    ep = store.episode(episode_id)
     if ep is None:
         return {"error": "no active episode"}
     store.mutate_episode(ep.id, lambda e: e.stats.__setitem__("brief", brief))

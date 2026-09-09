@@ -85,9 +85,7 @@ class EpisodeRunner:
             if ev.get("node_id") == "assess":
                 store.mutate_episode(ep_id, lambda ep: setattr(ep, "status", "assessing"))
         elif t == "multiagent_node_stream":
-            inner = ev.get("event", {})
-            if "data" in inner and inner["data"]:
-                bus.emit("delta", inner["data"], episode_id=ep_id, agent=ev.get("node_id", ""))
+            pass  # per-token deltas are not published; AuditHook surfaces final assistant text and every tool call
         elif t == "multiagent_node_stop":
             node_id = ev.get("node_id", "")
             nr = ev.get("node_result")

@@ -50,6 +50,9 @@ def _agent_name(agent: Any) -> str:
 class AuditHook(HookProvider):
     """Streams reasoning/tool telemetry to the dashboard and writes tool calls to the episode timeline."""
 
+    def __init__(self) -> None:
+        self._announced: set[str] = set()  # hooks re-run on interrupt resume; announce each tool use once
+
     def register_hooks(self, registry: HookRegistry, **kwargs: Any) -> None:
         registry.add_callback(BeforeModelCallEvent, self.before_model)
         registry.add_callback(AfterModelCallEvent, self.after_model)
@@ -68,6 +71,10 @@ class AuditHook(HookProvider):
         name = event.tool_use.get("name", "?")
         if name in STRUCTURED_OUTPUT_NAMES:
             return
+        tid = event.tool_use.get("toolUseId", "")
+        if tid in self._announced:
+            return
+        self._announced.add(tid)
         ep_id = episode_id_from(event.invocation_state)
         bus.emit("tool_call", f"calling {name}", episode_id=ep_id, agent=_agent_name(event.agent), tool=name, input=event.tool_use.get("input", {}))
 

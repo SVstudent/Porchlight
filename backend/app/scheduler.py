@@ -1,7 +1,9 @@
 """Background jobs: hazard scanning, follow-up cycles, and Telegram reply polling."""
 from __future__ import annotations
 
+import asyncio
 import logging
+from datetime import datetime, timedelta
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
@@ -21,7 +23,7 @@ async def sentinel_job() -> None:
     if not store.get_setting("sentinel_enabled", settings.SENTINEL_ENABLED):
         return
     try:
-        fresh = new_hazards()
+        fresh = await asyncio.to_thread(new_hazards)  # blocking HTTP off the event loop
     except Exception as e:  # noqa: BLE001
         log.warning("sentinel scan failed: %s", e)
         return
@@ -77,7 +79,8 @@ async def telegram_job() -> None:
 
 
 def start() -> None:
-    scheduler.add_job(sentinel_job, "interval", minutes=settings.SENTINEL_INTERVAL_MINUTES, id="sentinel", next_run_time=None)
+    scheduler.add_job(sentinel_job, "interval", minutes=settings.SENTINEL_INTERVAL_MINUTES, id="sentinel",
+                      next_run_time=datetime.now() + timedelta(seconds=20))  # first scan shortly after startup
     scheduler.add_job(followup_job, "interval", minutes=settings.FOLLOWUP_INTERVAL_MINUTES, id="followup")
     scheduler.add_job(telegram_job, "interval", seconds=8, id="telegram")
     scheduler.start()

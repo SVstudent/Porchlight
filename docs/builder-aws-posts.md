@@ -29,7 +29,7 @@ The whole `GraphBuilder` graph stops with `Status.INTERRUPTED`. Our FastAPI laye
 
 What surprised us: editing the tool input inside the hook on resume is enough to let a human rewrite a message the agent drafted, without the agent ever knowing. That is the right amount of human in the loop for a volunteer.
 
-Stack: Strands Agents 1.55, Amazon Bedrock (Claude), AgentCore Runtime entrypoint, FastAPI, React. Repo: <link>.
+Stack: Strands Agents 1.55, Amazon Bedrock (Claude), AgentCore Runtime entrypoint, FastAPI, React. Repo: <link>. [FINALIZE AFTER FIRST BEDROCK RUN.]
 
 ---
 
@@ -51,6 +51,6 @@ We built Porchlight on a 2017 laptop with no AWS credentials for the first day. 
 ModelRouter(models=[BedrockModel(model_id=..., region_name=...), AnthropicModel(...), OllamaModel(host=..., model_id="qwen2.5:3b")])
 ```
 
-The graph, hooks, interrupts, session persistence and structured output all behaved identically on the 3B local model (slowly) and on Claude through Bedrock (fast). Our smoke test runs the exact features we depend on against whatever provider is configured. Deploying the same graph to Amazon Bedrock AgentCore Runtime is a `BedrockAgentCoreApp` entrypoint that streams graph events and resumes on interrupt responses.
+Our smoke tests run the exact Strands features we depend on (interrupt, resume from a fresh Graph built from the session, coordinator edits reaching the tool, structured output) against whatever provider is configured; they pass on the 3B local model, slowly. The full five-agent pipeline needs a real model: the 3B model on a laptop CPU timed out on triage. [FINALIZE AFTER FIRST BEDROCK RUN: add timings and a screenshot of the decision card.] Deploying the same graph to Amazon Bedrock AgentCore Runtime is a `BedrockAgentCoreApp` entrypoint that streams graph events and resumes on interrupt responses.
 
 Gotchas we hit: the Python AgentCore starter toolkit is deprecated in favour of the `@aws/agentcore` npm CLI; nested Pydantic tool arguments confuse small local models, so we flatten action-tool inputs to lists of dicts and validate inside the tool; and never let an SSE endpoint buffer behind nginx (`proxy_buffering off`).
