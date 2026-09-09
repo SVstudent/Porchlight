@@ -131,9 +131,11 @@ The runtime entrypoint streams graph events and interrupt payloads; the FastAPI 
 ## Testing
 
 ```bash
-cd backend && python -m tests.smoke_strands
+cd backend
+python -m tests.test_deterministic   # no model, no network: alert classification, fixture parsing, atomic store updates
+python -m tests.smoke_strands        # needs a model provider
 ```
-Exercises, on the configured model: a `BeforeToolCallEvent` interrupt, resume from a `FileSessionManager` session in a fresh `Agent`, tool execution after approval, `structured_output_model`, and a `Graph` whose node interrupts and then resumes to completion.
+The smoke test exercises, on the configured model: a `BeforeToolCallEvent` interrupt, resume from a `FileSessionManager` session in a fresh `Agent`, tool execution after approval, `structured_output_model`, and a `Graph` whose node interrupts and then resumes to completion.
 
 ## Safety and privacy
 
