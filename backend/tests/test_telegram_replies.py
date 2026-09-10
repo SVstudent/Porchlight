@@ -46,10 +46,50 @@ def test_a_neighbor_with_their_own_chat_id_is_matched_exactly():
     assert note == "", "an exact match needs no caveat"
 
 
+def test_only_the_designated_member_is_really_messaged():
+    """A demo has one phone. Twelve neighbours must not become twelve messages on it."""
+    setup()
+    from app.channels.registry import live_for
+    settings.SEND_MODE = "live"
+    settings.DEMO_LIVE_MEMBER_ID = "mem_rosa"
+    try:
+        assert live_for(store.member("mem_rosa")) is True, "the designated neighbour must really be messaged"
+        assert live_for(store.member("mem_walter")) is False, "everyone else must fall back to the activity feed"
+    finally:
+        settings.SEND_MODE = "console"
+        settings.DEMO_LIVE_MEMBER_ID = ""
+
+
+def test_with_no_designated_member_everyone_is_live():
+    setup()
+    from app.channels.registry import live_for
+    settings.SEND_MODE = "live"
+    settings.DEMO_LIVE_MEMBER_ID = ""
+    try:
+        assert live_for(store.member("mem_rosa")) is True
+        assert live_for(store.member("mem_walter")) is True
+    finally:
+        settings.SEND_MODE = "console"
+
+
+def test_the_designated_member_owns_the_override_chat():
+    """One chat, one neighbour: a reply from it is unambiguously theirs."""
+    setup()
+    settings.DEMO_OVERRIDE_TELEGRAM_CHAT_ID = MY_CHAT
+    settings.DEMO_LIVE_MEMBER_ID = "mem_rosa"
+    try:
+        member, note = scheduler._member_for_reply(MY_CHAT, "ok")
+        assert member and member.id == "mem_rosa", "the designated neighbour owns that chat"
+        assert note == "", "no guesswork means no caveat"
+    finally:
+        settings.DEMO_LIVE_MEMBER_ID = ""
+
+
 def test_the_demo_override_matches_the_newest_waiting_checkin():
     """Every message went to one chat, so a bare 'ok' answers the most recent one still waiting."""
     setup()
     settings.DEMO_OVERRIDE_TELEGRAM_CHAT_ID = MY_CHAT
+    settings.DEMO_LIVE_MEMBER_ID = ""
     member, note = scheduler._member_for_reply(MY_CHAT, "ok")
     assert member and member.id == "mem_walter", f"expected the newest check-in, got {member and member.id}"
     assert "demo override" in note, "the note must record that this was not a real reply from that person"

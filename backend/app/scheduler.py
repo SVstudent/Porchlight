@@ -80,6 +80,12 @@ def _member_for_reply(chat_id: str, text: str) -> tuple[Any, str]:
     if not override or chat_id != str(override):
         return None, ""
 
+    # When one member is designated as the live one, that chat is unambiguously them.
+    only = settings.DEMO_LIVE_MEMBER_ID
+    if only:
+        m = store.member(only)
+        return (m, "") if m else (None, "")
+
     waiting = [c for c in store.checkins()
                if c.status in ("sent", "delivered") and c.channel == "telegram"
                and (ep := store.episode(c.episode_id)) and ep.status in ("monitoring", "escalating")]

@@ -92,9 +92,19 @@ def test_twiml_builder():
 
 
 def test_console_delivery_logs_script():
+    """Practice mode writes the call script to the feed instead of dialling.
+
+    SEND_MODE is forced here rather than inherited from backend/.env, so a developer who has switched a
+    channel live does not change what this test is asserting.
+    """
     bettie = store.member("mem_bettie") or MEMBERS[0]
-    res = deliver(bettie, "Bettie, stay cool. Check in: https://porchlight.example.org/checkin/x", preferred="voice",
-                  meta={"token": "x", "language": "en", "call_script": "Hi Bettie, please stay cool."})
+    previous = settings.SEND_MODE
+    settings.SEND_MODE = "console"
+    try:
+        res = deliver(bettie, "Bettie, stay cool. Check in: https://porchlight.example.org/checkin/x", preferred="voice",
+                      meta={"token": "x", "language": "en", "call_script": "Hi Bettie, please stay cool."})
+    finally:
+        settings.SEND_MODE = previous
     assert res.ok and res.channel == "console" and res.extra["requested_channel"] == "voice"
     assert "would say" in res.detail and "Hi Bettie, please stay cool." in res.detail and "http" not in res.detail
 

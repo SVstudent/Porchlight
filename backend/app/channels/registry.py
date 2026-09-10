@@ -38,11 +38,25 @@ def _address(member: Member, channel: str) -> str:
     return ""
 
 
+def live_for(member: Member) -> bool:
+    """Whether this member's messages should really be sent right now.
+
+    DEMO_LIVE_MEMBER_ID exists because a demo has one phone and the roster has a dozen neighbours. When it
+    names a member, only that member is contacted for real and the rest are logged, so the coordinator's
+    own phone shows one neighbour's conversation rather than the whole roster's.
+    """
+    if settings.SEND_MODE != "live":
+        return False
+    only = settings.DEMO_LIVE_MEMBER_ID
+    return not only or member.id == only
+
+
 def deliver(member: Member, body: str, preferred: str | None = None, *, subject: str = "", meta: dict[str, Any] | None = None) -> DeliveryResult:
     """Try the preferred channel, then any other configured channel the member has an address for."""
     first = preferred or member.preferred_channel
     order = [first] + [c for c in ("sms", "telegram", "email") if c != first]
-    live_voice = settings.SEND_MODE == "live" and _PROVIDERS["voice"].configured()
+    sending = live_for(member)
+    live_voice = sending and _PROVIDERS["voice"].configured()
     if not live_voice:  # no voice line configured: the call script goes out as a text instead
         order = ["sms" if c == "voice" else c for c in order]
     order = list(dict.fromkeys(order))
@@ -52,13 +66,13 @@ def deliver(member: Member, body: str, preferred: str | None = None, *, subject:
         addr = _address(member, ch)
         if not provider or not addr:
             continue
-        if settings.SEND_MODE == "live" and provider.configured():
+        if sending and provider.configured():
             res = provider.send(addr, body, subject=subject, meta=meta)
             tried.append(f"{ch}:{'ok' if res.ok else 'fail'}")
             if res.ok:
                 return res
             log.warning("delivery via %s failed for %s: %s", ch, member.name, res.detail)
-    if settings.SEND_MODE != "live":
+    if not sending:
         addr = _address(member, order[0]) or member.name
         if first == "voice":
             m = meta or {}

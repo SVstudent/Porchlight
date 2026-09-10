@@ -173,7 +173,9 @@ label.check { display: flex; align-items: center; gap: 8px; font-size: 13px; }
 .mtile .why { font-size: 11px; color: var(--ink-2); }
 
 .map { height: 300px; border-radius: 8px; overflow: hidden; border: 1px solid var(--line); }
-.leaflet-container { font: inherit; }
+.maplibregl-map { font: inherit; }
+.maplibregl-popup-content { font: inherit; font-size: 12px; border-radius: 8px; padding: 8px 10px; }
+.maplibregl-ctrl-attrib { font-size: 10px; }
 
 .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 .kpi { padding: 8px 10px; border-radius: 8px; background: var(--surface-2); }

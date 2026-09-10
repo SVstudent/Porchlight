@@ -54,6 +54,7 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--send-only", action="store_true", help="just send a test message")
     ap.add_argument("--no-write", action="store_true", help="do not modify backend/.env")
+    ap.add_argument("--minutes", type=float, default=3, help="how long to wait for your message")
     args = ap.parse_args()
 
     # ---------------------------------------------------------------- token
@@ -85,11 +86,11 @@ def main() -> int:
     if not args.send_only:
         # Telegram will not let a bot message someone who has never messaged it first. That is a spam
         # guard, not a bug, and it is why this step cannot be skipped.
-        print(f"{INFO} now open Telegram, find @{handle}, and send it any message (\"hi\" is fine).")
-        print(f"{INFO} waiting up to 3 minutes…")
+        print(f"{INFO} now open Telegram, find @{handle}, and send it any message (\"hi\" is fine).", flush=True)
+        print(f"{INFO} waiting up to {args.minutes:g} minutes…", flush=True)
         found = None
         offset = None
-        deadline = time.time() + 180
+        deadline = time.time() + args.minutes * 60
         while time.time() < deadline and not found:
             for u in get_updates(offset):
                 offset = u["update_id"] + 1

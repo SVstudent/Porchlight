@@ -59,6 +59,10 @@ class Settings:
     # Optional: redirect every outbound message to one number/chat/email for demos
     DEMO_OVERRIDE_PHONE = os.getenv("DEMO_OVERRIDE_PHONE", "")
     DEMO_OVERRIDE_TELEGRAM_CHAT_ID = os.getenv("DEMO_OVERRIDE_TELEGRAM_CHAT_ID", "")
+    # In a demo you hold one phone, but the roster has a dozen neighbours. Naming one member here makes
+    # that member the only one whose messages really send; everyone else is logged to the activity feed as
+    # in practice mode. Without it, a twelve-person dispatch arrives as twelve messages on one phone.
+    DEMO_LIVE_MEMBER_ID = os.getenv("DEMO_LIVE_MEMBER_ID", "")
     DEMO_OVERRIDE_EMAIL = os.getenv("DEMO_OVERRIDE_EMAIL", "")
 
     # --- policy ---
