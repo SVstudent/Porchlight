@@ -58,9 +58,19 @@ async def _sentinel_scan() -> None:
 
 
 async def followup_job() -> None:
+    """Wake the follow-up agent for episodes that actually have someone to follow up on.
+
+    An episode reaches "monitoring" whether or not any message went out — a run that was declined, or that
+    failed before outreach, sits there with no check-ins. Running the agent on those costs a model call
+    every cycle and can only conclude that there is nothing to do.
+    """
     for ep in store.episodes():
-        if ep.status in ("monitoring", "escalating"):
-            await runner.run_followup(ep.id)
+        if ep.status not in ("monitoring", "escalating"):
+            continue
+        waiting = [c for c in store.checkins(ep.id) if c.status in ("sent", "delivered")]
+        if not waiting:
+            continue
+        await runner.run_followup(ep.id)
 
 
 def _member_for_reply(chat_id: str, text: str) -> tuple[Any, str]:

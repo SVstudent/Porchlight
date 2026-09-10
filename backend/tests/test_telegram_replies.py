@@ -120,9 +120,40 @@ def test_nothing_waiting_means_nothing_matched():
     assert member is None, "with every check-in answered there is nothing left to attribute a reply to"
 
 
+def test_followup_skips_episodes_with_nobody_waiting():
+    """An episode reaches monitoring whether or not a message ever went out.
+
+    Running the follow-up agent on one with no check-ins costs a model call every cycle and can only
+    conclude there is nothing to do, so those are skipped.
+    """
+    import asyncio
+
+    ep = setup()
+    woken: list[str] = []
+
+    class FakeRunner:
+        async def run_followup(self, ep_id):
+            woken.append(ep_id)
+
+    real = scheduler.runner
+    scheduler.runner = FakeRunner()
+    try:
+        asyncio.run(scheduler.followup_job())
+        assert ep.id in woken, "an episode with people waiting must be followed up"
+
+        for c in store.checkins(ep.id):          # everyone has now answered
+            store.mutate_checkin(c.token, lambda x: setattr(x, "status", "ok"))
+        woken.clear()
+        asyncio.run(scheduler.followup_job())
+        assert woken == [], f"nothing is waiting, so nothing should be woken: {woken}"
+    finally:
+        scheduler.runner = real
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_") and callable(fn):
             fn()
             print("ok", name)
     print("ALL TELEGRAM REPLY TESTS PASSED")
+
