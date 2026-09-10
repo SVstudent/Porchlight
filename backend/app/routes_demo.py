@@ -96,6 +96,39 @@ async def retry_episode(episode_id: str) -> dict[str, Any]:
 _base_probe: dict[str, Any] = {"at": 0.0, "ok": False, "detail": "not checked yet"}
 
 
+_model_probe: dict[str, Any] = {"at": 0.0, "ok": False, "detail": "not checked yet"}
+
+
+def probe_model() -> tuple[bool, str]:
+    """Ask the configured provider for one short completion, from inside the server process.
+
+    Whether a model answers from a developer's shell says nothing about whether it answers from the
+    process that actually runs the agents, which is the one that matters. This checks the latter.
+    """
+    import time
+
+    now = time.time()
+    if now - _model_probe["at"] < 120:
+        return _model_probe["ok"], _model_probe["detail"]
+
+    from .agents.model_factory import build_model, candidate_names
+
+    names = ", ".join(candidate_names()) or "none configured"
+    try:
+        from strands import Agent
+
+        t0 = time.time()
+        reply = str(Agent(model=build_model(), callback_handler=None)("Reply with the single word: ready"))
+        ok = bool(reply.strip())
+        detail = (f"{names} answered in {time.time() - t0:.0f}s" if ok
+                  else f"{names} returned an empty reply")
+    except Exception as e:  # noqa: BLE001
+        ok, detail = False, f"{names} could not be reached: {str(e)[:120]}"
+
+    _model_probe.update({"at": now, "ok": ok, "detail": detail})
+    return ok, detail
+
+
 def probe_public_base() -> tuple[bool, str]:
     """Fetch PUBLIC_BASE_URL and report whether Porchlight is what answers."""
     import time
@@ -136,6 +169,7 @@ def readiness() -> dict[str, Any]:
     live_channels = [k for k, v in channels.items() if v and k != "console"]
 
     base_ok, base_detail = probe_public_base()
+    model_ok, model_detail = probe_model()
     local_base = settings.PUBLIC_BASE_URL.startswith(("http://localhost", "http://127.0.0.1"))
 
     checks = [
@@ -144,6 +178,12 @@ def readiness() -> dict[str, Any]:
             "label": "A model provider is configured",
             "ok": bool(candidate_names()),
             "detail": ", ".join(candidate_names()) or "none — set MODEL_PROVIDER and credentials in backend/.env",
+        },
+        {
+            "id": "model_reachable",
+            "label": "The agents can actually reach the model",
+            "ok": model_ok,
+            "detail": model_detail,
         },
         {
             "id": "roster",

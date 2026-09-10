@@ -49,7 +49,7 @@ export default function Demo() {
   };
 
   const checks = readiness?.checks || [];
-  const blocking = checks.filter((c) => !c.ok && ['model', 'roster', 'public_url_serves'].includes(c.id));
+  const blocking = checks.filter((c) => !c.ok && ['model', 'model_reachable', 'roster', 'public_url_serves'].includes(c.id));
   const unmet = checks.filter((c) => !c.ok);
 
   return (
