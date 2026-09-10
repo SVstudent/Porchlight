@@ -31,14 +31,19 @@ class TelegramProvider(ChannelProvider):
             return DeliveryResult(ok=False, channel="telegram", detail=f"telegram error: {e}")
 
 
-def get_updates(offset: int | None = None) -> list[dict[str, Any]]:
-    """Long-poll new messages (used by the check-in poller to capture replies)."""
+def get_updates(offset: int | None = None, wait_s: int = 0) -> list[dict[str, Any]]:
+    """Fetch new messages.
+
+    With wait_s > 0 this is a long poll: Telegram holds the connection open until something arrives, so a
+    neighbour's reply is picked up in about a second instead of waiting for the next scheduled tick. That
+    is as close to a push as the Bot API offers without exposing a public webhook URL.
+    """
     if not settings.TELEGRAM_BOT_TOKEN:
         return []
-    params: dict[str, Any] = {"timeout": 0}
+    params: dict[str, Any] = {"timeout": wait_s}
     if offset is not None:
         params["offset"] = offset
-    with httpx.Client(timeout=15.0) as c:
+    with httpx.Client(timeout=wait_s + 15.0) as c:
         r = c.get(f"{_base()}/getUpdates", params=params)
         j = r.json()
     return j.get("result", []) if j.get("ok") else []

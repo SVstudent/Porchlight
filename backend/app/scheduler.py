@@ -18,6 +18,7 @@ from .store import store
 
 log = logging.getLogger("porchlight.scheduler")
 _scan_lock = asyncio.Lock()  # the manual endpoint calls sentinel_job directly, outside the scheduler
+_telegram_task: asyncio.Task | None = None
 scheduler = AsyncIOScheduler(
     job_defaults={"coalesce": True, "max_instances": 1, "misfire_grace_time": 300}
 )
@@ -102,13 +103,53 @@ def _member_for_reply(chat_id: str, text: str) -> tuple[Any, str]:
     return member, "  (demo override: replies from one chat are matched to the newest waiting check-in)"
 
 
+async def _answer_in_words(member: Any, text: str) -> None:
+    """A neighbour wrote a sentence rather than tapping a button. Read it, answer them, record it."""
+    from .agents import responder
+    from .channels.registry import deliver
+
+    waiting = [c for c in store.checkins()
+               if c.member_id == member.id and c.status in ("sent", "delivered")
+               and (ep := store.episode(c.episode_id)) and ep.status in ("monitoring", "escalating")]
+    if not waiting:
+        return
+    checkin = max(waiting, key=lambda c: c.sent_at)
+    ep = store.episode(checkin.episode_id)
+
+    bus.emit("checkin", f"{member.name} wrote back; reading their message…",
+             episode_id=ep.id, member_id=member.id, agent="responder", said=text[:200])
+    outcome = await responder.respond(ep, member, text)
+    responder.record(ep, member, checkin.token, text, outcome)
+    res = await asyncio.to_thread(deliver, member, outcome["reply"], "telegram")
+    if not res.ok:
+        log.warning("could not answer %s: %s", member.name, res.detail)
+
+
+async def telegram_listener() -> None:
+    """Hold a long poll open against Telegram for as long as the server runs.
+
+    A long poll does not fit a scheduled job: the job outlives its own interval, so APScheduler spends the
+    time refusing to start overlapping copies. A single loop is both simpler and what the Bot API expects.
+    """
+    log.info("telegram listener started")
+    while True:
+        try:
+            await telegram_job()
+        except asyncio.CancelledError:
+            log.info("telegram listener stopped")
+            raise
+        except Exception as e:  # noqa: BLE001 — a bad poll must never end the loop
+            log.warning("telegram listener error: %s", e)
+            await asyncio.sleep(5)
+
+
 async def telegram_job() -> None:
     """Capture OK / HELP replies from Telegram and record them as check-ins."""
     if not settings.TELEGRAM_BOT_TOKEN:
         return
     offset = store.get_setting("telegram_offset")
     try:
-        updates = await asyncio.to_thread(get_updates, offset)
+        updates = await asyncio.to_thread(get_updates, offset, settings.TELEGRAM_POLL_WAIT_S)
     except Exception as e:  # noqa: BLE001
         log.debug("telegram poll failed: %s", e)
         return
@@ -119,12 +160,15 @@ async def telegram_job() -> None:
         text = (msg.get("text") or "").strip().lower()
         if not chat_id or not text:
             continue
-        status = ("ok" if text in ("ok", "okay", "im ok", "i'm ok", "bien", "estoy bien", "si", "sí", "yes", "1")
-                  else "needs_help" if any(k in text for k in ("help", "ayuda", "no", "2")) else "")
-        if not status:
-            continue
+        raw = (msg.get("text") or "").strip()
         member, note = _member_for_reply(chat_id, text)
         if not member:
+            continue
+        # A one-word answer is unambiguous; anything else is a sentence the responder agent should read.
+        status = ("ok" if text in ("ok", "okay", "im ok", "i'm ok", "bien", "estoy bien", "si", "sí", "yes", "1")
+                  else "needs_help" if text in ("help", "ayuda", "no", "2") else "")
+        if not status:
+            await _answer_in_words(member, raw)
             continue
         for c in store.checkins():
             ep = store.episode(c.episode_id)
@@ -147,5 +191,14 @@ def start() -> None:
     except (TypeError, ValueError):
         followup_minutes = settings.FOLLOWUP_INTERVAL_MINUTES
     scheduler.add_job(followup_job, "interval", minutes=followup_minutes, id="followup")
-    scheduler.add_job(telegram_job, "interval", seconds=8, id="telegram")
     scheduler.start()
+    if settings.TELEGRAM_BOT_TOKEN:
+        global _telegram_task
+        _telegram_task = asyncio.create_task(telegram_listener())
+
+
+def stop() -> None:
+    if _telegram_task is not None:
+        _telegram_task.cancel()
+    if scheduler.running:
+        scheduler.shutdown(wait=False)

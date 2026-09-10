@@ -78,7 +78,7 @@ def _setup_telemetry() -> None:
 @app.on_event("shutdown")
 async def _shutdown() -> None:
     try:
-        sched.scheduler.shutdown(wait=False)
+        sched.stop()
     except Exception:  # noqa: BLE001
         pass
 

@@ -28,7 +28,7 @@ class Settings:
     PUBLIC_BASE_URL = os.getenv("PUBLIC_BASE_URL", "http://localhost:5173").rstrip("/")
 
     # --- model provider ---
-    # auto | bedrock | anthropic
+    # auto | bedrock | anthropic | tokenrouter
     MODEL_PROVIDER = os.getenv("MODEL_PROVIDER", "auto").lower()
     BEDROCK_MODEL_ID = os.getenv("BEDROCK_MODEL_ID", "global.anthropic.claude-sonnet-4-6")
     AWS_REGION = os.getenv("AWS_REGION", os.getenv("AWS_DEFAULT_REGION", "us-east-1"))
@@ -53,6 +53,9 @@ class Settings:
     TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN", "")
     TWILIO_FROM_NUMBER = os.getenv("TWILIO_FROM_NUMBER", "")
     TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
+    # Seconds Telegram holds the poll open. Above zero a reply arrives in about a second rather than
+    # waiting for the next tick; zero returns immediately and is what the tests use.
+    TELEGRAM_POLL_WAIT_S = _int("TELEGRAM_POLL_WAIT_S", 25)
     SES_FROM_EMAIL = os.getenv("SES_FROM_EMAIL", "")
     # Voice webhooks: skip Twilio signature validation (local testing only)
     VOICE_SKIP_SIGNATURE = _bool("VOICE_SKIP_SIGNATURE", False)
@@ -63,6 +66,14 @@ class Settings:
     # that member the only one whose messages really send; everyone else is logged to the activity feed as
     # in practice mode. Without it, a twelve-person dispatch arrives as twelve messages on one phone.
     DEMO_LIVE_MEMBER_ID = os.getenv("DEMO_LIVE_MEMBER_ID", "")
+
+    # TokenRouter: one OpenAI-compatible endpoint in front of many providers.
+    TOKENROUTER_API_KEY = os.getenv("TOKENROUTER_API_KEY", "")
+    TOKENROUTER_BASE_URL = os.getenv("TOKENROUTER_BASE_URL", "https://api.tokenrouter.com/v1")
+    TOKENROUTER_MODEL_ID = os.getenv("TOKENROUTER_MODEL_ID", "z-ai/glm-5.3-free")
+    # GLM-5.3 reasons before it answers. Left alone it spends 45 seconds thinking about a two-line reply to a
+    # neighbour, so ask for the least reasoning that still produces a usable answer.
+    TOKENROUTER_REASONING_EFFORT = os.getenv("TOKENROUTER_REASONING_EFFORT", "minimal")
     DEMO_OVERRIDE_EMAIL = os.getenv("DEMO_OVERRIDE_EMAIL", "")
 
     # --- policy ---

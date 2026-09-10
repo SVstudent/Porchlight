@@ -1,7 +1,7 @@
 """Build the Strands model for every agent.
 
-Primary: Amazon Bedrock. Fallbacks (via strands ModelRouter) let the same code run on the Anthropic API or a
-Anthropic API key as a fallback when Bedrock is not reachable.
+Primary: Amazon Bedrock. Fallbacks (via strands ModelRouter) let the same code run on the Anthropic API or
+on TokenRouter, an OpenAI-compatible gateway, when Bedrock is not reachable.
 """
 from __future__ import annotations
 
@@ -57,6 +57,20 @@ def _anthropic():
     )
 
 
+def _tokenrouter():
+    """TokenRouter speaks the OpenAI wire format, so the OpenAI adapter drives it with a different base URL."""
+    from strands.models.openai import OpenAIModel
+
+    params: dict[str, Any] = {"temperature": settings.MODEL_TEMPERATURE, "max_tokens": 2048}
+    if settings.TOKENROUTER_REASONING_EFFORT:
+        params["reasoning_effort"] = settings.TOKENROUTER_REASONING_EFFORT
+    return OpenAIModel(
+        client_args={"api_key": settings.TOKENROUTER_API_KEY, "base_url": settings.TOKENROUTER_BASE_URL},
+        model_id=settings.TOKENROUTER_MODEL_ID,
+        params=params,
+    )
+
+
 def candidate_names() -> list[str]:
     names: list[str] = []
     p = settings.MODEL_PROVIDER
@@ -64,6 +78,8 @@ def candidate_names() -> list[str]:
         names.append(f"bedrock:{settings.BEDROCK_MODEL_ID}")
     if p in ("anthropic", "auto") and settings.ANTHROPIC_API_KEY:
         names.append(f"anthropic:{settings.ANTHROPIC_MODEL_ID}")
+    if p in ("tokenrouter", "auto") and settings.TOKENROUTER_API_KEY:
+        names.append(f"tokenrouter:{settings.TOKENROUTER_MODEL_ID}")
     return names
 
 
@@ -74,9 +90,11 @@ def build_model() -> Any:
         candidates.append(_bedrock())
     if p in ("anthropic", "auto") and settings.ANTHROPIC_API_KEY:
         candidates.append(_anthropic())
+    if p in ("tokenrouter", "auto") and settings.TOKENROUTER_API_KEY:
+        candidates.append(_tokenrouter())
     if not candidates:
-        raise RuntimeError("No model provider configured. Set AWS credentials for Bedrock, "
-                           "or ANTHROPIC_API_KEY, in backend/.env")
+        raise RuntimeError("No model provider configured. Set AWS credentials for Bedrock, or "
+                           "ANTHROPIC_API_KEY, or TOKENROUTER_API_KEY, in backend/.env")
     if len(candidates) == 1:
         log.info("model provider: %s", candidate_names()[0])
         return candidates[0]
