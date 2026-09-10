@@ -4,6 +4,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from datetime import datetime, timedelta
+from typing import Any
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
@@ -61,6 +62,40 @@ async def followup_job() -> None:
             await runner.run_followup(ep.id)
 
 
+def _member_for_reply(chat_id: str, text: str) -> tuple[Any, str]:
+    """Work out which neighbour a Telegram reply is answering for.
+
+    Normally each neighbour has their own chat id and the match is exact. During a demo every outbound
+    message is redirected to one chat by DEMO_OVERRIDE_TELEGRAM_CHAT_ID, so replies from that chat cannot
+    be told apart by sender. In that case the reply answers the neighbour named in the text if there is
+    one ("ok rosa"), and otherwise the most recent check-in still waiting for an answer. The check-in note
+    records that the attribution came from the override, so nothing later reads as a real reply from that
+    person when it was not.
+    """
+    exact = next((m for m in store.members() if m.telegram_chat_id and m.telegram_chat_id == chat_id), None)
+    if exact:
+        return exact, ""
+
+    override = settings.DEMO_OVERRIDE_TELEGRAM_CHAT_ID
+    if not override or chat_id != str(override):
+        return None, ""
+
+    waiting = [c for c in store.checkins()
+               if c.status in ("sent", "delivered") and c.channel == "telegram"
+               and (ep := store.episode(c.episode_id)) and ep.status in ("monitoring", "escalating")]
+    if not waiting:
+        return None, ""
+
+    by_id = {m.id: m for m in store.members()}
+    named = [c for c in waiting
+             if (m := by_id.get(c.member_id)) and m.name.split()[0].lower() in text]
+    chosen = max(named or waiting, key=lambda c: c.sent_at)
+    member = by_id.get(chosen.member_id)
+    if not member:
+        return None, ""
+    return member, "  (demo override: replies from one chat are matched to the newest waiting check-in)"
+
+
 async def telegram_job() -> None:
     """Capture OK / HELP replies from Telegram and record them as check-ins."""
     if not settings.TELEGRAM_BOT_TOKEN:
@@ -78,22 +113,24 @@ async def telegram_job() -> None:
         text = (msg.get("text") or "").strip().lower()
         if not chat_id or not text:
             continue
-        member = next((m for m in store.members() if m.telegram_chat_id == chat_id), None)
-        if not member:
-            continue
-        status = "ok" if text in ("ok", "okay", "im ok", "i'm ok", "bien", "estoy bien", "si", "sí", "yes", "1") else "needs_help" if any(k in text for k in ("help", "ayuda", "no", "2")) else ""
+        status = ("ok" if text in ("ok", "okay", "im ok", "i'm ok", "bien", "estoy bien", "si", "sí", "yes", "1")
+                  else "needs_help" if any(k in text for k in ("help", "ayuda", "no", "2")) else "")
         if not status:
+            continue
+        member, note = _member_for_reply(chat_id, text)
+        if not member:
             continue
         for c in store.checkins():
             ep = store.episode(c.episode_id)
             if c.member_id == member.id and ep and ep.status in ("monitoring", "escalating") and c.status in ("sent", "delivered"):
-                def _reply(x, _s=status, _t=text):
+                def _reply(x, _s=status, _t=text, _n=note):
                     x.status = _s
                     x.responded_at = now_iso()
-                    x.note = f"telegram reply: {_t[:80]}"
+                    x.note = f"telegram reply: {_t[:80]}{_n}"
 
                 store.mutate_checkin(c.token, _reply)
                 bus.emit("checkin", f"{member.name} replied via Telegram: {status.replace('_', ' ')}", episode_id=ep.id, member_id=member.id, status=status)
+                break
 
 
 def start() -> None:
