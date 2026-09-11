@@ -101,6 +101,25 @@ class AuditHook(HookProvider):
             bus.emit("text", " ".join(texts).strip()[:1200], agent=_agent_name(event.agent))
 
 
+def _fingerprint(name: str, inp: dict[str, Any]) -> str:
+    """A stable identity for one proposed action, so a repeat of it can be recognised."""
+    try:
+        return name + "|" + json.dumps(inp, sort_keys=True, default=str)
+    except Exception:  # noqa: BLE001
+        return name + "|" + str(inp)
+
+
+def _already_decided(ep_id: str, name: str, inp: dict[str, Any]) -> str | None:
+    """The title of an identical action the coordinator has already approved in this episode, if any."""
+    if not ep_id:
+        return None
+    fp = _fingerprint(name, inp)
+    for a in store.approvals(ep_id):
+        if a.status == "approved" and a.payload.get("_fingerprint") == fp:
+            return a.title
+    return None
+
+
 def _describe(name: str, inp: dict[str, Any]) -> tuple[str, str, str]:
     """(kind, title, summary) for the approval card."""
     if name == "dispatch_outreach":
@@ -142,8 +161,18 @@ class ApprovalGateHook(HookProvider):
             bus.emit("policy", f"Volunteer visit auto-approved by standing policy for {inp.get('member_id')}", episode_id=ep_id, agent=_agent_name(event.agent))
             return
 
+        # An agent can call the same action twice in a run — a retry, or a second pass it judged
+        # necessary. Asking the coordinator to approve the identical dispatch again is noise at best and,
+        # if they approve it, a second set of messages to the same neighbours.
+        already = _already_decided(ep_id, name, inp)
+        if already is not None:
+            bus.emit("policy", f"{already} was already approved in this episode; not asking again",
+                     episode_id=ep_id, agent=_agent_name(event.agent))
+            return
+
         kind, title, summary = _describe(name, inp)
-        reason = {"kind": kind, "title": title, "summary": summary, "tool": name, "payload": inp,
+        reason = {"kind": kind, "title": title, "summary": summary, "tool": name,
+                  "payload": {**inp, "_fingerprint": _fingerprint(name, inp)},
                   "episode_id": ep_id, "agent": _agent_name(event.agent)}
         response = event.interrupt(APPROVAL_INTERRUPT, reason=reason)
 
