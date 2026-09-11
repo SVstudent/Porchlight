@@ -124,7 +124,7 @@ Model access is the most common blocker. Before the first run, confirm your acco
 
 ```bash
 aws bedrock list-foundation-models --region us-east-1 --by-provider anthropic --query 'modelSummaries[].modelId'
-python -c "from strands import Agent; print(Agent(model='global.anthropic.claude-sonnet-4-6', callback_handler=None)('Say ready.'))"
+python -c "from strands import Agent; print(Agent(model='amazon.nova-pro-v1:0', callback_handler=None)('Say ready.'))"
 ```
 If the model id is not enabled for your account, request access in the Bedrock console (Model access) or set `BEDROCK_MODEL_ID` to one that is.
 

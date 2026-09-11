@@ -33,14 +33,14 @@ ENV_PATH = BACKEND / ".env"
 
 # Preference order: newest and cheapest-capable first. The first id the account can invoke wins.
 PREFERRED = [
+    # Amazon's own models first: no per-account use case form stands between a new account and a working
+    # demo, and Nova answers a graph node in about a second.
+    "amazon.nova-pro-v1:0",
+    "amazon.nova-lite-v1:0",
+    # Anthropic models are a drop-in upgrade once the use case form for the account is approved.
     "global.anthropic.claude-sonnet-4-6",
     "us.anthropic.claude-sonnet-4-6",
-    "anthropic.claude-sonnet-4-6",
-    "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
     "global.anthropic.claude-haiku-4-5",
-    "us.anthropic.claude-haiku-4-5-20251001-v1:0",
-    "us.anthropic.claude-3-5-sonnet-20241022-v2:0",
-    "anthropic.claude-3-5-sonnet-20241022-v2:0",
 ]
 
 OK, WARN, BAD = "PASS", "WARN", "FAIL"
@@ -171,9 +171,9 @@ def pick_model(available: list[str]) -> str | None:
 
 ANTHROPIC_FORM = (
     "Anthropic models on Bedrock need a one-time use case form for this account.\n"
-    "      Open the Bedrock console -> Model access -> Anthropic -> submit the use case details,\n"
-    "      then wait about 15 minutes. Amazon Nova models work without it, so Porchlight can run on\n"
-    "      Bedrock in the meantime: set BEDROCK_MODEL_ID=amazon.nova-pro-v1:0")
+    "      This is optional: Porchlight runs on Amazon Nova, which needs no form. To use Claude instead,\n"
+    "      open the Bedrock console -> Model access -> Anthropic, submit the use case details, wait about\n"
+    "      fifteen minutes, then set BEDROCK_MODEL_ID to the Anthropic model you want.")
 
 
 def explain_invoke_failure(err: str) -> str:

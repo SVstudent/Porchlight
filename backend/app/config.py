@@ -30,7 +30,10 @@ class Settings:
     # --- model provider ---
     # auto | bedrock | anthropic | tokenrouter
     MODEL_PROVIDER = os.getenv("MODEL_PROVIDER", "auto").lower()
-    BEDROCK_MODEL_ID = os.getenv("BEDROCK_MODEL_ID", "global.anthropic.claude-sonnet-4-6")
+    # Amazon Nova is the default: it is a Bedrock first-party model, it needs no per-account use case
+    # form, and it answers a Porchlight node in about a second. Anthropic models work here too once that
+    # form is approved — set BEDROCK_MODEL_ID to one of them and nothing else changes.
+    BEDROCK_MODEL_ID = os.getenv("BEDROCK_MODEL_ID", "amazon.nova-pro-v1:0")
     AWS_REGION = os.getenv("AWS_REGION", os.getenv("AWS_DEFAULT_REGION", "us-east-1"))
     ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
     ANTHROPIC_MODEL_ID = os.getenv("ANTHROPIC_MODEL_ID", "claude-sonnet-4-6")
