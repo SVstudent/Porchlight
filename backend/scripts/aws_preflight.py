@@ -142,6 +142,26 @@ def pick_model(available: list[str]) -> str | None:
     return claude[0] if claude else None
 
 
+ANTHROPIC_FORM = (
+    "Anthropic models on Bedrock need a one-time use case form for this account.\n"
+    "      Open the Bedrock console -> Model access -> Anthropic -> submit the use case details,\n"
+    "      then wait about 15 minutes. Amazon Nova models work without it, so Porchlight can run on\n"
+    "      Bedrock in the meantime: set BEDROCK_MODEL_ID=amazon.nova-pro-v1:0")
+
+
+def explain_invoke_failure(err: str) -> str:
+    """Turn Bedrock's terser refusals into the thing the reader has to go and do."""
+    if "use case details have not been submitted" in err:
+        return ANTHROPIC_FORM
+    if "currently being verified" in err:
+        return ("This AWS account is still being verified. That normally clears within a couple of hours;\n"
+                "      nothing to do but wait, then run this again.")
+    if "AccessDenied" in err:
+        return ("The credentials resolve but are not allowed to invoke this model. Check Bedrock model\n"
+                "      access for the region, and that the role or user has bedrock:InvokeModel.")
+    return ""
+
+
 def check_invoke(model_id: str, region: str) -> bool:
     """The only check that proves the account can actually run the agents."""
     try:
@@ -158,7 +178,11 @@ def check_invoke(model_id: str, region: str) -> bool:
         record("Live model invocation", OK, f"{model_id} replied {reply[:40]!r}")
         return True
     except Exception as e:  # noqa: BLE001
-        record("Live model invocation", BAD, f"{model_id}: {str(e)[:200]}")
+        err = str(e)
+        record("Live model invocation", BAD, f"{model_id}: {err[:180]}")
+        hint = explain_invoke_failure(err)
+        if hint:
+            print(f"\n      {hint}\n", flush=True)
         return False
 
 
