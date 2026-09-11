@@ -1,0 +1,126 @@
+"""Chasing a neighbour who has not answered, without becoming the thing that harasses them.
+
+The rules are deliberately simple, deterministic and outside the model's control, because "how often do
+we text an anxious 78-year-old" is a policy decision, not something to re-derive from a prompt each time:
+
+* **One word back ends it.** A reply resolves every open check-in that neighbour has, across every
+  episode. Answering "I'm fine" once should not leave three other conversations still nagging them.
+* **Reminders are paced.** At most one every REMINDER_GAP_MINUTES, counted from the last time we said
+  anything to them, not from when the episode started.
+* **Silence runs out.** After MAX_REMINDERS with no word, the check-in becomes `critical` and stops.
+  Nobody is texted a fifth time; instead the coordinator is told that this person has gone quiet, which
+  is the thing that actually needs a human.
+"""
+from __future__ import annotations
+
+import logging
+from datetime import datetime, timedelta, timezone
+
+from .config import settings
+from .events import bus
+from .models import TimelineEntry, now_iso
+from .store import store
+
+log = logging.getLogger("porchlight.reminders")
+
+OPEN = ("sent", "delivered")
+
+
+def _age_minutes(ts: str) -> float:
+    """Minutes since an ISO timestamp. Unparseable or missing means "long ago"."""
+    if not ts:
+        return 1e9
+    try:
+        t = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+    except ValueError:
+        return 1e9
+    if t.tzinfo is None:
+        t = t.replace(tzinfo=timezone.utc)
+    return (datetime.now(timezone.utc) - t).total_seconds() / 60.0
+
+
+def open_checkins_for(member_id: str) -> list:
+    """Every check-in still waiting on this neighbour, in any episode that is still running."""
+    out = []
+    for c in store.checkins():
+        if c.member_id != member_id or c.status not in OPEN:
+            continue
+        ep = store.episode(c.episode_id)
+        if ep and ep.status in ("monitoring", "escalating", "dispatching"):
+            out.append(c)
+    return out
+
+
+def resolve_all_for(member_id: str, status: str, note: str) -> list[str]:
+    """A neighbour answered. Close every conversation we have open with them, not just the newest.
+
+    Without this, a roster that has been through several episodes keeps chasing someone who has already
+    said they are fine, which is precisely the behaviour that makes people stop reading the messages.
+    """
+    closed: list[str] = []
+    for c in open_checkins_for(member_id):
+        def _apply(x, _s=status, _n=note):
+            x.status = _s
+            x.responded_at = now_iso()
+            x.note = _n
+
+        store.mutate_checkin(c.token, _apply)
+        closed.append(c.episode_id)
+    return closed
+
+
+def due_for_reminder(c) -> bool:
+    """Is this check-in owed another nudge yet?"""
+    if c.status not in OPEN:
+        return False
+    if c.reminders_sent >= settings.MAX_REMINDERS:
+        return False
+    since = _age_minutes(c.last_contact_at or c.sent_at)
+    return since >= settings.REMINDER_GAP_MINUTES
+
+
+def exhausted(c) -> bool:
+    """Reminders used up and still nothing back."""
+    return (c.status in OPEN
+            and c.reminders_sent >= settings.MAX_REMINDERS
+            and _age_minutes(c.last_contact_at or c.sent_at) >= settings.REMINDER_GAP_MINUTES)
+
+
+def reminder_text(member, episode, attempt: int) -> str:
+    """Escalating in seriousness but never in volume. Short, and always easy to answer."""
+    event = episode.hazard.event_name
+    if attempt == 1:
+        return (f"Hi {member.name.split()[0]}, checking again about the {event}. "
+                f"Are you doing okay? Just reply OK, or tell me how you're doing.")
+    if attempt == 2:
+        return (f"{member.name.split()[0]}, we still haven't heard from you about the {event} and we'd "
+                f"like to know you're alright. Reply OK if you're fine, or HELP if you need anything.")
+    return (f"{member.name.split()[0]}, this is our last message. If we don't hear back we'll ask someone "
+            f"to come check on you. Reply OK if you're safe. Call 911 if this is an emergency.")
+
+
+def mark_critical(c, member) -> None:
+    """Out of reminders and still silent. Stop texting; make it the coordinator's problem."""
+    def _apply(x):
+        x.status = "critical"
+        x.note = (f"No reply after {settings.MAX_REMINDERS} attempts over "
+                  f"{settings.MAX_REMINDERS * settings.REMINDER_GAP_MINUTES} minutes")
+
+    store.mutate_checkin(c.token, _apply)
+    ep = store.episode(c.episode_id)
+    if ep:
+        store.mutate_episode(ep.id, lambda e: e.timeline.append(TimelineEntry(
+            kind="critical",
+            text=(f"{member.name} has not answered {settings.MAX_REMINDERS} messages. "
+                  f"Marked critical — someone should go round."))))
+        bus.emit("critical", f"{member.name} has not answered {settings.MAX_REMINDERS} messages",
+                 episode_id=ep.id, member_id=member.id, status="critical", agent="reminders")
+    log.info("marked %s critical on %s", member.name, c.episode_id)
+
+
+def record_reminder(c) -> None:
+    def _apply(x):
+        x.reminders_sent = x.reminders_sent + 1
+        x.last_contact_at = now_iso()
+
+    store.mutate_checkin(c.token, _apply)

@@ -178,11 +178,16 @@ class Checkin(BaseModel):
     token: str
     episode_id: str
     member_id: str
-    status: Literal["sent", "delivered", "failed", "ok", "needs_help", "no_response", "escalated"] = "sent"
+    # "critical" means the reminders ran out with no word at all, which is the state a coordinator must
+    # look at first: silence from someone at risk is not the same as being told they are fine.
+    status: Literal["sent", "delivered", "failed", "ok", "needs_help",
+                    "no_response", "escalated", "critical"] = "sent"
     channel: str = ""
     sent_at: str = Field(default_factory=now_iso)
     responded_at: str = ""
     note: str = ""
+    reminders_sent: int = 0
+    last_contact_at: str = ""  # when we last said anything to them; reminders are paced from this
 
 
 class TimelineEntry(BaseModel):

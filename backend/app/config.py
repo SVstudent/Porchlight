@@ -41,6 +41,10 @@ class Settings:
     SENTINEL_INTERVAL_MINUTES = _int("SENTINEL_INTERVAL_MINUTES", 15)
     FOLLOWUP_INTERVAL_MINUTES = _int("FOLLOWUP_INTERVAL_MINUTES", 2)
     FOLLOWUP_GRACE_MINUTES = _int("FOLLOWUP_GRACE_MINUTES", 20)
+    # How long to leave someone alone between reminders, and how many reminders they get before their
+    # silence is treated as the problem rather than an inconvenience.
+    REMINDER_GAP_MINUTES = _int("REMINDER_GAP_MINUTES", 3)
+    MAX_REMINDERS = _int("MAX_REMINDERS", 3)
     HEAT_INDEX_ACTIVATE_F = float(os.getenv("HEAT_INDEX_ACTIVATE_F", "105"))
     AQI_ACTIVATE = _int("AQI_ACTIVATE", 151)
     COLD_ACTIVATE_F = float(os.getenv("COLD_ACTIVATE_F", "15"))

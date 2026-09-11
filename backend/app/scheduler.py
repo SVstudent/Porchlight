@@ -13,6 +13,7 @@ from .agents.sentinel import new_hazards
 from .channels.telegram import get_updates
 from .config import settings
 from .events import bus
+from . import reminders
 from .models import now_iso
 from .store import store
 
@@ -55,6 +56,39 @@ async def _sentinel_scan() -> None:
             continue
         # Only now is the alert handled. A run that later fails re-arms detection (see runner._run_graph).
         store.mark_alert_seen(h.external_id, ep.id)
+
+
+async def reminder_job() -> None:
+    """Chase the neighbours who have not answered, at a human pace, and give up out loud.
+
+    This is deliberately deterministic rather than agent-driven: how often to text someone who may be
+    frightened, and when to stop, is a policy the coordinator sets, not a judgement call to re-make on
+    every cycle.
+    """
+    from .channels.registry import deliver
+
+    for c in store.checkins():
+        if c.status not in reminders.OPEN:
+            continue
+        ep = store.episode(c.episode_id)
+        member = store.member(c.member_id)
+        if not ep or not member or ep.status not in ("monitoring", "escalating"):
+            continue
+
+        if reminders.exhausted(c):
+            reminders.mark_critical(c, member)
+            continue
+        if not reminders.due_for_reminder(c):
+            continue
+
+        attempt = c.reminders_sent + 1
+        body = reminders.reminder_text(member, ep, attempt)
+        res = await asyncio.to_thread(deliver, member, body, c.channel or None)
+        reminders.record_reminder(c)
+        bus.emit("checkin", f"Reminder {attempt} of {settings.MAX_REMINDERS} sent to {member.name}",
+                 episode_id=ep.id, member_id=member.id, agent="reminders", attempt=attempt)
+        if not res.ok:
+            log.warning("reminder to %s failed: %s", member.name, res.detail)
 
 
 async def followup_job() -> None:
@@ -180,17 +214,12 @@ async def telegram_job() -> None:
         if not status:
             await _answer_in_words(member, raw)
             continue
-        for c in store.checkins():
-            ep = store.episode(c.episode_id)
-            if c.member_id == member.id and ep and ep.status in ("monitoring", "escalating") and c.status in ("sent", "delivered"):
-                def _reply(x, _s=status, _t=text, _n=note):
-                    x.status = _s
-                    x.responded_at = now_iso()
-                    x.note = f"telegram reply: {_t[:80]}{_n}"
-
-                store.mutate_checkin(c.token, _reply)
-                bus.emit("checkin", f"{member.name} replied via Telegram: {status.replace('_', ' ')}", episode_id=ep.id, member_id=member.id, status=status)
-                break
+        closed = reminders.resolve_all_for(member.id, status, f"telegram reply: {text[:80]}{note}")
+        for ep_id in closed:
+            bus.emit("checkin", f"{member.name} replied via Telegram: {status.replace('_', ' ')}",
+                     episode_id=ep_id, member_id=member.id, status=status)
+        if len(closed) > 1:
+            log.info("%s answered once; closed %d open check-ins", member.name, len(closed))
 
 
 def start() -> None:
@@ -201,6 +230,7 @@ def start() -> None:
     except (TypeError, ValueError):
         followup_minutes = settings.FOLLOWUP_INTERVAL_MINUTES
     scheduler.add_job(followup_job, "interval", minutes=followup_minutes, id="followup")
+    scheduler.add_job(reminder_job, "interval", minutes=1, id="reminders")
     scheduler.start()
     if settings.TELEGRAM_BOT_TOKEN:
         global _telegram_task

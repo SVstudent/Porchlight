@@ -143,15 +143,22 @@ async def respond(ep: Any, member: Any, text: str) -> dict[str, Any]:
 
 
 def record(ep: Any, member: Any, checkin_token: str, text: str, outcome: dict[str, Any]) -> None:
-    """Write the neighbour's own words and the agent's answer where the coordinator will see them."""
+    """Write the neighbour's own words and the agent's answer where the coordinator will see them.
+
+    Answering closes every conversation open with this neighbour, not only the one they happened to
+    reply to. Someone who has told us how they are should not still be chased by another episode.
+    """
+    from ..reminders import resolve_all_for
+
     status = outcome["status"]
+    closed = resolve_all_for(member.id, status, f"said: {text[:120]}")
+    if not closed:  # nothing was open (already answered); still record against the one we were given
+        def _apply(c):
+            c.status = status
+            c.responded_at = c.responded_at or now_iso()
+            c.note = f"said: {text[:120]}"
 
-    def _apply(c):
-        c.status = status
-        c.responded_at = c.responded_at or now_iso()
-        c.note = f"said: {text[:120]}"
-
-    store.mutate_checkin(checkin_token, _apply)
+        store.mutate_checkin(checkin_token, _apply)
     store.mutate_episode(ep.id, lambda e: e.timeline.append(TimelineEntry(
         kind="checkin",
         text=f"{member.name} wrote: “{text[:160]}” — Porchlight replied: “{outcome['reply'][:160]}”",
