@@ -20,6 +20,8 @@ from .store import store
 log = logging.getLogger("porchlight.scheduler")
 _scan_lock = asyncio.Lock()  # the manual endpoint calls sentinel_job directly, outside the scheduler
 _telegram_task: asyncio.Task | None = None
+# Set as soon as a stop is requested, so long-lived streams can let go and nothing new is scheduled.
+stopping = asyncio.Event()
 scheduler = AsyncIOScheduler(
     job_defaults={"coalesce": True, "max_instances": 1, "misfire_grace_time": 300}
 )
@@ -67,24 +69,30 @@ async def reminder_job() -> None:
     """
     from .channels.registry import deliver
 
-    for c in store.checkins():
-        if c.status not in reminders.OPEN:
+    # One message per person per cycle, never one per row. A neighbour can appear in several episodes at
+    # once — a heat wave and an outage, or simply a coordinator testing — and chasing each row separately
+    # means three open episodes become three texts arriving in the same second.
+    for member_id in reminders.members_awaiting():
+        member = store.member(member_id)
+        if not member:
+            continue
+        c = reminders.oldest_open_for(member_id)
+        if c is None:
             continue
         ep = store.episode(c.episode_id)
-        member = store.member(c.member_id)
-        if not ep or not member or ep.status not in ("monitoring", "escalating"):
+        if ep is None:
             continue
 
         if reminders.exhausted(c):
-            reminders.mark_critical(c, member)
+            reminders.mark_critical_for(member)
             continue
         if not reminders.due_for_reminder(c):
             continue
 
-        attempt = c.reminders_sent + 1
+        attempt = reminders.attempts_for(member_id) + 1
         body = reminders.reminder_text(member, ep, attempt)
         res = await asyncio.to_thread(deliver, member, body, c.channel or None)
-        reminders.record_reminder(c)
+        reminders.record_reminder_for(member_id)
         bus.emit("checkin", f"Reminder {attempt} of {settings.MAX_REMINDERS} sent to {member.name}",
                  episode_id=ep.id, member_id=member.id, agent="reminders", attempt=attempt)
         if not res.ok:
@@ -238,7 +246,10 @@ def start() -> None:
 
 
 def stop() -> None:
+    """Stop every background job at once. Safe to call more than once."""
+    stopping.set()
     if _telegram_task is not None:
         _telegram_task.cancel()
     if scheduler.running:
         scheduler.shutdown(wait=False)
+    log.info("background jobs stopped")

@@ -5,6 +5,7 @@ import asyncio
 import csv
 import io
 import json
+import signal
 import logging
 from pathlib import Path
 from typing import Any, Optional
@@ -83,6 +84,36 @@ async def _shutdown() -> None:
         pass
 
 
+def _begin_shutdown(*_a) -> None:
+    """Stop scheduled work the instant a stop is requested.
+
+    FastAPI's shutdown handler runs only after connections have drained, which is too late: the
+    dashboard holds an event stream open, so the scheduler went on sending messages for the nine
+    minutes between asking the server to stop and it actually stopping.
+    """
+    try:
+        sched.stop()
+    except Exception:  # noqa: BLE001
+        pass
+
+
+@app.on_event("startup")
+async def _install_signal_handlers() -> None:
+    loop = asyncio.get_running_loop()
+    for sig in (signal.SIGINT, signal.SIGTERM):
+        try:
+            previous = signal.getsignal(sig)
+            loop.add_signal_handler(sig, _on_signal, sig, previous)
+        except (NotImplementedError, RuntimeError):  # pragma: no cover - platform dependent
+            pass
+
+
+def _on_signal(sig, previous) -> None:
+    _begin_shutdown()
+    if callable(previous):
+        previous(sig, None)
+
+
 # ------------------------------------------------------------------ health / settings
 
 @app.get("/api/health")
@@ -132,7 +163,10 @@ async def events_stream(request: Request):
         try:
             yield f"event: hello\ndata: {json.dumps({'time': now_iso()})}\n\n"
             while True:
-                if await request.is_disconnected():
+                # A server-sent event stream never ends on its own, so uvicorn's graceful shutdown waits
+                # for it forever while background jobs keep running. Leaving when the server is stopping
+                # is what lets "stop" actually mean stop.
+                if sched.stopping.is_set() or await request.is_disconnected():
                     break
                 try:
                     ev = await asyncio.wait_for(q.get(), timeout=15)

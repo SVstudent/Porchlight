@@ -5,8 +5,10 @@ we text an anxious 78-year-old" is a policy decision, not something to re-derive
 
 * **One word back ends it.** A reply resolves every open check-in that neighbour has, across every
   episode. Answering "I'm fine" once should not leave three other conversations still nagging them.
-* **Reminders are paced.** At most one every REMINDER_GAP_MINUTES, counted from the last time we said
-  anything to them, not from when the episode started.
+* **Reminders are paced, and counted per person.** At most one every REMINDER_GAP_MINUTES, counted from
+  the last time we said anything to them. A neighbour can be in several episodes at once — a heat wave
+  and an outage, or a coordinator testing — and they are one person who has been texted N times, not
+  three rows that have each been texted once.
 * **Silence runs out.** After MAX_REMINDERS with no word, the check-in becomes `critical` and stops.
   Nobody is texted a fifth time; instead the coordinator is told that this person has gone quiet, which
   is the thing that actually needs a human.
@@ -124,3 +126,48 @@ def record_reminder(c) -> None:
         x.last_contact_at = now_iso()
 
     store.mutate_checkin(c.token, _apply)
+
+
+# --------------------------------------------------------------------------- per-person view
+# The unit of pacing is a person, not a check-in row. Everything below reads and writes across every
+# open row a neighbour has, so a second episode cannot double their messages.
+
+
+def members_awaiting() -> list[str]:
+    """Every neighbour with at least one conversation still open, each listed once."""
+    seen: list[str] = []
+    for c in store.checkins():
+        if c.status in OPEN and c.member_id not in seen:
+            ep = store.episode(c.episode_id)
+            if ep and ep.status in ("monitoring", "escalating"):
+                seen.append(c.member_id)
+    return seen
+
+
+def oldest_open_for(member_id: str):
+    """The conversation that has been waiting longest; its hazard is what a reminder should mention."""
+    rows = open_checkins_for(member_id)
+    return min(rows, key=lambda c: c.sent_at) if rows else None
+
+
+def attempts_for(member_id: str) -> int:
+    """How many reminders this person has had, across every episode."""
+    rows = open_checkins_for(member_id)
+    return max((c.reminders_sent for c in rows), default=0)
+
+
+def record_reminder_for(member_id: str) -> None:
+    """Count one reminder against every open row, so the tally follows the person."""
+    stamp = now_iso()
+    for c in open_checkins_for(member_id):
+        def _apply(x, _s=stamp):
+            x.reminders_sent = x.reminders_sent + 1
+            x.last_contact_at = _s
+
+        store.mutate_checkin(c.token, _apply)
+
+
+def mark_critical_for(member) -> None:
+    """Out of reminders. Close every open conversation as critical, not just the one we looked at."""
+    for c in open_checkins_for(member.id):
+        mark_critical(c, member)

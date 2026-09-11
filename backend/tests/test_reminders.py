@@ -111,6 +111,54 @@ def test_the_three_messages_escalate_in_seriousness():
     assert all(len(t) < 320 for t in texts), "these go out as text messages"
 
 
+def test_three_open_episodes_do_not_become_three_texts_at_once():
+    """The bug that produced six messages in one burst: the job looped over rows, not people."""
+    make(n_episodes=3, sent_minutes_ago=60)
+    awaiting = reminders.members_awaiting()
+    assert awaiting == ["mem_bettie"], f"one person, listed once, got {awaiting}"
+
+    c = reminders.oldest_open_for("mem_bettie")
+    assert c is not None and reminders.due_for_reminder(c)
+
+    reminders.record_reminder_for("mem_bettie")
+
+    # every row must now show the attempt, so no other row can fire in the same cycle
+    rows = reminders.open_checkins_for("mem_bettie")
+    assert len(rows) == 3, "all three are still open; she has not answered"
+    assert all(r.reminders_sent == 1 for r in rows), [r.reminders_sent for r in rows]
+    assert reminders.attempts_for("mem_bettie") == 1
+    assert not any(reminders.due_for_reminder(r) for r in rows), "nothing else may fire this cycle"
+
+
+def test_the_cap_counts_the_person_not_the_rows():
+    """Three episodes must still mean three messages in total, not nine."""
+    make(n_episodes=3, sent_minutes_ago=60)
+    for _ in range(settings.MAX_REMINDERS):
+        for r in reminders.open_checkins_for("mem_bettie"):
+            store.mutate_checkin(r.token, lambda x: setattr(x, "last_contact_at", ago(settings.REMINDER_GAP_MINUTES + 1)))
+        c = reminders.oldest_open_for("mem_bettie")
+        assert reminders.due_for_reminder(c), "each of the three is due in turn"
+        reminders.record_reminder_for("mem_bettie")
+
+    assert reminders.attempts_for("mem_bettie") == settings.MAX_REMINDERS
+    for r in reminders.open_checkins_for("mem_bettie"):
+        store.mutate_checkin(r.token, lambda x: setattr(x, "last_contact_at", ago(settings.REMINDER_GAP_MINUTES + 1)))
+    c = reminders.oldest_open_for("mem_bettie")
+    assert not reminders.due_for_reminder(c), "a fourth message must never be sent"
+    assert reminders.exhausted(c)
+
+
+def test_going_critical_closes_every_episode_for_that_person():
+    make(n_episodes=3, sent_minutes_ago=60)
+    for r in reminders.open_checkins_for("mem_bettie"):
+        store.mutate_checkin(r.token, lambda x: (setattr(x, "reminders_sent", settings.MAX_REMINDERS),
+                                                 setattr(x, "last_contact_at", ago(settings.REMINDER_GAP_MINUTES + 1))))
+    reminders.mark_critical_for(store.member("mem_bettie"))
+    assert reminders.open_checkins_for("mem_bettie") == [], "nothing may still be chasing her"
+    crit = [c for c in store.checkins() if c.member_id == "mem_bettie" and c.status == "critical"]
+    assert len(crit) == 3, f"every episode should show critical, got {len(crit)}"
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_") and callable(fn):
