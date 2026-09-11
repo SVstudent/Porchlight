@@ -137,7 +137,16 @@ def test_lessons_endpoint_and_community_history():
     cur = store.episode(ep2.id)
     assert cur.timeline[-1].kind == "lesson" and cur.stats["lessons"][0]["text"].startswith("Rosa never")
 
-    rosa = client.get("/api/roster/mem_rosa/history").json()
+    # The local history is the source of truth and must stand on its own, whether or not this machine
+    # happens to have AgentCore Memory configured. Force it off rather than inheriting backend/.env.
+    import app.agents.agentcore_memory as agentcore
+
+    previous_id = agentcore.MEMORY_ID
+    agentcore.MEMORY_ID = ""
+    try:
+        rosa = client.get("/api/roster/mem_rosa/history").json()
+    finally:
+        agentcore.MEMORY_ID = previous_id
     assert rosa["episodes"][0]["lessons"] == ["Rosa never answers texts; her daughter Marisol answered when we called."]
     assert rosa["insight"].endswith('Coordinator note: "Rosa never answers texts; her daughter Marisol answered when we called."'), rosa["insight"]
     assert rosa["agentcore_memories"] == [] and rosa["agentcore"]["enabled"] is False
@@ -157,11 +166,21 @@ def test_lessons_endpoint_and_community_history():
 
 
 def test_agentcore_is_silent_when_not_configured():
+    """Without AGENTCORE_MEMORY_ID the whole integration must be inert, not merely quiet.
+
+    MEMORY_ID is forced empty here rather than read from backend/.env, so this keeps testing the
+    not-configured path on a machine where AgentCore Memory is in fact configured.
+    """
     ep1, _ = setup()
-    assert agentcore_memory.enabled() is False and agentcore_memory.status()["enabled"] is False
-    assert agentcore_memory.retrieve_member_memories("mem_rosa", "anything") == []
-    assert sync_to_agentcore(ep1.id) == {"skipped": "not configured"}
-    assert "agentcore_events" not in store.episode(ep1.id).stats
+    previous_id = agentcore_memory.MEMORY_ID
+    agentcore_memory.MEMORY_ID = ""
+    try:
+        assert agentcore_memory.enabled() is False and agentcore_memory.status()["enabled"] is False
+        assert agentcore_memory.retrieve_member_memories("mem_rosa", "anything") == []
+        assert sync_to_agentcore(ep1.id) == {"skipped": "not configured"}
+        assert "agentcore_events" not in store.episode(ep1.id).stats
+    finally:
+        agentcore_memory.MEMORY_ID = previous_id
 
 
 def test_agentcore_write_and_retrieve_with_stub_client():

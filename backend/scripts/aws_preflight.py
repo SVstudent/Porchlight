@@ -21,6 +21,13 @@ import subprocess
 import sys
 from pathlib import Path
 
+try:  # read backend/.env so the preflight checks the configuration the app will actually use
+    from dotenv import load_dotenv
+
+    load_dotenv(Path(__file__).resolve().parent.parent / ".env", override=False)
+except ImportError:  # pragma: no cover - the script still works from a plain shell environment
+    pass
+
 BACKEND = Path(__file__).resolve().parent.parent
 ENV_PATH = BACKEND / ".env"
 
@@ -113,16 +120,25 @@ def check_region() -> str:
 
 
 def check_models(region: str) -> list[str]:
-    code, out = aws("bedrock", "list-foundation-models", "--region", region,
-                    "--by-provider", "anthropic", "--output", "json")
-    if code != 0:
-        record("Bedrock reachable", BAD, out.splitlines()[-1][:160])
-        return []
-    ids = [m["modelId"] for m in json.loads(out).get("modelSummaries", [])]
+    """Every model this account can see, Amazon's as well as Anthropic's.
+
+    Anthropic models are gated behind a use case form that Amazon Nova does not require, so a preflight
+    that only looks at Anthropic will call a perfectly working Bedrock account broken.
+    """
+    ids: list[str] = []
+    for provider in ("anthropic", "amazon"):
+        code, out = aws("bedrock", "list-foundation-models", "--region", region,
+                        "--by-provider", provider, "--output", "json")
+        if code != 0:
+            if provider == "anthropic":
+                record("Bedrock reachable", BAD, out.splitlines()[-1][:160])
+                return []
+            continue
+        ids += [m["modelId"] for m in json.loads(out).get("modelSummaries", [])]
     if not ids:
-        record("Anthropic models listed", BAD, "none returned; request model access in the Bedrock console")
+        record("Bedrock reachable", BAD, "no models returned; request model access in the Bedrock console")
         return []
-    record("Bedrock reachable", OK, f"{len(ids)} Anthropic models listed")
+    record("Bedrock reachable", OK, f"{len(ids)} models visible to this account")
 
     # Inference profiles are what you actually invoke for the newer models.
     code, out = aws("bedrock", "list-inference-profiles", "--region", region, "--output", "json")
@@ -135,9 +151,20 @@ def check_models(region: str) -> list[str]:
 
 
 def pick_model(available: list[str]) -> str | None:
+    """Check the model Porchlight is configured to use, not the one we would pick in the abstract.
+
+    A preflight that verifies a different model than the app runs is worse than none: it can pass while
+    the app cannot start, or fail while the app is perfectly happy.
+    """
+    configured = os.getenv("BEDROCK_MODEL_ID", "").strip()
+    if configured:
+        return configured
     for want in PREFERRED:
         if want in available:
             return want
+    for fallback in ("amazon.nova-pro-v1:0", "amazon.nova-lite-v1:0"):
+        if fallback in available:
+            return fallback
     claude = [i for i in available if "claude" in i.lower()]
     return claude[0] if claude else None
 
