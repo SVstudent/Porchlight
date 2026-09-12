@@ -32,6 +32,11 @@ const COLOR = {
 };
 const TIER = { 1: '#c8412b', 2: '#b8741a', 3: '#3a6a8a', 0: '#b9b3a6' };
 const NEUTRAL = '#b9b3a6';
+// The watch list's one-word verdict, straight to a colour.
+const STATE_COLOR = {
+  critical: '#8c1d11', needs_help: '#c8412b', waiting: '#e39a2f',
+  ok: '#2f6b5a', not_contacted: '#b9b3a6',
+};
 
 /** A responder in transit: a filled dot with a ring, so it reads as moving rather than placed. */
 const responderIcon = L.divIcon({
@@ -64,7 +69,7 @@ function FitToData({ points }) {
   return null;
 }
 
-export default function MapView({ members, resources, episode, deployments = [] }) {
+export default function MapView({ members, resources, episode, deployments = [], highlight = null }) {
   const shown = useMemo(
     () => (resources || []).filter((r) => r.kind !== 'hydration' && Number.isFinite(r.lat)),
     [resources],
@@ -139,13 +144,22 @@ export default function MapView({ members, resources, episode, deployments = [] 
         {people.map((m) => {
           const c = checkins[m.id];
           const d = decisions[m.id];
-          const color = c ? COLOR[c.status] || NEUTRAL : d ? TIER[d.tier] : NEUTRAL;
+          // The watch list hands us a neighbour's state directly; an episode view derives it.
+          const color = STATE_COLOR[m.state]
+            || (c ? COLOR[c.status] || NEUTRAL : d ? TIER[d.tier] : NEUTRAL);
+          const urgent = m.state === 'critical' || m.state === 'needs_help' || (d && d.tier === 1);
+          const lit = highlight === m.id;
           return (
             <CircleMarker
               key={m.id}
               center={[m.lat, m.lon]}
-              radius={d && d.tier === 1 ? 10 : 7}
-              pathOptions={{ color: '#fff', weight: 2, fillColor: color, fillOpacity: 0.95 }}
+              radius={lit ? 14 : urgent ? 10 : 7}
+              pathOptions={{
+                color: lit ? '#1e2a2b' : '#fff',
+                weight: lit ? 3 : 2,
+                fillColor: color,
+                fillOpacity: 0.95,
+              }}
             >
               <Popup>
                 <b>{m.name}</b><br />{m.address}

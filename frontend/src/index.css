@@ -468,3 +468,135 @@ a.btn { text-decoration: none; }
   line-height: 1.5;
 }
 .agent-note .eyebrow { display: block; margin-bottom: 4px; }
+
+
+/* ============================================================================
+   The watch: who we are looking after on the left, where they are on the right.
+   Two halves of one question, so they sit side by side and never scroll apart —
+   the map stays put while the list moves under the coordinator's eye.
+   ========================================================================== */
+.watch {
+  display: grid;
+  grid-template-columns: minmax(380px, 1fr) 1fr;
+  gap: 16px;
+  padding: 16px;
+  height: calc(100vh - 58px);
+  box-sizing: border-box;
+}
+@media (max-width: 1000px) {
+  .watch { grid-template-columns: 1fr; height: auto; }
+  .watch-list, .watch-map { height: auto; }
+}
+
+.watch-list, .watch-map {
+  min-height: 0;                /* lets the inner column scroll instead of the page */
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.watch-head {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+  padding: 14px 16px 10px;
+}
+.watch-head h2 { margin: 0 0 2px; font-size: 16px; display: flex; align-items: center; gap: 7px; }
+.watch-head p { margin: 0; }
+
+.watch-filters { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 16px 12px; }
+.fchip {
+  border: 1px solid var(--line); background: #fff; border-radius: 999px;
+  padding: 4px 11px; font-size: 12px; cursor: pointer; color: var(--muted);
+  font-family: inherit;
+}
+.fchip.on { background: var(--ink, #1e2a2b); color: #fff; border-color: var(--ink, #1e2a2b); }
+.fchip:disabled { opacity: .4; cursor: default; }
+.fchip b { font-weight: 600; margin-left: 3px; }
+
+.watch-scroll { overflow-y: auto; padding: 0 16px 16px; flex: 1; }
+.watch-cta { margin-top: 14px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+
+/* ---- a neighbour card ---- */
+.ncard {
+  display: block; text-decoration: none; color: inherit;
+  border: 1px solid var(--line); border-left: 4px solid var(--line);
+  border-radius: 10px; padding: 11px 13px; margin-bottom: 9px; background: #fff;
+  transition: box-shadow .12s ease, transform .12s ease, border-color .12s ease;
+}
+.ncard:hover, .ncard.on { box-shadow: 0 3px 12px rgba(0,0,0,.10); transform: translateY(-1px); }
+.ncard.critical { border-left-color: #8c1d11; }
+.ncard.needs    { border-left-color: #c8412b; }
+.ncard.waiting  { border-left-color: #e39a2f; }
+.ncard.ok       { border-left-color: #2f6b5a; }
+.ncard.idle     { border-left-color: #d9d4c8; }
+
+.ncard-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.nstate { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 600; }
+.nstate.critical { color: #8c1d11; }
+.nstate.needs { color: #c8412b; }
+.nstate.waiting { color: #b8741a; }
+.nstate.ok { color: #2f6b5a; }
+.nstate.idle { color: var(--muted); }
+
+.ncard-name { font-size: 15px; font-weight: 600; line-height: 1.25; }
+.ncard-addr { font-size: 12px; color: var(--muted); margin-bottom: 7px; }
+.ncard-risks { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+.rchip {
+  font-size: 10.5px; padding: 2px 7px; border-radius: 999px;
+  background: #f3f0e8; color: #5f6b6c; white-space: nowrap;
+}
+.rchip.big { font-size: 12px; padding: 4px 10px; }
+.ncard-foot {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  font-size: 11px; color: var(--muted);
+}
+.ndeploy { display: inline-flex; align-items: center; gap: 4px; font-weight: 600; color: #2f6b5a; }
+.ndeploy.proposed { color: #b8741a; }
+
+/* ---- the map half ---- */
+.watch-map-inner { flex: 1; min-height: 0; }
+.watch-map-inner .map { height: 100%; border: 0; border-radius: 0; }
+.watch-deploys { border-top: 1px solid var(--line); padding: 12px 14px; max-height: 38%; overflow-y: auto; }
+
+/* ============================================================================
+   One neighbour's case.
+   ========================================================================== */
+.case {
+  display: grid; grid-template-columns: minmax(420px, 1.05fr) 1fr;
+  gap: 16px; padding: 16px; height: calc(100vh - 58px); box-sizing: border-box;
+}
+@media (max-width: 1000px) { .case { grid-template-columns: 1fr; height: auto; } }
+.case-main { overflow-y: auto; min-height: 0; padding-right: 4px; }
+.case-map {
+  display: flex; flex-direction: column; min-height: 0;
+  background: #fff; border: 1px solid var(--line); border-radius: 12px; overflow: hidden;
+}
+.case-map-inner { flex: 1; min-height: 0; }
+.case-map-inner .map { height: 100%; border: 0; border-radius: 0; }
+
+.back { display: inline-flex; align-items: center; gap: 5px; color: var(--muted); text-decoration: none; margin-bottom: 10px; }
+.back:hover { color: var(--ink, #1e2a2b); }
+.case-state { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; margin-bottom: 6px; }
+.case-state.critical { color: #8c1d11; }
+.case-state.needs { color: #c8412b; }
+.case-state.waiting { color: #b8741a; }
+.case-state.ok { color: #2f6b5a; }
+.case-state.idle { color: var(--muted); }
+.case-name { margin: 0 0 2px; font-size: 24px; line-height: 1.15; }
+.case-risks { display: flex; flex-wrap: wrap; gap: 5px; margin: 12px 0 0; }
+.case-notes { font-size: 13px; line-height: 1.5; margin: 10px 0 0; }
+.case-contact { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 12px; }
+.case-contact span { display: inline-flex; align-items: center; gap: 5px; }
+
+.proto {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 14px;
+  padding: 11px 0; border-bottom: 1px solid var(--line);
+}
+.proto:last-of-type { border-bottom: 0; }
+.proto .small { margin-top: 3px; line-height: 1.45; max-width: 52ch; }
+.proto-note { background: #f3f0e8; border-radius: 8px; padding: 8px 11px; margin: 4px 0 10px; }
+.said { font-size: 13.5px; line-height: 1.5; margin: 8px 0; padding-left: 11px; border-left: 3px solid var(--line); }
+.hist-row { padding: 6px 0; border-bottom: 1px solid var(--line); }
+.hist-row:last-child { border-bottom: 0; }

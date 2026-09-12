@@ -177,6 +177,157 @@ def events(episode_id: str | None = None, limit: int = 200) -> dict[str, Any]:
     return {"events": [e.model_dump() for e in bus.history(episode_id, limit)]}
 
 
+def _neighbour_state(member, episode, checkins, deployments) -> dict[str, Any]:
+    """One neighbour, as they stand right now: their risk, where the check-in got to, who is going."""
+    tier = None
+    if episode and episode.triage:
+        for d in episode.triage.decisions:
+            if d.member_id == member.id:
+                tier = d.tier
+                break
+    mine = [c for c in checkins if c.member_id == member.id]
+    checkin = max(mine, key=lambda c: c.sent_at) if mine else None
+    trip = next((d for d in deployments
+                 if d.member_id == member.id and d.status in ("proposed", "approved")), None)
+
+    # One word for the whole situation, which is what the card leads with and what it sorts on.
+    if checkin is None:
+        state = "not_contacted"
+    elif checkin.status == "critical":
+        state = "critical"
+    elif checkin.status in ("needs_help", "escalated"):
+        state = "needs_help"
+    elif checkin.status == "ok":
+        state = "ok"
+    else:
+        state = "waiting"
+
+    return {
+        "id": member.id, "name": member.name, "address": member.address,
+        "lat": member.lat, "lon": member.lon, "language": member.language,
+        "risk_factors": member.risk_factors, "notes": member.notes,
+        "devices": member.devices, "preferred_channel": member.preferred_channel,
+        "emergency_contact_name": member.emergency_contact_name,
+        "tier": tier,
+        "state": state,
+        "checkin": checkin.model_dump() if checkin else None,
+        "reminders_sent": checkin.reminders_sent if checkin else 0,
+        "deployment": ({"id": trip.id, "status": trip.status, "task": trip.task,
+                        "responder_id": trip.responder_id,
+                        "responder_name": (store.volunteer(trip.responder_id).name
+                                           if store.volunteer(trip.responder_id) else trip.responder_id),
+                        "eta_minutes": round(trip.duration_s / 60)} if trip else None),
+    }
+
+
+# The order a coordinator should work down the list in: loudest problem first, people who are fine last.
+_STATE_ORDER = {"critical": 0, "needs_help": 1, "waiting": 2, "not_contacted": 3, "ok": 4}
+
+
+@app.get("/api/neighbors")
+def neighbors(episode_id: str | None = None) -> dict[str, Any]:
+    """Every neighbour and how they are doing, for the watch list."""
+    episode = store.episode(episode_id) if episode_id else _current_episode()
+    checkins = store.checkins(episode.id) if episode else []
+    deployments = store.deployments(episode.id) if episode else []
+    rows = [_neighbour_state(m, episode, checkins, deployments) for m in store.members() if m.opted_in]
+    rows.sort(key=lambda r: (_STATE_ORDER.get(r["state"], 9), r["tier"] if r["tier"] else 9, r["name"]))
+    return {"episode_id": episode.id if episode else None,
+            "episode": episode.model_dump() if episode else None,
+            "neighbors": rows}
+
+
+@app.get("/api/neighbors/{member_id}")
+def neighbor(member_id: str, episode_id: str | None = None) -> dict[str, Any]:
+    """One neighbour's case: their state now, their history, and the trips involving them."""
+    member = store.member(member_id)
+    if member is None:
+        raise HTTPException(404, "unknown neighbour")
+    episode = store.episode(episode_id) if episode_id else _current_episode()
+    checkins = store.checkins(episode.id) if episode else []
+    deployments = store.deployments(episode.id) if episode else []
+    state = _neighbour_state(member, episode, checkins, deployments)
+    from .agents.tools_memory import neighbor_history
+
+    return {
+        **state,
+        "episode": episode.model_dump() if episode else None,
+        "phone": member.phone, "email": member.email,
+        "emergency_contact_phone": member.emergency_contact_phone,
+        "history": neighbor_history(member_id, exclude_episode_id=episode.id if episode else None),
+        "deployments": [d.model_dump() for d in deployments if d.member_id == member_id],
+    }
+
+
+@app.post("/api/neighbors/{member_id}/checkup")
+async def run_checkup(member_id: str) -> dict[str, Any]:
+    """Send this one neighbour a check-in now, and start the reminder ladder for them.
+
+    The coordinator's own version of what the outreach agent does for the whole roster: aimed at one
+    person, because sometimes you are worried about one person.
+    """
+    import secrets
+
+    from .channels.registry import deliver
+    from .models import Checkin
+
+    member = store.member(member_id)
+    episode = _current_episode()
+    if member is None:
+        raise HTTPException(404, "unknown neighbour")
+    if episode is None:
+        raise HTTPException(400, "no episode is running; start one first")
+
+    open_already = [c for c in store.checkins(episode.id)
+                    if c.member_id == member_id and c.status in ("sent", "delivered")]
+    if open_already:
+        return {"already_waiting": True, "token": open_already[0].token}
+
+    token = secrets.token_urlsafe(8)
+    link = f"{settings.PUBLIC_BASE_URL}/checkin/{token}"
+    body = (f"Hi {member.name.split()[0]}, this is Porchlight from {settings.COMMUNITY_NAME}. "
+            f"{episode.hazard.event_name} — are you doing okay?\n\n{link}\n\nOr just reply here.")
+    store.put_checkin(Checkin(token=token, episode_id=episode.id, member_id=member_id,
+                              channel=member.preferred_channel, status="sent"))
+    res = await asyncio.to_thread(deliver, member, body, member.preferred_channel,
+                                  meta={"token": token, "language": member.language})
+    store.mutate_episode(episode.id, lambda e: e.timeline.append(TimelineEntry(
+        kind="checkin", text=f"Check-in sent to {member.name} by the coordinator")))
+    bus.emit("checkin", f"Check-in sent to {member.name}", episode_id=episode.id,
+             member_id=member_id, agent="coordinator")
+    return {"sent": res.ok, "channel": res.channel, "detail": res.detail, "token": token}
+
+
+@app.post("/api/neighbors/{member_id}/escalate")
+def run_escalate(member_id: str) -> dict[str, Any]:
+    """Treat this neighbour as needing help now, and propose who should go to them."""
+    from . import deployments as dep_mod
+
+    member = store.member(member_id)
+    episode = _current_episode()
+    if member is None:
+        raise HTTPException(404, "unknown neighbour")
+    if episode is None:
+        raise HTTPException(400, "no episode is running; start one first")
+
+    mine = [c for c in store.checkins(episode.id) if c.member_id == member_id]
+    if not mine:
+        raise HTTPException(400, "nothing has been sent to this neighbour yet; run a check-in first")
+    checkin = max(mine, key=lambda c: c.sent_at)
+    store.mutate_checkin(checkin.token, lambda c: (setattr(c, "status", "needs_help"),
+                                                   setattr(c, "note", "escalated by the coordinator")))
+    dep = dep_mod.propose_for(store.checkin(checkin.token))
+    if dep is None:
+        return {"proposed": False, "reason": "no volunteer is free, or someone is already going"}
+    return {"proposed": True, "deployment": dep.model_dump()}
+
+
+def _current_episode():
+    """The episode a coordinator is working right now: the newest one that has not been closed."""
+    live = [e for e in store.episodes() if e.status not in ("closed", "stood_down")]
+    return max(live, key=lambda e: e.created_at) if live else None
+
+
 @app.get("/api/episodes/{episode_id}/deployments")
 def list_deployments(episode_id: str) -> dict[str, Any]:
     """Suggested and approved trips, each with its road route and where the responder should be by now."""

@@ -20,7 +20,8 @@ export default function TopBar({ health, connected, refreshHealth }) {
         </span>
       </Link>
       <nav>
-        <NavLink to="/" end>Desk</NavLink>
+        <NavLink to="/" end>Watch</NavLink>
+        <NavLink to="/episodes">Episodes</NavLink>
         <NavLink to="/roster">Roster</NavLink>
         <NavLink to="/compare">Compare</NavLink>
         <NavLink to="/demo">Present</NavLink>

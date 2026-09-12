@@ -3,6 +3,8 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import './index.css';
 import Dashboard from './pages/Dashboard.jsx';
+import Watch from './pages/Watch.jsx';
+import Neighbor from './pages/Neighbor.jsx';
 import Checkin from './pages/Checkin.jsx';
 import Roster from './pages/Roster.jsx';
 import Demo from './pages/Demo.jsx';
@@ -13,7 +15,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Dashboard />} />
+        <Route path="/" element={<Watch />} />
+        <Route path="/neighbors/:id" element={<Neighbor />} />
+        <Route path="/episodes" element={<Dashboard />} />
         <Route path="/episodes/:id" element={<Dashboard />} />
         <Route path="/episodes/:id/report" element={<Report />} />
         <Route path="/roster" element={<Roster />} />
