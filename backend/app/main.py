@@ -53,6 +53,7 @@ async def _startup() -> None:
         store.put_resource(r)
     _setup_telemetry()
     sched.start()
+    _warn_about_stored_overrides()
     log.info("Porchlight ready. Model candidates: %s. Channels: %s", candidate_names(), available_channels())
 
 
@@ -82,6 +83,26 @@ async def _shutdown() -> None:
         sched.stop()
     except Exception:  # noqa: BLE001
         pass
+
+
+# Settings the presenter view can change at runtime. Once changed they live in the database and win over
+# backend/.env, which is correct — a coordinator adjusting pacing mid-event should not be overruled by a
+# file — but it is invisible, and an edit to .env that silently does nothing costs an hour to work out.
+_OVERRIDABLE = ("followup_grace_minutes", "followup_interval_minutes", "sentinel_enabled",
+                "auto_approve_escalations")
+
+
+def _warn_about_stored_overrides() -> None:
+    for key in _OVERRIDABLE:
+        stored = store.get_setting(key, None)
+        if stored is None:
+            continue
+        env_value = getattr(settings, key.upper(), None)
+        if env_value is not None and str(stored) != str(env_value):
+            log.warning(
+                "%s is %s, set from the presenter view and stored in the database. It overrides "
+                "%s=%s in backend/.env; change it in the app, or clear the stored value.",
+                key, stored, key.upper(), env_value)
 
 
 def _begin_shutdown(*_a) -> None:
