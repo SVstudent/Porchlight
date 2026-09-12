@@ -213,7 +213,7 @@ class Store:
     # ---- maintenance ----
     def reset_runtime(self) -> None:
         """Clear episodes/approvals/check-ins/seen alerts but keep roster, volunteers, resources."""
-        for t in ("hazards", "episodes", "approvals", "checkins", "seen_alerts"):
+        for t in ("hazards", "episodes", "approvals", "checkins", "deployments", "seen_alerts"):
             self._clear(t)
 
     def seed_if_empty(self, members: Iterable[Member], volunteers: Iterable[Volunteer], resources: Iterable[Resource]) -> bool:

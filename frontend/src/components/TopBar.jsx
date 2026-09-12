@@ -44,13 +44,16 @@ export default function TopBar({ health, connected, refreshHealth }) {
       ) : (
         <span className="pill red small" title="No model provider is configured in backend/.env">No model</span>
       )}
+      {/* The feeds are live whatever the send mode is: real alerts, real conditions, real routing. The
+          tooltip carries whether outbound messages are actually leaving, which is a separate question. */}
       <span
-        className={`pill ${health?.send_mode === 'live' ? 'green' : 'warn'}`}
+        className="pill live"
         title={health?.send_mode === 'live'
-          ? 'Messages are really being sent'
-          : 'Messages are written to the activity feed instead of being sent. Set SEND_MODE=live in backend/.env to send.'}
+          ? 'Live National Weather Service alerts, live conditions, live routing. Outbound messages are really being sent.'
+          : 'Live National Weather Service alerts, live conditions, live routing. Outbound messages are written to the activity feed rather than sent.'}
       >
-        {health?.send_mode === 'live' ? 'Sending for real' : 'Practice mode'}
+        <span className="dot" />
+        Live ingestion
       </span>
       <SettingsMenu health={health} refreshHealth={refreshHealth} />
     </header>

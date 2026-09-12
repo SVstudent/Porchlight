@@ -5,6 +5,7 @@ import asyncio
 import csv
 import io
 import json
+import os
 import signal
 from datetime import datetime, timezone
 import logging
@@ -152,6 +153,9 @@ def health() -> dict[str, Any]:
         "last_scan_at": store.get_setting("last_scan_at"),
         "auto_approve_escalations": store.get_setting("auto_approve_escalations", settings.AUTO_APPROVE_ESCALATIONS),
         "public_base_url": settings.PUBLIC_BASE_URL,
+        # Which process answered. A restart hands the port over gradually, so without this a probe can
+        # read the configuration of the process that is on its way out and conclude a change did nothing.
+        "pid": os.getpid(),
         "time": now_iso(),
     }
 

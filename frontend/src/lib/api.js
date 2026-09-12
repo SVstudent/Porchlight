@@ -37,6 +37,7 @@ export const api = {
   approvals: () => req('/api/approvals'),
   neighbors: () => req('/api/neighbors'),
   mapLayers: () => req('/api/map/layers'),
+  ingest: (body = {}) => req('/api/demo/ingest', { method: 'POST', body: JSON.stringify(body) }),
   neighbor: (id) => req(`/api/neighbors/${id}`),
   checkup: (id) => req(`/api/neighbors/${id}/checkup`, { method: 'POST' }),
   escalateNeighbor: (id) => req(`/api/neighbors/${id}/escalate`, { method: 'POST' }),

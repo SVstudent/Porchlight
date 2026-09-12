@@ -71,6 +71,18 @@ def resolve_all_for(member_id: str, status: str, note: str) -> list[str]:
     return closed
 
 
+def gap_minutes() -> float:
+    """The wait between reminders. A stored value set from the app wins over backend/.env, the same
+    way the follow-up grace period does, so pacing can be changed without a restart."""
+    try:
+        stored = store.get_setting("reminder_gap_minutes", None)
+        if stored is not None:
+            return max(0.0, float(stored))
+    except (TypeError, ValueError):
+        pass
+    return float(settings.REMINDER_GAP_MINUTES)
+
+
 def due_for_reminder(c) -> bool:
     """Is this check-in owed another nudge yet?"""
     if c.status not in OPEN:
@@ -78,14 +90,14 @@ def due_for_reminder(c) -> bool:
     if c.reminders_sent >= settings.MAX_REMINDERS:
         return False
     since = _age_minutes(c.last_contact_at or c.sent_at)
-    return since >= settings.REMINDER_GAP_MINUTES
+    return since >= gap_minutes()
 
 
 def exhausted(c) -> bool:
     """Reminders used up and still nothing back."""
     return (c.status in OPEN
             and c.reminders_sent >= settings.MAX_REMINDERS
-            and _age_minutes(c.last_contact_at or c.sent_at) >= settings.REMINDER_GAP_MINUTES)
+            and _age_minutes(c.last_contact_at or c.sent_at) >= gap_minutes())
 
 
 def reminder_text(member, episode, attempt: int) -> str:
@@ -106,7 +118,7 @@ def mark_critical(c, member) -> None:
     def _apply(x):
         x.status = "critical"
         x.note = (f"No reply after {settings.MAX_REMINDERS} attempts over "
-                  f"{settings.MAX_REMINDERS * settings.REMINDER_GAP_MINUTES} minutes")
+                  f"{settings.MAX_REMINDERS * gap_minutes():.0f} minutes")
 
     store.mutate_checkin(c.token, _apply)
     ep = store.episode(c.episode_id)

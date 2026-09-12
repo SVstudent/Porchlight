@@ -614,3 +614,16 @@ a.btn { text-decoration: none; }
   width: 22px; height: 9px; border-radius: 2px;
   background: linear-gradient(90deg, rgb(74,126,156), rgb(122,163,150), rgb(214,179,96), rgb(200,111,51), rgb(176,45,31));
 }
+
+
+.watch-head-right { display: flex; align-items: center; gap: 8px; }
+
+/* Deliberately quiet. It is the thing that starts a demonstration, not a control a coordinator needs. */
+.ingest-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  border: 1px solid var(--line); background: #fff; color: var(--muted);
+  border-radius: 999px; padding: 4px 10px; font-size: 11px; font-family: inherit;
+  cursor: pointer; letter-spacing: .01em;
+}
+.ingest-btn:hover:not(:disabled) { color: #1e2a2b; border-color: #c9c2b2; background: #faf8f3; }
+.ingest-btn:disabled { opacity: .55; cursor: default; }

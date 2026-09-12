@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Users, Radar, PlusCircle } from 'lucide-react';
+import { Users, Radar, PlusCircle, Antenna } from 'lucide-react';
 import TopBar from '../components/TopBar.jsx';
 import MapView from '../components/MapView.jsx';
 import NeighborCard from '../components/NeighborCard.jsx';
@@ -27,6 +27,7 @@ export default function Watch() {
   const [layers, setLayers] = useState(null);
   const [show, setShow] = useState({ field: true, footprint: true });
   const [filter, setFilter] = useState('all');
+  const [ingesting, setIngesting] = useState(false);
   const timer = useRef(null);
 
   const load = useCallback(() => {
@@ -94,9 +95,34 @@ export default function Watch() {
                   : <>{all.length} neighbours · nothing active right now</>}
               </p>
             </div>
-            {attention > 0 ? (
-              <span className="pill red">{attention} need{attention === 1 ? 's' : ''} you</span>
-            ) : null}
+            <div className="watch-head-right">
+              {attention > 0 ? (
+                <span className="pill red">{attention} need{attention === 1 ? 's' : ''} you</span>
+              ) : null}
+              {/* Clears everything and sets the real pipeline going: a live alert if the National
+                  Weather Service has one for this area, an archived real one if it does not. */}
+              <button
+                className="ingest-btn"
+                disabled={ingesting}
+                title="Start from nothing: clear every episode and let the sentinel ingest what is actually happening"
+                onClick={async () => {
+                  setIngesting(true);
+                  try {
+                    const r = await api.ingest({ pace: 'filming' });
+                    setLayers(null);
+                    load();
+                    api.mapLayers().then(setLayers).catch(() => {});
+                    console.info('[porchlight] ingested', r.source, '—', r.hazard);
+                  } catch (e) {
+                    alert(e.message);
+                  } finally {
+                    setIngesting(false);
+                  }
+                }}
+              >
+                <Antenna size={12} /> {ingesting ? 'ingesting…' : 'ingestion'}
+              </button>
+            </div>
           </header>
 
           <div className="watch-filters">

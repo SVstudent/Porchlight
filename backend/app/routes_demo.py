@@ -5,6 +5,7 @@ it only makes them convenient to trigger and to watch, which is what a five-minu
 """
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import Any, Optional
 
@@ -154,6 +155,68 @@ def probe_public_base() -> tuple[bool, str]:
 
     _base_probe.update({"at": now, "ok": ok, "detail": detail})
     return ok, detail
+
+
+class IngestBody(BaseModel):
+    # "filming" compresses the waits so a whole episode fits one take; the behaviour is identical.
+    pace: str = "filming"
+    fixture_id: Optional[str] = None
+
+
+@router.post("/api/demo/ingest")
+async def ingest(body: IngestBody) -> dict[str, Any]:
+    """Start from nothing and let the real thing run.
+
+    Clears every episode, check-in, approval and trip, then puts the sentinel to work. If the National
+    Weather Service has something live for this roster's area it is used; otherwise an archived real
+    alert is replayed. Everything after that is the ordinary pipeline — the same agents, the same
+    approval gates, the same messages — because a demonstration of this project is only worth anything
+    if it is the project doing it.
+
+    `pace` only changes how long the system waits between its own steps. "filming" shortens the gap
+    before a reminder and before the follow-up agent treats silence as a problem, so an arc that takes
+    twenty minutes in a real heat wave fits a single take. Nothing about what happens changes.
+    """
+    from .agents.runner import runner
+    from .agents.sentinel import new_hazards, replay_fixture
+    from .scheduler import sentinel_job  # noqa: F401  (kept for parity with the manual scan route)
+
+    store.reset_runtime()
+    bus.emit("status", "Starting fresh — no episodes, no check-ins, nothing on the map")
+
+    if body.pace == "filming":
+        store.set_setting("followup_grace_minutes", 1)
+        store.set_setting("followup_interval_minutes", 1)
+        store.set_setting("reminder_gap_minutes", 1)
+    else:
+        for k in ("followup_grace_minutes", "followup_interval_minutes", "reminder_gap_minutes"):
+            store.set_setting(k, None)
+
+    hazard = None
+    source = ""
+    if body.fixture_id:
+        hazard, source = replay_fixture(body.fixture_id), "archived alert"
+    else:
+        try:
+            live = await asyncio.to_thread(new_hazards)
+        except Exception as e:  # noqa: BLE001
+            live = []
+            log.warning("live scan failed during ingestion: %s", e)
+        if live:
+            hazard, source = live[0], "live National Weather Service alert"
+        else:
+            fixtures = list_fixtures()
+            pick = next((f for f in fixtures if f["hazard_type"] == "heat"), fixtures[0] if fixtures else None)
+            if pick is None:
+                raise HTTPException(500, "no live alert and no archived alert to fall back on")
+            hazard, source = replay_fixture(pick["id"]), "archived real alert (nothing live right now)"
+
+    bus.emit("scan", f"Ingested a {source}: {hazard.event_name}", agent="sentinel")
+    episode = await runner.start(hazard)
+    if hazard.external_id:
+        store.mark_alert_seen(hazard.external_id, episode.id)
+    return {"episode_id": episode.id, "source": source, "pace": body.pace,
+            "hazard": hazard.event_name, "area": hazard.area}
 
 
 @router.get("/api/demo/readiness")
