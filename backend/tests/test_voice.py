@@ -199,6 +199,51 @@ def test_signature_validation():
         settings.TWILIO_AUTH_TOKEN = ""
 
 
+def test_simulated_call_recording():
+    """The playable call: case-specific lines, the live call's voice and keypad prompt, a real WAV, cached."""
+    import wave
+
+    from app import voice_sim
+
+    spoken: list[tuple[str, str]] = []
+
+    def fake_pcm(text, voice, rate="100%"):
+        spoken.append((voice, text))
+        return bytes(3200)  # 0.1 s of silence
+
+    real = voice_sim.synth_pcm
+    voice_sim.synth_pcm = fake_pcm
+    try:
+        ep = setup()
+        r = client.post("/api/voice/sim", json={"member_id": "mem_bettie", "episode_id": ep.id, "outcome": "needs_help"})
+        assert r.status_code == 200, r.text
+        sim = r.json()
+        assert sim["outcome"] == "needs_help" and not sim["cached"]
+        assert sim["voices"]["porchlight"] == voice_for("en").removeprefix("Polly.")
+        texts = [t["text"] for t in sim["turns"]]
+        assert "Bettie" in texts[2] and "Palo Verde Library" in texts[2]
+        assert texts.count("Press 1 if you are okay. Press 2 if you need help.") == 2  # hard of hearing: asked twice
+        assert any(t["kind"] == "dtmf" and t["digit"] == "2" for t in sim["turns"])
+        assert all(t["end"] >= t["start"] for t in sim["turns"])
+
+        audio = client.get(sim["url"])
+        assert audio.status_code == 200 and audio.headers["content-type"] == "audio/wav"
+        path = voice_sim.audio_path(sim["id"])
+        with wave.open(str(path)) as w:
+            assert w.getframerate() == 16000 and w.getnframes() / 16000 > 3
+
+        calls = len(spoken)
+        again = client.post("/api/voice/sim", json={"member_id": "mem_bettie", "episode_id": ep.id, "outcome": "needs_help"}).json()
+        assert again["cached"] and again["id"] == sim["id"] and len(spoken) == calls
+
+        spanish = client.post("/api/voice/sim", json={"member_id": "mem_rosa", "episode_id": ep.id, "outcome": "ok"}).json()
+        assert spanish["voices"]["porchlight"] == "Lupe" and spanish["turns"][1]["text"] == "¿Bueno?"
+
+        assert client.get("/api/voice/sim/..%2Fporchlight.wav").status_code == 404
+        assert client.post("/api/voice/sim", json={"member_id": "nobody"}).status_code == 404
+    finally:
+        voice_sim.synth_pcm = real
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_") and callable(fn):

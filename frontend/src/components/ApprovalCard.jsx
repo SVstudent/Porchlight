@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ShieldCheck, X, Check } from 'lucide-react';
 import { api } from '../lib/api.js';
+import VoiceCallSim from './VoiceCallSim.jsx';
 
 const TASK_LABEL = { wellness_visit: 'Wellness visit', ride_to_cooling_center: 'Ride to cooling center', phone_call: 'Phone call', deliver_supplies: 'Deliver supplies' };
 
@@ -60,6 +61,7 @@ export default function ApprovalCard({ approval, members, volunteers, onDecided 
                         <div className="eyebrow">What the call will say ({m.language === 'es' ? 'Polly.Lupe' : 'Polly.Joanna'})</div>
                         <textarea value={m.call_script || ''} placeholder="Call script (falls back to the message below, links removed)" onChange={(e) => setMessages(messages.map((x, j) => (j === i ? { ...x, call_script: e.target.value } : x)))} />
                         <div className="count">then: “Press 1 if you are okay. Press 2 if you need help.”</div>
+                        <VoiceCallSim compact memberId={m.member_id} episodeId={approval.episode_id} callScript={m.call_script || ''} />
                       </div>
                     ) : null}
                     <textarea value={m.body} onChange={(e) => setMessages(messages.map((x, j) => (j === i ? { ...x, body: e.target.value } : x)))} />

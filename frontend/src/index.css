@@ -627,3 +627,90 @@ a.btn { text-decoration: none; }
 }
 .ingest-btn:hover:not(:disabled) { color: #1e2a2b; border-color: #c9c2b2; background: #faf8f3; }
 .ingest-btn:disabled { opacity: .55; cursor: default; }
+
+
+/* Decisions land on the screen you are already watching, not on another page. */
+.watch-approvals {
+  border-top: 1px solid var(--line);
+  padding: 12px 14px;
+  max-height: 52%;
+  overflow-y: auto;
+  background: #fffdf7;
+}
+
+
+/* A screen that cannot load says why, rather than looking like an empty roster. */
+.load-err {
+  background: #fdf0ec; border: 1px solid #e8c4ba; color: #8c1d11;
+  border-radius: 8px; padding: 9px 12px; margin-bottom: 10px;
+}
+
+/* ---- simulated voice call ---- */
+.vsim { display: grid; gap: 10px; }
+.vsim.compact { margin-top: 8px; gap: 8px; }
+.vsim-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+.vsim-bar .btn { display: inline-flex; align-items: center; gap: 6px; }
+.vsim-seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; background: var(--surface); }
+.vsim-seg button { border: 0; background: transparent; font: inherit; font-size: 12px; padding: 4px 10px; color: var(--ink-2); cursor: pointer; }
+.vsim-seg button + button { border-left: 1px solid var(--line); }
+.vsim-seg button.on { background: var(--amber-soft); color: var(--amber-ink); font-weight: 600; }
+.vsim-audio { width: 100%; max-width: 100%; height: 36px; }
+.vsim-err { color: var(--red); }
+.vsim-transcript { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; max-height: 320px; overflow-y: auto; }
+.vsim-transcript li { display: grid; grid-template-columns: 38px 76px 1fr; gap: 8px; padding: 5px 8px; border-radius: 8px; font-size: 13px; line-height: 1.45; cursor: pointer; }
+.vsim-transcript li:hover { background: var(--surface-2); }
+.vsim-transcript li.on { background: var(--amber-soft); }
+.vsim-transcript .ts { font-family: var(--font-mono); font-size: 11px; color: var(--ink-2); padding-top: 2px; }
+.vsim-transcript .who { font-weight: 600; font-size: 12px; padding-top: 1px; }
+.vsim-transcript li.porchlight .who { color: var(--amber-ink); }
+.vsim-transcript li.neighbor .who { color: var(--blue); }
+.vsim-transcript li.ring .line, .vsim-transcript li.dtmf .line { color: var(--ink-2); font-style: italic; }
+.vsim-foot { line-height: 1.45; }
+@media (max-width: 480px) {
+  .vsim-transcript li { grid-template-columns: 34px 1fr; }
+  .vsim-transcript .who { grid-column: 2; }
+  .vsim-transcript .line { grid-column: 2; }
+}
+
+
+/* ---- pipeline strip: the run's structure, so parallel agents read as ordered ---- */
+.pstrip { display: flex; align-items: flex-start; padding: 2px 16px 12px; gap: 0; }
+.pstage {
+  position: relative; display: flex; flex-direction: column; align-items: center;
+  flex: 1; min-width: 0; gap: 4px;
+}
+.pstage .pline {
+  position: absolute; top: 10px; right: 50%; left: -50%; height: 2px;
+  background: var(--line); z-index: 0;
+}
+.pstage.done .pline, .pstage.running .pline, .pstage.waiting .pline { background: #c7ccc9; }
+.pdot {
+  position: relative; z-index: 1;
+  width: 21px; height: 21px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: #fff; border: 1.5px solid var(--line); color: #b3aa9a;
+}
+.plabel { font-size: 10.5px; color: var(--muted); letter-spacing: .01em; }
+
+.pstage.done .pdot { background: #2f6b5a; border-color: #2f6b5a; color: #fff; }
+.pstage.done .plabel { color: #2f6b5a; }
+
+.pstage.running .pdot { border-color: #b8741a; color: #b8741a; animation: ppulse 1.4s ease-in-out infinite; }
+.pstage.running .plabel { color: #b8741a; font-weight: 600; }
+
+.pstage.waiting .pdot { background: #c8412b; border-color: #c8412b; color: #fff; }
+.pstage.waiting .plabel { color: #c8412b; font-weight: 600; }
+.pwait { font-size: 9px; color: #c8412b; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+
+@keyframes ppulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(184,116,26,.35); }
+  50%      { box-shadow: 0 0 0 5px rgba(184,116,26,0); }
+}
+
+
+.menu-link {
+  display: block; padding: 7px 2px; font-size: 12.5px; color: var(--ink, #1e2a2b);
+  text-decoration: none; border-bottom: 1px solid var(--line);
+}
+.menu-link:hover { color: #b8741a; }
+.menu-link + .menu-link { }

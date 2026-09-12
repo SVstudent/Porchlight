@@ -5,6 +5,8 @@ import TopBar from '../components/TopBar.jsx';
 import MapView from '../components/MapView.jsx';
 import NeighborCard from '../components/NeighborCard.jsx';
 import DeploymentCards from '../components/DeploymentCards.jsx';
+import ApprovalCard from '../components/ApprovalCard.jsx';
+import PipelineStrip from '../components/PipelineStrip.jsx';
 import { api, useEventStream, usePoll } from '../lib/api.js';
 
 /**
@@ -15,8 +17,11 @@ import { api, useEventStream, usePoll } from '../lib/api.js';
  * by side and stay in step: hovering a card lifts that neighbour on the map, and the map shows the
  * trips the list is talking about.
  */
-const REFRESH = new Set(['checkin', 'critical', 'deployment', 'dispatch', 'escalation',
-                         'decision', 'status', 'brief', 'error']);
+// Anything that can change what the board shows. The agents' own narration — reasoning, streamed text,
+// individual tool results — is excluded because it arrives many times a second and the feed covers it.
+const REFRESH = new Set(['checkin', 'critical', 'deployment', 'dispatch', 'escalation', 'decision',
+                         'status', 'brief', 'error', 'assessment', 'approval', 'interrupt',
+                         'approval_requested', 'node_start', 'node_stop', 'scan', 'policy', 'gap']);
 
 export default function Watch() {
   const [health, refreshHealth] = usePoll(api.health, 30000);
@@ -28,17 +33,25 @@ export default function Watch() {
   const [show, setShow] = useState({ field: true, footprint: true });
   const [filter, setFilter] = useState('all');
   const [ingesting, setIngesting] = useState(false);
+  const [loadErr, setLoadErr] = useState('');
+  const [approvals, setApprovals] = useState([]);
+  const [vols] = usePoll(api.volunteers, 300000);
   const timer = useRef(null);
 
   const load = useCallback(() => {
     api.neighbors().then((d) => {
+      setLoadErr('');
       setData(d);
       if (d.episode_id) {
         api.deployments(d.episode_id).then((x) => setDeployments(x.deployments || [])).catch(() => {});
+        api.episode(d.episode_id)
+          .then((e) => setApprovals((e.approvals || []).filter((a) => a.status === 'pending')))
+          .catch(() => {});
       } else {
         setDeployments([]);
+        setApprovals([]);
       }
-    }).catch(() => {});
+    }).catch((e) => setLoadErr(e.message || 'could not reach the backend'));
   }, []);
 
   const queue = useCallback(() => {
@@ -62,10 +75,13 @@ export default function Watch() {
   // A responder in transit needs a steady tick; the list itself is not changing while they drive.
   const travelling = deployments.some((d) => d.status === 'approved' && (d.progress || 0) < 1);
   useEffect(() => {
-    if (!travelling && connected) return undefined;
-    const t = setInterval(load, travelling ? 5000 : 20000);
+    // Always poll. Events drive the fast updates, but a poll is the only thing that recovers from a
+    // fetch that failed — during a restart, say — and an empty screen with no explanation is worse
+    // than a slow one. Faster while someone is travelling or while something is wrong.
+    const every = travelling ? 5000 : loadErr ? 3000 : connected ? 15000 : 6000;
+    const t = setInterval(load, every);
     return () => clearInterval(t);
-  }, [travelling, connected, load]);
+  }, [travelling, connected, loadErr, load]);
 
   const all = data?.neighbors || [];
   const counts = useMemo(() => {
@@ -125,6 +141,9 @@ export default function Watch() {
             </div>
           </header>
 
+          {/* Outreach and logistics run at the same time; this is what keeps that legible. */}
+          <PipelineStrip episode={episode} approvals={approvals} busy={!!episode?.busy} />
+
           <div className="watch-filters">
             {[['all', 'Everyone'], ['critical', 'No reply'], ['needs_help', 'Needs help'],
               ['waiting', 'Waiting'], ['ok', 'Okay']].map(([k, label]) => (
@@ -136,11 +155,18 @@ export default function Watch() {
           </div>
 
           <div className="watch-scroll">
-            {shown.length === 0 ? (
+            {loadErr ? (
+              <div className="load-err small">
+                Cannot reach the backend — {loadErr}. Retrying every few seconds.
+              </div>
+            ) : null}
+            {!loadErr && shown.length === 0 ? (
               <div className="empty small">
-                {all.length === 0
-                  ? 'No neighbours on the roster yet.'
-                  : 'Nobody in this state right now.'}
+                {data === null
+                  ? 'Loading the roster…'
+                  : all.length === 0
+                    ? 'No neighbours on the roster yet.'
+                    : 'Nobody in this state right now.'}
               </div>
             ) : null}
             {shown.map((n) => (
@@ -192,6 +218,22 @@ export default function Watch() {
             <span className="k"><i className="sq" /> cooled buildings</span>
             <span className="k"><i className="ln" /> responder en route</span>
           </div>
+          {approvals.length ? (
+            <div className="watch-approvals">
+              <div className="eyebrow" style={{ marginBottom: 8 }}>
+                {approvals.length} waiting on your decision
+              </div>
+              {approvals.map((a) => (
+                <ApprovalCard
+                  key={a.id}
+                  approval={a}
+                  members={all}
+                  volunteers={vols?.volunteers || []}
+                  onDecided={load}
+                />
+              ))}
+            </div>
+          ) : null}
           {deployments.length ? (
             <div className="watch-deploys">
               <div className="eyebrow" style={{ marginBottom: 8 }}>

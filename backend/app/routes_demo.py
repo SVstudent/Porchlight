@@ -158,9 +158,14 @@ def probe_public_base() -> tuple[bool, str]:
 
 
 class IngestBody(BaseModel):
-    # "filming" compresses the waits so a whole episode fits one take; the behaviour is identical.
+    # "filming" walks the agents one at a time with a gap between them, so a recording can be narrated.
+    # "real" fans outreach and logistics out in parallel, which is what an actual emergency wants.
     pace: str = "filming"
     fixture_id: Optional[str] = None
+    # A small gap only. The agents themselves take about fifty seconds in sequence, which is already
+    # slow enough to follow; longer pauses push a run past a minute for no benefit to a viewer.
+    step_pause_seconds: float = 2.0
+    reminder_gap_minutes: float = 3.0
 
 
 @router.post("/api/demo/ingest")
@@ -185,11 +190,21 @@ async def ingest(body: IngestBody) -> dict[str, Any]:
     bus.emit("status", "Starting fresh — no episodes, no check-ins, nothing on the map")
 
     if body.pace == "filming":
-        store.set_setting("followup_grace_minutes", 1)
+        # Paced for a person watching, not for an emergency. One agent at a time with a gap after each,
+        # so a recording can describe each step as it lands instead of five of them arriving at once.
+        # The scheduled scan is paused too: a second episode opening halfway through is the single most
+        # confusing thing that can happen on camera, and this run is the one being watched.
+        store.set_setting("sentinel_enabled", False)
+        store.set_setting("sequential_agents", False)
+        store.set_setting("step_pause_seconds", body.step_pause_seconds)
+        store.set_setting("followup_grace_minutes", body.reminder_gap_minutes)
         store.set_setting("followup_interval_minutes", 1)
-        store.set_setting("reminder_gap_minutes", 1)
+        store.set_setting("reminder_gap_minutes", body.reminder_gap_minutes)
     else:
-        for k in ("followup_grace_minutes", "followup_interval_minutes", "reminder_gap_minutes"):
+        store.set_setting("sentinel_enabled", True)
+        store.set_setting("sequential_agents", False)
+        for k in ("step_pause_seconds", "followup_grace_minutes",
+                  "followup_interval_minutes", "reminder_gap_minutes"):
             store.set_setting(k, None)
 
     hazard = None
@@ -216,6 +231,8 @@ async def ingest(body: IngestBody) -> dict[str, Any]:
     if hazard.external_id:
         store.mark_alert_seen(hazard.external_id, episode.id)
     return {"episode_id": episode.id, "source": source, "pace": body.pace,
+            "sequential": False,
+            "step_pause_seconds": body.step_pause_seconds if body.pace == "filming" else 0,
             "hazard": hazard.event_name, "area": hazard.area}
 
 

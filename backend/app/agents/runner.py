@@ -90,8 +90,7 @@ class EpisodeRunner:
                 self._graphs[ep_id] = graph
             final: Any = None
             try:
-                async for ev in graph.stream_async(task_input, invocation_state={"episode_id": ep_id}):
-                    final = self._handle_graph_event(ep_id, ev) or final
+                final = await self._stream(ep_id, graph, task_input)
             except TypeError as e:
                 # The saved graph is still paused on an approval, so it will only accept interrupt responses.
                 if not allow_recovery or "interrupt" not in str(e).lower():
@@ -134,9 +133,23 @@ class EpisodeRunner:
             current_episode_id.reset(token)
 
     async def _stream(self, ep_id: str, graph: Any, task: Any) -> Any:
+        """Consume the graph's events, pausing between agents when asked to.
+
+        The pause is for a person watching, not for the system: the agents are fast enough that five of
+        them finish inside half a minute, and a recording of that is a wall of text nobody can follow.
+        Holding briefly after each agent finishes lets each step be described as it lands. It is zero
+        unless a pause has been configured.
+        """
+        from .pipeline import step_pause_s
+
         final: Any = None
+        pause = step_pause_s()
         async for ev in graph.stream_async(task, invocation_state={"episode_id": ep_id}):
             final = self._handle_graph_event(ep_id, ev) or final
+            if pause and ev.get("type") == "multiagent_node_stop":
+                bus.emit("status", f"{ev.get('node_id')} finished", episode_id=ep_id,
+                         agent=str(ev.get("node_id") or ""))
+                await asyncio.sleep(pause)
         return final
 
     def _rebuild_clean(self, ep_id: str) -> Any:

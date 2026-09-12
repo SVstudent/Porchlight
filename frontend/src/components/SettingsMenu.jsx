@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Settings2 } from 'lucide-react';
 import { api } from '../lib/api.js';
 
@@ -33,6 +34,15 @@ export default function SettingsMenu({ health, refreshHealth }) {
       </button>
       {open ? (
         <div className="menu-pop" role="dialog" aria-label="Settings">
+          {/* Rehomed from the main navigation: useful before a recording, not something a coordinator
+              needs alongside the screen they actually work from. */}
+          <Link className="menu-link" to="/demo" onClick={() => setOpen(false)}>
+            Presenter checks &amp; hazard replay
+          </Link>
+          <Link className="menu-link" to="/compare" onClick={() => setOpen(false)}>
+            Compare hazards on this roster
+          </Link>
+
           <div className="eyebrow">Standing policy</div>
           <label className="check">
             <input

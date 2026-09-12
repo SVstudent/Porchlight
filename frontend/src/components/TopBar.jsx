@@ -21,21 +21,18 @@ export default function TopBar({ health, connected, refreshHealth }) {
       </Link>
       <nav>
         <NavLink to="/" end>Watch</NavLink>
-        <NavLink to="/episodes">Episodes</NavLink>
         <NavLink to="/roster">Roster</NavLink>
-        <NavLink to="/compare">Compare</NavLink>
-        <NavLink to="/demo">Present</NavLink>
+        <NavLink to="/episodes">Agent runs</NavLink>
       </nav>
       <span className="spacer" />
-      <span className={`pill ${sentinelOn ? 'live' : 'off'}`} title="Deterministic hazard scan of National Weather Service alerts and live conditions">
+      <span
+        className={`pill ${connected ? 'live' : 'off'}`}
+        title={sentinelOn
+          ? `Watching National Weather Service alerts and live conditions · last scan ${health?.last_scan_at ? timeAgo(health.last_scan_at) : 'not yet'}`
+          : 'Scheduled scanning is paused'}
+      >
         <span className="dot" />
-        {sentinelOn
-          ? `Watching · scanned ${health?.last_scan_at ? timeAgo(health.last_scan_at) : 'not yet'}`
-          : 'Watching paused'}
-      </span>
-      <span className={`pill ${connected ? 'live' : 'off'}`} title="Live event stream from the Strands agents">
-        <span className="dot" />
-        {connected ? 'Agent feed live' : 'Reconnecting…'}
+        {connected ? 'Agents live' : 'Reconnecting…'}
       </span>
       {health?.models?.length ? (
         <span className="pill mono small" title={`Model fallback order: ${health.models.join(' → ')}`}>

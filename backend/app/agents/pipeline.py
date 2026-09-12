@@ -159,6 +159,33 @@ Finish with one or two sentences summarising what you did and who is still unacc
 """
 
 
+def sequential() -> bool:
+    """Whether to walk the graph one node at a time instead of fanning out.
+
+    A coordinator wants outreach and logistics working at once. Someone watching a recording wants to
+    hear about one thing at a time. This is set from the app, so it can be turned on for a demonstration
+    without changing how the system behaves the rest of the time.
+    """
+    try:
+        stored = store.get_setting("sequential_agents", None)
+        if stored is not None:
+            return bool(stored)
+    except Exception:  # noqa: BLE001
+        pass
+    return os.getenv("SEQUENTIAL_AGENTS", "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def step_pause_s() -> float:
+    """A deliberate gap between agents, so each one's work can be described as it lands."""
+    try:
+        stored = store.get_setting("step_pause_seconds", None)
+        if stored is not None:
+            return max(0.0, float(stored))
+    except (TypeError, ValueError):
+        pass
+    return float(os.getenv("STEP_PAUSE_S", "0") or 0)
+
+
 def graph_session_id(ep: Episode) -> str:
     """The name of the persisted session for an episode's graph. Stored on the episode so a reader of the
     database can find the session on disk, and so nothing has to re-derive the convention."""
@@ -211,10 +238,21 @@ def build_graph(ep: Episode, model: Any | None = None):
     b.add_node(logistics, "logistics")
     b.add_node(brief, "brief")
     b.add_edge("assess", "triage", condition=activated)
-    b.add_edge("triage", "outreach")
-    b.add_edge("triage", "logistics")
-    b.add_edge("outreach", "brief")
-    b.add_edge("logistics", "brief")
+
+    if sequential():
+        # One node at a time. Outreach and logistics are independent, so running them together is the
+        # right thing to do in an emergency — but it means two agents narrate over each other, and
+        # someone watching cannot tell which decision belonged to which. Walking the graph in order
+        # makes it followable, at the cost of a few seconds.
+        b.add_edge("triage", "outreach")
+        b.add_edge("outreach", "logistics")
+        b.add_edge("logistics", "brief")
+    else:
+        b.add_edge("triage", "outreach")
+        b.add_edge("triage", "logistics")
+        b.add_edge("outreach", "brief")
+        b.add_edge("logistics", "brief")
+
     b.set_entry_point("assess")
     b.set_execution_timeout(int(os.getenv("GRAPH_TIMEOUT_S", "1800")))
     b.set_node_timeout(int(os.getenv("NODE_TIMEOUT_S", "900")))

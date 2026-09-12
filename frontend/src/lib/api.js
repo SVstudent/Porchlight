@@ -5,12 +5,21 @@ const BASE = import.meta.env.VITE_API_URL || '';
 async function req(path, opts = {}) {
   const res = await fetch(BASE + path, {
     headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) },
+    // Never let the browser cache an API response. If the dev server is restarting it answers /api with
+    // the SPA's index.html, and Chrome will happily keep serving that HTML for the rest of the session —
+    // which looks exactly like an empty roster that never recovers.
+    cache: 'no-store',
     ...opts,
   });
   if (!res.ok) {
     let detail = res.statusText;
     try { detail = (await res.json()).detail || detail; } catch { /* ignore */ }
     throw new Error(detail);
+  }
+  const type = res.headers.get('content-type') || '';
+  if (!type.includes('json')) {
+    // Say what actually happened rather than surfacing a JSON parse error about a doctype.
+    throw new Error(`${path} returned ${type || 'no content type'} instead of JSON — is the backend running?`);
   }
   return res.json();
 }
@@ -65,6 +74,7 @@ export const api = {
     const res = await fetch(`${BASE}/api/roster/import`, { method: 'POST', body: fd });
     return res.json();
   },
+  voiceSim: (body) => req('/api/voice/sim', { method: 'POST', body: JSON.stringify(body) }),
   // ---- outage ----
   electricityDependent: () => req('/api/outage/electricity-dependent'),
   reportOutage: (body) => req('/api/outage/report', { method: 'POST', body: JSON.stringify(body) }),

@@ -2,11 +2,12 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
   ArrowLeft, Phone, MessageSquare, AlertTriangle, HeartHandshake, Clock, Check,
-  CircleDashed, ShieldAlert, Send, History,
+  CircleDashed, ShieldAlert, Send, History, PhoneCall,
 } from 'lucide-react';
 import TopBar from '../components/TopBar.jsx';
 import MapView from '../components/MapView.jsx';
 import DeploymentCards from '../components/DeploymentCards.jsx';
+import VoiceCallSim from '../components/VoiceCallSim.jsx';
 import { api, useEventStream, usePoll, timeAgo } from '../lib/api.js';
 
 /**
@@ -189,6 +190,20 @@ export default function Neighbor() {
               ) : (
                 <div className="small muted">Nothing has been sent to them in this episode.</div>
               )}
+            </div>
+          </section>
+
+          <section className="panel">
+            <div className="panel-h"><PhoneCall size={15} /><h3>Voice check-in call</h3></div>
+            <div className="panel-b">
+              <p className="small muted" style={{ marginTop: 0 }}>
+                {n.preferred_channel === 'voice'
+                  ? `Porchlight reaches ${n.name.split(' ')[0]} by phone call, not text. `
+                  : `Porchlight can call ${n.name.split(' ')[0]} when a text will not do. `}
+                Hear the call it would place: Amazon Polly reads the script, {n.name.split(' ')[0]} answers, and
+                a keypress records how they are.
+              </p>
+              <VoiceCallSim memberId={n.id} episodeId={n.episode?.id} />
             </div>
           </section>
 
