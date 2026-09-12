@@ -13,7 +13,7 @@ import { api, useEventStream, usePoll, timeAgo } from '../lib/api.js';
 // Events that change what the open episode looks like.
 const REFRESH_EPISODE = new Set([
   'status', 'approval', 'assessment', 'dispatch', 'checkin', 'escalation',
-  'node_stop', 'decision', 'brief', 'error', 'policy',
+  'node_stop', 'decision', 'brief', 'error', 'policy', 'deployment', 'critical',
 ]);
 // Events that change the episode list itself (a new episode, or a badge on one).
 const REFRESH_LIST = new Set(['status', 'approval', 'decision', 'error']);
@@ -27,6 +27,7 @@ export default function Dashboard() {
   const [res] = usePoll(api.resources, 300000);
   const [episodes, refreshEpisodes] = usePoll(api.episodes, 20000);
   const [episode, setEpisode] = useState(null);
+  const [deployments, setDeployments] = useState([]);
 
   const list = episodes?.episodes || [];
   const activeId = id || list[0]?.id;
@@ -38,11 +39,14 @@ export default function Dashboard() {
   const timer = useRef(null);
 
   const loadEpisode = useCallback(() => {
-    if (!activeId) { setEpisode(null); return; }
+    if (!activeId) { setEpisode(null); setDeployments([]); return; }
     const mine = ++seq.current;
     api.episode(activeId)
       .then((d) => { if (mine === seq.current) setEpisode(d); })
       .catch(() => { if (mine === seq.current) setEpisode((prev) => prev); });
+    api.deployments(activeId)
+      .then((d) => { if (mine === seq.current) setDeployments(d.deployments || []); })
+      .catch(() => {});
   }, [activeId]);
 
   const queueLoad = useCallback(() => {
@@ -52,6 +56,17 @@ export default function Dashboard() {
 
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
   useEffect(() => { loadEpisode(); }, [loadEpisode]);
+
+  // Someone travelling needs their position refreshed on a steady tick, which the episode poll does
+  // not provide: the episode itself is not changing while they drive.
+  const travelling = deployments.some((d) => d.status === 'approved' && (d.progress || 0) < 1);
+  useEffect(() => {
+    if (!travelling || !activeId) return undefined;
+    const t = setInterval(() => {
+      api.deployments(activeId).then((d) => setDeployments(d.deployments || [])).catch(() => {});
+    }, 5000);
+    return () => clearInterval(t);
+  }, [travelling, activeId]);
 
   // Poll the open episode only while its agents are still working; SSE covers the rest.
   // 'escalating' is not in this list on purpose: like 'monitoring' it is a settled state that can last
@@ -143,6 +158,7 @@ export default function Dashboard() {
             members={members}
             volunteers={vols?.volunteers || []}
             resources={res?.resources || []}
+            deployments={deployments}
             refresh={() => { loadEpisode(); refreshEpisodes(); }}
           />
         </div>

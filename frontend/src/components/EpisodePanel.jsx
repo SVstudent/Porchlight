@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import ApprovalCard from './ApprovalCard.jsx';
 import RosterStatus from './RosterStatus.jsx';
 import MapView from './MapView.jsx';
+import DeploymentCards from './DeploymentCards.jsx';
 import { api, clock, timeAgo } from '../lib/api.js';
 import HazardPill from './HazardPill.jsx';
 
@@ -35,7 +36,7 @@ function stepState(ep, id) {
 
 const STATUS_PILL = { assessing: 'blue', triaging: 'blue', awaiting_approval: 'amber', dispatching: 'blue', monitoring: 'green', escalating: 'red', closed: '', stood_down: '', failed: 'red' };
 
-export default function EpisodePanel({ episode, members, volunteers, resources, refresh }) {
+export default function EpisodePanel({ episode, members, volunteers, resources, refresh, deployments = [] }) {
   if (!episode) {
     return (
       <section className="panel">
@@ -127,9 +128,34 @@ export default function EpisodePanel({ episode, members, volunteers, resources, 
         </div>
       </section>
 
+      {/* The map, and directly under it the trips it is drawing. Keeping them together means a
+          coordinator approves a journey while looking at the journey. */}
       <section className="panel">
-        <div className="panel-h"><MapPin size={15} /><h3>Map</h3><div className="right small muted">circles: neighbors by tier / reply · squares: cooling centers</div></div>
-        <div className="panel-b"><MapView members={members} resources={resources} episode={ep} /></div>
+        <div className="panel-h">
+          <MapPin size={15} /><h3>Map</h3>
+          <div className="right small muted">
+            {deployments.filter((d) => d.status === 'approved').length
+              ? `${deployments.filter((d) => d.status === 'approved').length} on the way`
+              : 'live conditions and the roster'}
+          </div>
+        </div>
+        <div className="panel-b" style={{ paddingBottom: 0 }}>
+          <MapView members={members} resources={resources} episode={ep} deployments={deployments} />
+        </div>
+        <div className="map-legend">
+          <span className="k"><i className="dot" style={{ background: '#c8412b' }} /> tier 1</span>
+          <span className="k"><i className="dot" style={{ background: '#b8741a' }} /> tier 2 / waiting</span>
+          <span className="k"><i className="dot" style={{ background: '#2f6b5a' }} /> answered</span>
+          <span className="k"><i className="dot" style={{ background: '#8c1d11' }} /> no reply at all</span>
+          <span className="k"><i className="sq" /> cooled buildings</span>
+          <span className="k"><i className="ln" /> responder en route</span>
+        </div>
+        {deployments.length ? (
+          <div className="panel-b" style={{ borderTop: '1px solid var(--line)' }}>
+            <div className="eyebrow" style={{ marginBottom: 8 }}>Suggested deployments</div>
+            <DeploymentCards deployments={deployments} refresh={refresh} />
+          </div>
+        ) : null}
       </section>
 
       {ep.logistics ? (

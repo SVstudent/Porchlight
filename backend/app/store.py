@@ -7,9 +7,11 @@ import threading
 from typing import Any, Iterable, Optional
 
 from .config import settings
-from .models import Approval, Checkin, Episode, HazardEvent, Member, Resource, Volunteer, now_iso
+from .models import (Approval, Checkin, Deployment, Episode, HazardEvent, Member, Resource,
+                     Volunteer, now_iso)
 
-_TABLES = ["members", "volunteers", "resources", "hazards", "episodes", "approvals", "checkins", "seen_alerts", "settings"]
+_TABLES = ["members", "volunteers", "resources", "hazards", "episodes", "approvals", "checkins",
+           "deployments", "seen_alerts", "settings"]
 
 
 class Store:
@@ -160,6 +162,28 @@ class Store:
         if episode_id:
             out = [c for c in out if c.episode_id == episode_id]
         return out
+
+    def deployments(self, episode_id: str | None = None) -> list[Deployment]:
+        out = [Deployment(**d) for d in self._all("deployments")]
+        if episode_id:
+            out = [d for d in out if d.episode_id == episode_id]
+        return sorted(out, key=lambda d: d.created_at)
+
+    def deployment(self, dep_id: str) -> Optional[Deployment]:
+        d = self._get("deployments", dep_id)
+        return Deployment(**d) if d else None
+
+    def put_deployment(self, d: Deployment) -> Deployment:
+        self._put("deployments", d.id, d.model_dump())
+        return d
+
+    def mutate_deployment(self, dep_id: str, fn) -> Optional[Deployment]:
+        with self._lock:
+            d = self.deployment(dep_id)
+            if d is None:
+                return None
+            fn(d)
+            return self.put_deployment(d)
 
     def checkin(self, token: str) -> Optional[Checkin]:
         d = self._get("checkins", token)

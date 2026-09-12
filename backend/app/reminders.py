@@ -118,6 +118,17 @@ def mark_critical(c, member) -> None:
         bus.emit("critical", f"{member.name} has not answered {settings.MAX_REMINDERS} messages",
                  episode_id=ep.id, member_id=member.id, status="critical", agent="reminders")
     log.info("marked %s critical on %s", member.name, c.episode_id)
+    _propose_a_visit(c)
+
+
+def _propose_a_visit(c) -> None:
+    """Silence that has run out of reminders is evidence enough to suggest someone goes round."""
+    try:
+        from . import deployments
+
+        deployments.propose_for(store.checkin(c.token))
+    except Exception as e:  # noqa: BLE001 — a routing outage must not stop the escalation itself
+        log.warning("could not propose a visit for %s: %s", c.member_id, e)
 
 
 def record_reminder(c) -> None:

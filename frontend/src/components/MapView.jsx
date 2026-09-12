@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react';
-import { MapContainer, TileLayer, CircleMarker, Popup, Marker, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, CircleMarker, Popup, Marker, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -33,6 +33,15 @@ const COLOR = {
 const TIER = { 1: '#c8412b', 2: '#b8741a', 3: '#3a6a8a', 0: '#b9b3a6' };
 const NEUTRAL = '#b9b3a6';
 
+/** A responder in transit: a filled dot with a ring, so it reads as moving rather than placed. */
+const responderIcon = L.divIcon({
+  className: '',
+  html: '<div style="width:16px;height:16px;border-radius:50%;background:#2f6b5a;border:3px solid #fff;'
+    + 'box-shadow:0 0 0 3px rgba(47,107,90,.3),0 1px 4px rgba(0,0,0,.4)"></div>',
+  iconSize: [16, 16],
+  iconAnchor: [8, 8],
+});
+
 const resourceIcon = L.divIcon({
   className: '',
   html: '<div style="width:15px;height:15px;border-radius:3px;background:#3a6a8a;'
@@ -55,7 +64,7 @@ function FitToData({ points }) {
   return null;
 }
 
-export default function MapView({ members, resources, episode }) {
+export default function MapView({ members, resources, episode, deployments = [] }) {
   const shown = useMemo(
     () => (resources || []).filter((r) => r.kind !== 'hydration' && Number.isFinite(r.lat)),
     [resources],
@@ -64,9 +73,23 @@ export default function MapView({ members, resources, episode }) {
     () => (members || []).filter((m) => Number.isFinite(m.lat) && Number.isFinite(m.lon)),
     [members],
   );
+  // Approved trips are drawn on the map; a declined one is not a journey anybody is making.
+  const live = useMemo(
+    () => deployments.filter((d) => d.status === 'approved' && (d.route || []).length > 1),
+    [deployments],
+  );
+  const proposed = useMemo(
+    () => deployments.filter((d) => d.status === 'proposed' && (d.route || []).length > 1),
+    [deployments],
+  );
+
   const points = useMemo(
-    () => [...people.map((m) => [m.lat, m.lon]), ...shown.map((r) => [r.lat, r.lon])],
-    [people, shown],
+    () => [
+      ...people.map((m) => [m.lat, m.lon]),
+      ...shown.map((r) => [r.lat, r.lon]),
+      ...live.flatMap((d) => d.route),
+    ],
+    [people, shown, live],
   );
 
   const decisions = Object.fromEntries((episode?.triage?.decisions || []).map((d) => [d.member_id, d]));
@@ -83,6 +106,27 @@ export default function MapView({ members, resources, episode }) {
       <MapContainer center={center} zoom={13} scrollWheelZoom={false} style={{ height: '100%', width: '100%' }}>
         <TileLayer attribution={ATTRIBUTION} url={BASEMAP} maxZoom={20} />
         <FitToData points={points} />
+
+        {/* A suggested trip, faint: nobody has agreed to make it yet. */}
+        {proposed.map((d) => (
+          <Polyline key={`p-${d.id}`} positions={d.route}
+                    pathOptions={{ color: '#b8741a', weight: 3, opacity: 0.45, dashArray: '4 7' }} />
+        ))}
+
+        {/* An approved trip: the road actually being driven, and where they should be by now. */}
+        {live.map((d) => (
+          <Polyline key={`r-${d.id}`} positions={d.route}
+                    pathOptions={{ color: '#c8412b', weight: 4, opacity: 0.85, dashArray: '8 6' }} />
+        ))}
+        {live.filter((d) => d.position).map((d) => (
+          <Marker key={`v-${d.id}`} position={d.position} icon={responderIcon} zIndexOffset={1000}>
+            <Popup>
+              <b>{d.responder_name}</b> → {d.member_name}<br />
+              {Math.round((d.progress || 0) * 100)}% of the way · about {Math.max(0, Math.round((d.eta_seconds || 0) / 60))} min left
+              <br /><i style={{ fontSize: 11 }}>Estimated from the route, not a GPS position.</i>
+            </Popup>
+          </Marker>
+        ))}
 
         {shown.map((r) => (
           <Marker key={r.id} position={[r.lat, r.lon]} icon={resourceIcon}>

@@ -166,3 +166,15 @@ def record(ep: Any, member: Any, checkin_token: str, text: str, outcome: dict[st
     bus.emit("checkin", f"{member.name} replied: {status.replace('_', ' ')}",
              episode_id=ep.id, member_id=member.id, status=status,
              said=text[:200], answered=outcome["reply"][:200], source=outcome["source"], agent="responder")
+
+    # Someone who has just said they need help is the clearest evidence there is.
+    if status == "needs_help":
+        try:
+            from .. import deployments
+
+            for c in store.checkins(ep.id):
+                if c.member_id == member.id and c.status == "needs_help":
+                    deployments.propose_for(c)
+                    break
+        except Exception as e:  # noqa: BLE001
+            log.warning("could not propose a visit for %s: %s", member.name, e)

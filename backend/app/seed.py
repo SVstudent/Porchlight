@@ -55,7 +55,8 @@ MEMBERS = [
 ]
 
 VOLUNTEERS = [
-    Volunteer(id="vol_marisol", name="Marisol Alvarez", phone="+16025550102", lat=33.5017, lon=-112.1522, skills=["spanish", "wellness_visit", "drive"], max_assignments=2),
+    # Distinct from Rosa: a volunteer who drives to her, not someone at the same address.
+    Volunteer(id="vol_marisol", name="Marisol Alvarez", phone="+16025550102", lat=33.4958, lon=-112.1573, skills=["spanish", "wellness_visit", "drive"], max_assignments=2),
     Volunteer(id="vol_ray", name="Pastor Ray Whitfield", phone="+16025550108", lat=33.4900, lon=-112.1800, skills=["wellness_visit", "phone_call"], max_assignments=3),
     Volunteer(id="vol_danny", name="Danny Tran", phone="+16025550113", lat=33.5075, lon=-112.1690, skills=["drive", "deliver", "wellness_visit"], max_assignments=2),
     Volunteer(id="vol_priya", name="Priya Natarajan (RN)", phone="+16025550118", lat=33.4960, lon=-112.1650, skills=["medical", "wellness_visit", "phone_call"], max_assignments=2),

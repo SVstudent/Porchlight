@@ -6,6 +6,7 @@ import csv
 import io
 import json
 import signal
+from datetime import datetime, timezone
 import logging
 from pathlib import Path
 from typing import Any, Optional
@@ -174,6 +175,55 @@ def update_settings(body: SettingsIn) -> dict[str, Any]:
 @app.get("/api/events")
 def events(episode_id: str | None = None, limit: int = 200) -> dict[str, Any]:
     return {"events": [e.model_dump() for e in bus.history(episode_id, limit)]}
+
+
+@app.get("/api/episodes/{episode_id}/deployments")
+def list_deployments(episode_id: str) -> dict[str, Any]:
+    """Suggested and approved trips, each with its road route and where the responder should be by now."""
+    from . import deployments as dep_mod
+
+    out = []
+    for d in store.deployments(episode_id):
+        member = store.member(d.member_id)
+        responder = store.volunteer(d.responder_id)
+        elapsed = 0.0
+        if d.approved_at:
+            elapsed = max(0.0, (datetime.now(timezone.utc)
+                                - datetime.fromisoformat(d.approved_at.replace("Z", "+00:00"))).total_seconds())
+        p = dep_mod.progress(d, elapsed)
+        out.append({
+            **d.model_dump(),
+            "member_name": member.name if member else d.member_id,
+            "member_point": [member.lat, member.lon] if member else None,
+            "responder_name": responder.name if responder else d.responder_id,
+            "responder_skills": responder.skills if responder else [],
+            "origin": d.route[0] if d.route else None,
+            "progress": p["fraction"],
+            "position": p["point"],
+            "eta_seconds": p["eta_s"],
+            "elapsed_seconds": elapsed,
+        })
+    return {"deployments": out}
+
+
+@app.post("/api/deployments/{deployment_id}/decide")
+def decide_deployment(deployment_id: str, body: dict[str, Any]) -> dict[str, Any]:
+    from . import deployments as dep_mod
+
+    d = dep_mod.decide(deployment_id, str(body.get("decision", "")).lower().startswith("appr"),
+                       str(body.get("note", "")))
+    if d is None:
+        raise HTTPException(404, "unknown deployment")
+    return {"deployment": d.model_dump()}
+
+
+@app.post("/api/episodes/{episode_id}/deployments/sweep")
+def sweep_deployments(episode_id: str) -> dict[str, Any]:
+    """Propose a trip for every established need in this episode that does not already have one."""
+    from . import deployments as dep_mod
+
+    made = dep_mod.sweep(episode_id)
+    return {"proposed": [d.model_dump() for d in made]}
 
 
 @app.get("/api/events/stream")

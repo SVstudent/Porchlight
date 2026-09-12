@@ -190,6 +190,36 @@ class Checkin(BaseModel):
     last_contact_at: str = ""  # when we last said anything to them; reminders are paced from this
 
 
+class Deployment(BaseModel):
+    """A proposed or approved trip: someone going to a neighbour who needs help.
+
+    It exists only once a neighbour's need is established — they asked for help, or they stopped
+    answering entirely — so the map shows real responses rather than speculative ones.
+    """
+    id: str = Field(default_factory=lambda: new_id("dep"))
+    episode_id: str
+    member_id: str            # who is being helped
+    responder_id: str         # volunteer, or resource for a cooling centre
+    responder_kind: Literal["volunteer", "resource"] = "volunteer"
+    task: str = "wellness_visit"
+    # Where they are being taken, when the task is a lift rather than a visit.
+    destination_id: str = ""
+    destination_name: str = ""
+    reason: str = ""
+    trigger: Literal["needs_help", "critical", "coordinator"] = "needs_help"
+    status: Literal["proposed", "approved", "declined", "arrived", "cancelled"] = "proposed"
+    # The road route, as [lat, lon] pairs, plus what the routing service estimated for it.
+    route: list[list[float]] = []
+    route_source: str = ""
+    distance_m: float = 0
+    duration_s: float = 0
+    steps: list[str] = []
+    created_at: str = Field(default_factory=now_iso)
+    approved_at: str = ""
+    arrived_at: str = ""
+    decision_note: str = ""
+
+
 class TimelineEntry(BaseModel):
     ts: str = Field(default_factory=now_iso)
     kind: str
