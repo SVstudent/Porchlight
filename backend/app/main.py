@@ -224,6 +224,40 @@ def _neighbour_state(member, episode, checkins, deployments) -> dict[str, Any]:
 _STATE_ORDER = {"critical": 0, "needs_help": 1, "waiting": 2, "not_contacted": 3, "ok": 4}
 
 
+@app.get("/api/map/layers")
+def map_layers(episode_id: str | None = None) -> dict[str, Any]:
+    """What the map should draw besides the roster: the hazard's footprint and the conditions field.
+
+    These are the two scales of the same event. The footprint is the National Weather Service's own
+    geometry — the forecaster's polygon, or the outlines of the forecast zones the alert named. The
+    field is measured conditions sampled across the neighbourhood, which is where a warning stops being
+    a county-wide statement and starts being about one person's street.
+    """
+    from .feeds import field as field_mod
+    from .feeds import footprint as fp_mod
+
+    episode = store.episode(episode_id) if episode_id else _current_episode()
+    members = [m for m in store.members() if m.opted_in]
+    points = [(m.lat, m.lon) for m in members]
+
+    layers: dict[str, Any] = {"episode_id": episode.id if episode else None}
+    if episode:
+        fp = fp_mod.for_hazard(episode.hazard)
+        layers["footprint"] = {
+            **fp,
+            "event_name": episode.hazard.event_name,
+            "area": episode.hazard.area,
+            "severity": episode.hazard.severity,
+            "hazard_type": episode.hazard.hazard_type,
+        }
+    else:
+        layers["footprint"] = {"kind": "none", "parts": [], "points": 0}
+
+    hazard_type = episode.hazard.hazard_type if episode else "heat"
+    layers["field"] = field_mod.sample(points, hazard_type)
+    return layers
+
+
 @app.get("/api/neighbors")
 def neighbors(episode_id: str | None = None) -> dict[str, Any]:
     """Every neighbour and how they are doing, for the watch list."""

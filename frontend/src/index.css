@@ -600,3 +600,17 @@ a.btn { text-decoration: none; }
 .said { font-size: 13.5px; line-height: 1.5; margin: 8px 0; padding-left: 11px; border-left: 3px solid var(--line); }
 .hist-row { padding: 6px 0; border-bottom: 1px solid var(--line); }
 .hist-row:last-child { border-bottom: 0; }
+
+
+/* Layer toggles sit in the legend: a coordinator can strip the map back to just the people. */
+.lchip {
+  display: inline-flex; align-items: center; gap: 5px;
+  border: 1px solid var(--line); background: #fff; border-radius: 999px;
+  padding: 3px 9px; font-size: 11px; color: var(--muted); cursor: pointer; font-family: inherit;
+}
+.lchip.on { background: #f3f0e8; color: #1e2a2b; border-color: #d9d4c8; }
+.lchip i.fp { width: 11px; height: 11px; border: 1.5px solid #8c1d11; background: rgba(200,65,43,.12); border-radius: 2px; }
+.lchip i.fld {
+  width: 22px; height: 9px; border-radius: 2px;
+  background: linear-gradient(90deg, rgb(74,126,156), rgb(122,163,150), rgb(214,179,96), rgb(200,111,51), rgb(176,45,31));
+}

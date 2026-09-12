@@ -24,6 +24,8 @@ export default function Watch() {
   const [data, setData] = useState(null);
   const [deployments, setDeployments] = useState([]);
   const [hovered, setHovered] = useState(null);
+  const [layers, setLayers] = useState(null);
+  const [show, setShow] = useState({ field: true, footprint: true });
   const [filter, setFilter] = useState('all');
   const timer = useRef(null);
 
@@ -44,6 +46,14 @@ export default function Watch() {
   }, [load]);
 
   useEffect(() => { load(); }, [load]);
+
+  // The hazard footprint and the conditions field change on the scale of an hour, not a click.
+  useEffect(() => {
+    const get = () => api.mapLayers().then(setLayers).catch(() => {});
+    get();
+    const t = setInterval(get, 300000);
+    return () => clearInterval(t);
+  }, []);
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
 
   const [, connected] = useEventStream((ev) => { if (REFRESH.has(ev.type)) queue(); });
@@ -130,9 +140,25 @@ export default function Watch() {
               episode={episode}
               deployments={deployments}
               highlight={hovered}
+              layers={layers}
+              showField={show.field}
+              showFootprint={show.footprint}
             />
           </div>
           <div className="map-legend">
+            {layers?.footprint?.parts?.length ? (
+              <button className={`lchip ${show.footprint ? 'on' : ''}`}
+                      onClick={() => setShow((s) => ({ ...s, footprint: !s.footprint }))}>
+                <i className="fp" /> {layers.footprint.kind === 'alert_polygon'
+                  ? 'warning area' : `${layers.footprint.parts.length} forecast zones`}
+              </button>
+            ) : null}
+            {layers?.field?.cells?.length ? (
+              <button className={`lchip ${show.field ? 'on' : ''}`}
+                      onClick={() => setShow((s) => ({ ...s, field: !s.field }))}>
+                <i className="fld" /> {layers.field.metric} {Math.round(layers.field.min)}–{Math.round(layers.field.max)}{layers.field.unit}
+              </button>
+            ) : null}
             <span className="k"><i className="dot" style={{ background: '#c8412b' }} /> needs help</span>
             <span className="k"><i className="dot" style={{ background: '#8c1d11' }} /> no reply at all</span>
             <span className="k"><i className="dot" style={{ background: '#e39a2f' }} /> waiting</span>

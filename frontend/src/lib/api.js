@@ -36,6 +36,7 @@ export const api = {
   close: (id) => req(`/api/episodes/${id}/close`, { method: 'POST' }),
   approvals: () => req('/api/approvals'),
   neighbors: () => req('/api/neighbors'),
+  mapLayers: () => req('/api/map/layers'),
   neighbor: (id) => req(`/api/neighbors/${id}`),
   checkup: (id) => req(`/api/neighbors/${id}/checkup`, { method: 'POST' }),
   escalateNeighbor: (id) => req(`/api/neighbors/${id}/escalate`, { method: 'POST' }),

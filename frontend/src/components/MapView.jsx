@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react';
-import { MapContainer, TileLayer, CircleMarker, Popup, Marker, Polyline, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, CircleMarker, Popup, Marker, Polyline, GeoJSON, Rectangle, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -69,7 +69,21 @@ function FitToData({ points }) {
   return null;
 }
 
-export default function MapView({ members, resources, episode, deployments = [], highlight = null }) {
+/** Cool blue through to hot red, for whatever the conditions field is measuring. */
+function fieldColor(value, min, max) {
+  if (value == null || min == null || max == null || max <= min) return '#9aa7ab';
+  const t = Math.max(0, Math.min(1, (value - min) / (max - min)));
+  // A deliberately short ramp: the point is to see where the gradient is, not to read a value off it.
+  const stops = [[74, 126, 156], [122, 163, 150], [214, 179, 96], [200, 111, 51], [176, 45, 31]];
+  const i = Math.min(stops.length - 2, Math.floor(t * (stops.length - 1)));
+  const f = t * (stops.length - 1) - i;
+  const [a, b] = [stops[i], stops[i + 1]];
+  const c = a.map((v, k) => Math.round(v + (b[k] - v) * f));
+  return `rgb(${c[0]},${c[1]},${c[2]})`;
+}
+
+export default function MapView({ members, resources, episode, deployments = [], highlight = null,
+                                  layers = null, showField = true, showFootprint = true }) {
   const shown = useMemo(
     () => (resources || []).filter((r) => r.kind !== 'hydration' && Number.isFinite(r.lat)),
     [resources],
@@ -97,6 +111,9 @@ export default function MapView({ members, resources, episode, deployments = [],
     [people, shown, live],
   );
 
+  const field = layers?.field || { cells: [], min: null, max: null, metric: '', unit: '' };
+  const footprint = layers?.footprint || { kind: 'none', parts: [] };
+
   const decisions = Object.fromEntries((episode?.triage?.decisions || []).map((d) => [d.member_id, d]));
   const checkins = Object.fromEntries((episode?.checkins || []).map((c) => [c.member_id, c]));
 
@@ -111,6 +128,47 @@ export default function MapView({ members, resources, episode, deployments = [],
       <MapContainer center={center} zoom={13} scrollWheelZoom={false} style={{ height: '100%', width: '100%' }}>
         <TileLayer attribution={ATTRIBUTION} url={BASEMAP} maxZoom={20} />
         <FitToData points={points} />
+
+        {/* The conditions actually measured across the neighbourhood, underneath everything else.
+            A warning is issued for a whole county; this is the part of it that is about one street. */}
+        {showField && field.cells.length ? field.cells.map((c, i) => (
+          <Rectangle
+            key={`f-${i}`}
+            bounds={c.bounds}
+            pathOptions={{
+              stroke: false,
+              fillColor: fieldColor(c.value, field.min, field.max),
+              fillOpacity: 0.38,
+            }}
+          >
+            <Popup>
+              <b>{field.metric} {c.value}{field.unit}</b><br />
+              measured here, not at the centre of town<br />
+              <i style={{ fontSize: 11 }}>{field.source}</i>
+            </Popup>
+          </Rectangle>
+        )) : null}
+
+        {/* The National Weather Service's own shape for this hazard. */}
+        {showFootprint && footprint.parts.map((part, i) => (
+          <GeoJSON
+            key={`fp-${i}-${footprint.kind}`}
+            data={part.geometry}
+            // Outline only. An alert can name a dozen zones, and a dozen translucent fills stacked on
+            // top of each other turn the whole map red and bury the conditions underneath.
+            style={{ color: '#8c1d11', weight: 1.6, opacity: 0.65, fill: false }}
+          >
+            <Popup>
+              <b>{footprint.event_name}</b><br />
+              {part.name}<br />
+              <i style={{ fontSize: 11 }}>
+                {footprint.kind === 'alert_polygon'
+                  ? 'The forecaster’s own warning polygon'
+                  : 'National Weather Service forecast zone named by this alert'}
+              </i>
+            </Popup>
+          </GeoJSON>
+        ))}
 
         {/* A suggested trip, faint: nobody has agreed to make it yet. */}
         {proposed.map((d) => (

@@ -105,5 +105,9 @@ def feature_to_hazard(feature: dict[str, Any], source: str = "nws") -> HazardEve
             "urgency": p.get("urgency"),
             "certainty": p.get("certainty"),
             "sender": p.get("senderName"),
+            # Where the hazard actually is. Storm-based warnings carry their own polygon; area warnings
+            # such as heat and winter name forecast zones instead, which have to be resolved separately.
+            "geometry": feature.get("geometry") or None,
+            "affected_zones": p.get("affectedZones", []) or [],
         },
     )
