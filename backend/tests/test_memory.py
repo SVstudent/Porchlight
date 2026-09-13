@@ -220,6 +220,58 @@ def test_agentcore_write_and_retrieve_with_stub_client():
         agentcore_memory.MEMORY_ID, agentcore_memory.REGION, agentcore_memory._client = saved
 
 
+def test_an_outcome_reaches_long_term_memory_without_anyone_asking():
+    """The integration is worthless if it is a function nobody calls.
+
+    A neighbour answering, and an episode finishing, both have to push what happened into AgentCore
+    Memory on their own — otherwise outcomes sit in the local store and the next hazard's triage learns
+    nothing from this one, which was true of every run until this was wired up.
+    """
+    import app.agents.runner as runner_mod
+    from app import reminders
+
+    ep1, _ = setup()
+    synced = []
+
+    def fake_sync(episode_id, member_id=""):
+        synced.append((episode_id, member_id))
+        return {"written": 1}
+
+    import app.agents.tools_memory as tm
+    real = tm.sync_to_agentcore
+    tm.sync_to_agentcore = fake_sync
+    try:
+        # a run finishing records the whole episode
+        runner_mod.runner._remember(ep1.id)
+        assert (ep1.id, "") in synced, f"a finished run must record its outcomes: {synced}"
+
+        # and a neighbour answering records theirs, as soon as they answer
+        synced.clear()
+        c = next(c for c in store.checkins(ep1.id))
+        store.mutate_checkin(c.token, lambda x: (setattr(x, "status", "sent"),
+                                                 setattr(x, "responded_at", "")))
+        ep = store.episode(ep1.id)
+        store.mutate_episode(ep.id, lambda e: setattr(e, "status", "monitoring"))
+        reminders.resolve_all_for(c.member_id, "ok", "said: im fine")
+        assert any(m == c.member_id for _, m in synced), f"a reply must be remembered: {synced}"
+    finally:
+        tm.sync_to_agentcore = real
+
+
+def test_remembering_never_breaks_the_thing_it_is_recording():
+    """AgentCore being unreachable must cost the memory, not the response."""
+    import app.agents.runner as runner_mod
+    import app.agents.tools_memory as tm
+
+    ep1, _ = setup()
+    real = tm.sync_to_agentcore
+    tm.sync_to_agentcore = lambda *a, **k: (_ for _ in ()).throw(RuntimeError("agentcore down"))
+    try:
+        runner_mod.runner._remember(ep1.id)   # must not raise
+    finally:
+        tm.sync_to_agentcore = real
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_") and callable(fn):

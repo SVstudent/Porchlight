@@ -228,6 +228,22 @@ class EpisodeRunner:
         ep = store.mutate_episode(ep_id, _complete) or ep
         self._graphs.pop(ep_id, None)
         bus.emit("status", f"Pipeline complete: {ep.status}", episode_id=ep.id, status=ep.status)
+        self._remember(ep_id)
+
+    def _remember(self, ep_id: str) -> None:
+        """Push what happened in this episode into long-term memory.
+
+        Without this the integration is a function nobody calls: outcomes sit in the local store and the
+        next hazard's triage learns nothing from this one.
+        """
+        try:
+            from .tools_memory import sync_to_agentcore
+
+            result = sync_to_agentcore(ep_id)
+            if result.get("written"):
+                log.info("recorded %s outcome(s) in AgentCore Memory for %s", result["written"], ep_id)
+        except Exception as e:  # noqa: BLE001 — memory is an enhancement, never a dependency
+            log.debug("could not record %s in long-term memory: %s", ep_id, e)
 
     def _register_approvals(self, ep: Episode, interrupts: list[Any], scope: str) -> None:
         batch_id = new_id("batch")

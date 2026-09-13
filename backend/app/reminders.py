@@ -53,6 +53,23 @@ def open_checkins_for(member_id: str) -> list:
     return out
 
 
+def remember(member_id: str) -> None:
+    """Write this neighbour's outcome to long-term memory, if AgentCore Memory is configured.
+
+    What is worth keeping is not that a message was sent but how they responded: which channel reached
+    them, how long they took, whether it took a visit. The next hazard's triage reads it back.
+    """
+    try:
+        from .agents.tools_memory import sync_to_agentcore
+
+        for c in store.checkins():
+            if c.member_id == member_id and c.responded_at:
+                sync_to_agentcore(c.episode_id, member_id)
+                return
+    except Exception as e:  # noqa: BLE001 — never let remembering break responding
+        log.debug("could not record %s in long-term memory: %s", member_id, e)
+
+
 def resolve_all_for(member_id: str, status: str, note: str) -> list[str]:
     """A neighbour answered. Close every conversation we have open with them, not just the newest.
 
@@ -68,6 +85,8 @@ def resolve_all_for(member_id: str, status: str, note: str) -> list[str]:
 
         store.mutate_checkin(c.token, _apply)
         closed.append(c.episode_id)
+    if closed:
+        remember(member_id)
     return closed
 
 
