@@ -34,7 +34,7 @@ from .models import Episode, Member
 from .store import store
 
 RATE = 16000
-FORMAT_VERSION = 1
+FORMAT_VERSION = 2
 SIM_DIR = settings.DATA_DIR / "voice_sims"
 SIM_ID = re.compile(r"^[0-9a-f]{20}$")
 
@@ -231,8 +231,9 @@ def build_conversation(member: Member, episode: Episode | None, outcome: str = "
 
     porch = POLLY_VOICE[lg].removeprefix("Polly.")
     neigh = NEIGHBOR_VOICE.get(member.id, DEFAULT_NEIGHBOR_VOICE[lg])
-    porch_rate = "85%" if hard_of_hearing else "100%"
-    neigh_rate = "92%" if "age_75_plus" in member.risk_factors else "100%"
+    # Brisk, like a real automated call; a hard-of-hearing neighbour still gets it a touch slower.
+    porch_rate = "105%" if hard_of_hearing else "115%"
+    neigh_rate = "108%" if "age_75_plus" in member.risk_factors else "115%"
     first = member.name.split()[0]
 
     def p(text: str, rate: str = porch_rate) -> dict[str, Any]:
@@ -249,7 +250,7 @@ def build_conversation(member: Member, episode: Episode | None, outcome: str = "
         p(P["gather"]),
     ]
     if hard_of_hearing:
-        turns += [n(L["pardon"]), p(P["gather"], "75%")]
+        turns += [n(L["pardon"]), p(P["gather"], "100%")]
     turns.append(n(L["ok"].get(hazard_type, L["ok"]["other"]) if outcome == "ok" else _help_line(member, hazard_type, lg, place_kind)))
     turns.append({"kind": "dtmf", "speaker": "line", "name": "Keypad", "digit": digit,
                   "text": f"{first} pressed {digit}"})
@@ -308,19 +309,18 @@ def _render(convo: dict[str, Any], out: Path) -> dict[str, Any]:
     prev = None
     for t in convo["turns"]:
         if audio:
-            audio.extend(_silence(0.25 if t["speaker"] == prev else 0.5))
+            audio.extend(_silence(0.08 if t["speaker"] == prev else 0.18))
         t["start"] = round(len(audio) / RATE, 2)
         if t["kind"] == "ring":
-            for _ in range(2):
-                audio.extend(_tone((440, 480), 1.2, 0.18))
-                audio.extend(_silence(0.9))
+            audio.extend(_tone((440, 480), 0.9, 0.18))
+            audio.extend(_silence(0.25))
         elif t["kind"] == "dtmf":
-            audio.extend(_tone(DTMF[t["digit"]], 0.22, 0.3))
+            audio.extend(_tone(DTMF[t["digit"]], 0.15, 0.3))
         else:
             audio.extend(_pcm(synth_pcm(t["text"], t["voice"], t["rate"])))
         t["end"] = round(len(audio) / RATE, 2)
         prev = t["speaker"]
-    audio.extend(_silence(0.4))
+    audio.extend(_silence(0.2))
 
     data = audio if sys.byteorder == "little" else array("h", audio)
     if sys.byteorder != "little":

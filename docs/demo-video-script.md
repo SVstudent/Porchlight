@@ -2,12 +2,12 @@
 
 **Track:** Good Neighbor Agents · **Target 4:45, hard cap 5:00**
 
-**Shape:** thirty seconds of what and why, then straight into the real thing running, and only then how
-it is built. A judge who stops watching after two minutes has still seen the product work.
+**Shape:** forty seconds of why, what and who, then straight into the real thing running, and only then
+how it is built. A judge who stops watching after two minutes has still seen the product work.
 
-Judged on Presentation: *does the video clearly demonstrate the project working end-to-end, and does the
-pitch communicate what problem is solved, who it's for, and why it matters.* Beat 1 answers all three in
-thirty seconds; beat 9 returns to them with the weight of the demo behind it.
+Beat 1 carries all three required pitch points in order, marked in the narration so none can be lost in
+a rewrite. Beat 9 returns to them with the weight of the demo behind it. See the rules check below
+before publishing.
 
 Every figure spoken aloud is sourced in [`sources.md`](sources.md). **Do not add a number that is not on
 that page.**
@@ -36,17 +36,17 @@ The demo's whole claim is that nothing is staged, so the board must genuinely st
 
 ## The beats
 
-### Part one — what this is (0:00–0:35)
+### Part one — what this is (0:00–0:40)
 
 | # | Time | On screen | Narration |
 |---|---|---|---|
-| **1** | 0:00–0:35 | The watch screen, empty. Twelve grey cards on the left, all "Not contacted". The map on the right with twelve homes and the real cooling centres. Hold still. | This is Porchlight. It is for the one volunteer who holds a neighbourhood's contact list together — a block captain, a parish coordinator — the person who, when a heat warning hits, has one evening to work out who is in danger, text them all, and remember who never wrote back. New York City does exactly this by hand: 1,942 wellness checks last year, one volunteer at a time. Heat is the deadliest weather in the United States, and the people it kills are the ones nobody reached. This is a block captain's roster in Maryvale, Phoenix — twelve neighbours, four volunteers, real cooling centres. Nothing is running yet. I am going to click one button, and everything after that is the system. |
+| **1** | 0:00–0:40 | The watch screen, empty. Twelve grey cards on the left, all "Not contacted". The map on the right with twelve homes and the real cooling centres. Hold still. | **[why it matters]** In the 2021 heat dome, sixty-nine people died in one county in Oregon. Seventy-one percent of them lived alone. They did not die in the street — they died at home, because nobody reached them in time. **[the problem]** Every agency's advice is the same sentence: check on your neighbours. Doing it falls to volunteers with a spreadsheet and a phone. New York City runs exactly this programme by hand — 1,942 wellness checks last year, one at a time. **[who it's for]** This is Porchlight, and it is built for that person: the block captain, the parish coordinator, the one volunteer holding a neighbourhood's contact list together. It is a Good Neighbor agent, five Strands agents on Amazon Bedrock, and it runs in the background until a human actually has to decide something. This is a real roster in Maryvale, Phoenix. Nothing is running yet. I click one button, and everything after this is the system. |
 
-### Part two — the demo (0:35–3:45) · **unbroken, nothing staged**
+### Part two — the demo (0:40–3:45) · **unbroken, nothing staged**
 
 | # | Time | On screen | Narration |
 |---|---|---|---|
-| **2** | 0:35–1:05 | **Click `ingestion`.** Let it run untouched. Hazard banner appears, activity feed streams, cards turn amber as tiers land. | It polls the National Weather Service and live conditions, and it has just found dangerous heat in Phoenix from live readings — not a recording. Five agents take over. Assess reads the hazard and returns a typed decision. Triage ranks every neighbour from their recorded risk factors against the conditions at their own address. Outreach and logistics run in parallel. Every tool call is on screen as it happens. |
+| **2** | 0:40–1:05 | **Click `ingestion`.** Let it run untouched. Hazard banner appears, activity feed streams, cards turn amber as tiers land. | It polls the National Weather Service and live conditions, and it has just found dangerous heat in Phoenix from live readings — not a recording. Five agents take over. Assess reads the hazard and returns a typed decision. Triage ranks every neighbour from their recorded risk factors against the conditions at their own address. Outreach and logistics run in parallel. Every tool call is on screen as it happens. |
 | **3** | 1:05–1:45 | Two approval cards appear together. Scroll them. Open Rosa's message (Spanish). **Edit Walter's wording.** Approve & send. Then approve the volunteer assignments. | And here it stops. The outreach agent wants to send eleven messages, and it cannot. The whole graph is paused inside that tool call, waiting for me. I read Rosa's in Spanish, tweak Walter's, and approve — and it resumes inside the same call, with my edit. Logistics asks next: Marisol, who speaks Spanish and drives, to Rosa. Priya, the nurse, to Walter — because Walter is on a home oxygen concentrator and the system knows that. Nothing reaches a neighbour without a human yes. |
 | **4** | 1:45–2:20 | Phone: the Telegram message arrives with a one-tap link. Reply in your own words: "my ac stopped working and i feel a bit dizzy". Cut to the desk: Bettie's card turns red, the feed shows the agent reading it, the reply lands back on the phone. | Neighbours get one message with two big buttons. But people do not tap buttons — they write back. So an agent reads what they actually said. She did not say "help". She said her air conditioning stopped and she feels dizzy. It understood that, answered her by name with the nearest cooled building, and flagged her on my board. During this demo one neighbour is contacted for real, on my own phone; the rest are logged. |
 | **5** | 2:20–2:50 | The watch, now sorted worst-first. Walter at the top: "No reply at all · 3 reminders". Click his card → his case page: the oxygen concentrator note, his emergency contact, the two protocols. | Walter never answered. Three reminders, three minutes apart — then Porchlight stopped texting him and flagged him, because silence from a man on an oxygen concentrator is the finding, not a reason to send a fourth message. This is his case: what we know, what was said, what happened in past events. |
@@ -59,6 +59,36 @@ The demo's whole claim is that nothing is staged, so the board must genuinely st
 |---|---|---|---|
 | **8** | 3:45–4:20 | Architecture diagram, held still. Optionally cut to `agentcore invoke` in a terminal, and the coordinator brief. | Five Strands agents in a GraphBuilder graph on Amazon Bedrock, with a conditional edge and parallel branches. The pause you saw is a Strands interrupt raised from a BeforeToolCall hook on the three tools that can affect the world, with session persistence, so a paused run survives a restart. The same graph runs on Bedrock AgentCore Runtime, and every check-in outcome goes into AgentCore Memory — so next time, triage already knows Bettie prefers Telegram to a phone call. Live public data, no API keys: the National Weather Service, Open-Meteo, OpenStreetMap. |
 | **9** | 4:20–4:45 | The brief: who was reached, who was visited, who was not, the gaps. Then title card: Porchlight, repo URL, "Built with Strands Agents and Amazon Bedrock". | And when it is over, the brief is the after-action record — who was reached, who was visited, who is still unaccounted for. Portland, 2021: sixty-nine people died in one county, seventy-one percent of them living alone. Every agency says to check on your neighbours. Porchlight is for the volunteer who actually does it. The porch light is on. |
+
+---
+
+## Does this meet the rules? — check before you publish
+
+The submission page requires a video of **five minutes maximum** that **demonstrates the working
+project** and whose pitch covers **(1) the problem, (2) who it is for, (3) why it matters**. Slides,
+screen recording and voiceover are all allowed; no face needed.
+
+| Requirement | Where it is met |
+|---|---|
+| Maximum five minutes | Target 4:45. Time the read-through before recording — narration always runs long. |
+| Demonstrates the working project | Beats 2–7: one unbroken run from an empty board, nothing staged. |
+| **(1) The problem** | Beat 1, second sentence: the advice is universal, and doing it falls to a volunteer with a spreadsheet. Re-landed in beat 5 when Walter goes silent. |
+| **(2) Who it is for** | Beat 1, named explicitly — block captain, parish coordinator, the person holding the list. |
+| **(3) Why it matters** | Beat 1 opens on it: sixty-nine dead, seventy-one percent living alone. Beat 9 closes the loop. |
+
+Scored separately on **Technological Implementation** (depth of Strands use, with a live demo or
+AgentCore strengthening it), **Design**, **Potential Impact**, **Creativity**, and **Presentation**.
+Three things earn those marks and are easy to lose by cutting:
+
+- **Say "Strands" in beat 1**, not only at 3:45. A judge scoring as they watch should not wait almost
+  four minutes to learn what the project is built on.
+- **Beat 3 is the Technical Implementation beat.** The graph pausing mid-tool-call for a human is the
+  non-obvious use of the SDK. Do not cut it for time.
+- **Beat 8 names AgentCore Runtime and AgentCore Memory**, both of which strengthen that score, and
+  both of which are genuinely running.
+
+If you have the tunnel up, put its URL on the closing card as a live demo link — the rules say projects
+with one score higher on Technical Implementation.
 
 ---
 
