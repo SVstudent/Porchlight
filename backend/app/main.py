@@ -293,7 +293,37 @@ def neighbor(member_id: str, episode_id: str | None = None) -> dict[str, Any]:
         "phone": member.phone, "email": member.email,
         "emergency_contact_phone": member.emergency_contact_phone,
         "history": neighbor_history(member_id, exclude_episode_id=episode.id if episode else None),
-        "deployments": [d.model_dump() for d in deployments if d.member_id == member_id],
+        "deployments": [_deployment_view(d) for d in deployments if d.member_id == member_id],
+    }
+
+
+def _deployment_view(d) -> dict[str, Any]:
+    """One trip, with where the responder should be by now.
+
+    The map needs more than the stored record: it needs the point along the route that corresponds to
+    how long ago the coordinator approved it. Shared by the watch and by a neighbour's own page so both
+    draw the same thing.
+    """
+    from . import deployments as dep_mod
+
+    member = store.member(d.member_id)
+    responder = store.volunteer(d.responder_id)
+    elapsed = 0.0
+    if d.approved_at:
+        elapsed = max(0.0, (datetime.now(timezone.utc)
+                            - datetime.fromisoformat(d.approved_at.replace("Z", "+00:00"))).total_seconds())
+    p = dep_mod.progress(d, elapsed)
+    return {
+        **d.model_dump(),
+        "member_name": member.name if member else d.member_id,
+        "member_point": [member.lat, member.lon] if member else None,
+        "responder_name": responder.name if responder else d.responder_id,
+        "responder_skills": responder.skills if responder else [],
+        "origin": d.route[0] if d.route else None,
+        "progress": p["fraction"],
+        "position": p["point"],
+        "eta_seconds": p["eta_s"],
+        "elapsed_seconds": elapsed,
     }
 
 
@@ -371,28 +401,7 @@ def list_deployments(episode_id: str) -> dict[str, Any]:
     """Suggested and approved trips, each with its road route and where the responder should be by now."""
     from . import deployments as dep_mod
 
-    out = []
-    for d in store.deployments(episode_id):
-        member = store.member(d.member_id)
-        responder = store.volunteer(d.responder_id)
-        elapsed = 0.0
-        if d.approved_at:
-            elapsed = max(0.0, (datetime.now(timezone.utc)
-                                - datetime.fromisoformat(d.approved_at.replace("Z", "+00:00"))).total_seconds())
-        p = dep_mod.progress(d, elapsed)
-        out.append({
-            **d.model_dump(),
-            "member_name": member.name if member else d.member_id,
-            "member_point": [member.lat, member.lon] if member else None,
-            "responder_name": responder.name if responder else d.responder_id,
-            "responder_skills": responder.skills if responder else [],
-            "origin": d.route[0] if d.route else None,
-            "progress": p["fraction"],
-            "position": p["point"],
-            "eta_seconds": p["eta_s"],
-            "elapsed_seconds": elapsed,
-        })
-    return {"deployments": out}
+    return {"deployments": [_deployment_view(d) for d in store.deployments(episode_id)]}
 
 
 @app.post("/api/deployments/{deployment_id}/decide")

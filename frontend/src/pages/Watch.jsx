@@ -92,7 +92,9 @@ export default function Watch() {
   const shown = filter === 'all' ? all : all.filter((n) => n.state === filter);
   const attention = counts.critical + counts.needs_help;
 
-  const members = all.map((n) => ({ ...n, id: n.id }));
+  // Rebuilding this every render gave the map a new array on every mouse move, which is what made it
+  // re-frame itself whenever a card was hovered.
+  const members = useMemo(() => all.map((n) => ({ ...n, id: n.id })), [all]);
   const episode = data?.episode || null;
 
   return (

@@ -477,9 +477,12 @@ a.btn { text-decoration: none; }
    ========================================================================== */
 .watch {
   display: grid;
-  grid-template-columns: minmax(380px, 1fr) 1fr;
-  gap: 16px;
-  padding: 16px;
+  /* The map gets the larger share. The list needs enough width to read a name, an address and a row of
+     risk chips; everything beyond that is better spent on the map, which is where distance, hazard and
+     response are all legible at once. */
+  grid-template-columns: minmax(340px, 0.78fr) 1.42fr;
+  gap: 14px;
+  padding: 14px;
   height: calc(100vh - 58px);
   box-sizing: border-box;
 }
@@ -556,15 +559,15 @@ a.btn { text-decoration: none; }
 .ndeploy.proposed { color: #b8741a; }
 
 /* ---- the map half ---- */
-.watch-map-inner { flex: 1; min-height: 0; }
+.watch-map-inner { flex: 1 1 auto; min-height: 58%; }
 .watch-map-inner .map { height: 100%; border: 0; border-radius: 0; }
-.watch-deploys { border-top: 1px solid var(--line); padding: 12px 14px; max-height: 38%; overflow-y: auto; }
+.watch-deploys { border-top: 1px solid var(--line); padding: 12px 14px; max-height: 26%; overflow-y: auto; }
 
 /* ============================================================================
    One neighbour's case.
    ========================================================================== */
 .case {
-  display: grid; grid-template-columns: minmax(420px, 1.05fr) 1fr;
+  display: grid; grid-template-columns: minmax(380px, 0.85fr) 1.25fr;
   gap: 16px; padding: 16px; height: calc(100vh - 58px); box-sizing: border-box;
 }
 @media (max-width: 1000px) { .case { grid-template-columns: 1fr; height: auto; } }
@@ -633,7 +636,7 @@ a.btn { text-decoration: none; }
 .watch-approvals {
   border-top: 1px solid var(--line);
   padding: 12px 14px;
-  max-height: 52%;
+  max-height: 34%;
   overflow-y: auto;
   background: #fffdf7;
 }
@@ -714,3 +717,20 @@ a.btn { text-decoration: none; }
 }
 .menu-link:hover { color: #b8741a; }
 .menu-link + .menu-link { }
+
+
+/* A responder's label rides beside their marker so several trips stay legible at once. */
+.trip-label {
+  background: rgba(255,255,255,.95) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 6px !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,.18) !important;
+  font-size: 11px !important;
+  padding: 3px 7px !important;
+  white-space: nowrap;
+}
+.trip-label::before { display: none !important; }   /* no callout arrow; it crowds the route */
+.trip-label .trip-eta {
+  margin-left: 6px; padding-left: 6px; border-left: 1px solid var(--line);
+  color: var(--muted); font-variant-numeric: tabular-nums;
+}

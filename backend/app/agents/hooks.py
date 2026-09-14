@@ -101,22 +101,47 @@ class AuditHook(HookProvider):
             bus.emit("text", " ".join(texts).strip()[:1200], agent=_agent_name(event.agent))
 
 
+# Free text the model rewrites every time it proposes the same thing. Including it in the identity of an
+# action means the same escalation looks new on every cycle, which is how the follow-up agent came to ask
+# for the same visit over and over no matter how many times it had been answered.
+_RESTATED = ("reason", "coordinator_note", "note", "summary", "instruction", "call_script")
+
+
+def _material(value: Any) -> Any:
+    """Strip the wording, keep the decision."""
+    if isinstance(value, dict):
+        return {k: _material(v) for k, v in sorted(value.items()) if k not in _RESTATED}
+    if isinstance(value, list):
+        return [_material(v) for v in value]
+    return value
+
+
 def _fingerprint(name: str, inp: dict[str, Any]) -> str:
-    """A stable identity for one proposed action, so a repeat of it can be recognised."""
+    """A stable identity for one proposed action, so a repeat of it can be recognised.
+
+    Built from what the action would *do* — who it concerns, what would happen to them, which volunteer
+    goes — and never from how the agent happened to describe it this time.
+    """
     try:
-        return name + "|" + json.dumps(inp, sort_keys=True, default=str)
+        return name + "|" + json.dumps(_material(inp), sort_keys=True, default=str)
     except Exception:  # noqa: BLE001
         return name + "|" + str(inp)
 
 
 def _already_decided(ep_id: str, name: str, inp: dict[str, Any]) -> str | None:
-    """The title of an identical action the coordinator has already approved in this episode, if any."""
+    """How an identical action in this episode was already answered, if it was.
+
+    Approved and declined both count. A coordinator who has said no to sending a volunteer to someone
+    has made a decision, and putting the same card in front of them on the next cycle is not asking
+    again — it is refusing to hear them. An agent that genuinely wants to revisit it has to propose
+    something materially different.
+    """
     if not ep_id:
         return None
     fp = _fingerprint(name, inp)
     for a in store.approvals(ep_id):
-        if a.status == "approved" and a.payload.get("_fingerprint") == fp:
-            return a.title
+        if a.status in ("approved", "rejected") and a.payload.get("_fingerprint") == fp:
+            return f"{a.title} ({'approved' if a.status == 'approved' else 'declined'})"
     return None
 
 
@@ -166,8 +191,11 @@ class ApprovalGateHook(HookProvider):
         # if they approve it, a second set of messages to the same neighbours.
         already = _already_decided(ep_id, name, inp)
         if already is not None:
-            bus.emit("policy", f"{already} was already approved in this episode; not asking again",
+            bus.emit("policy", f"{already} — already decided in this episode, not asking again",
                      episode_id=ep_id, agent=_agent_name(event.agent))
+            event.cancel_tool = (f"You already asked the coordinator about this and they answered: "
+                                 f"{already}. Do not raise it again. Move on to whoever has not been "
+                                 f"dealt with, or finish.")
             return
 
         kind, title, summary = _describe(name, inp)

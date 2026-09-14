@@ -1,5 +1,5 @@
-import { useEffect, useMemo } from 'react';
-import { MapContainer, TileLayer, CircleMarker, Popup, Marker, Polyline, GeoJSON, Rectangle, useMap } from 'react-leaflet';
+import { useEffect, useMemo, useRef } from 'react';
+import { MapContainer, TileLayer, CircleMarker, Popup, Tooltip, Marker, Polyline, GeoJSON, Rectangle, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -32,20 +32,34 @@ const COLOR = {
 };
 const TIER = { 1: '#c8412b', 2: '#b8741a', 3: '#3a6a8a', 0: '#b9b3a6' };
 const NEUTRAL = '#b9b3a6';
+// Where to look when there is no roster yet: the community this is set up for.
+const FALLBACK_CENTRE = [33.4955, -112.1680];
 // The watch list's one-word verdict, straight to a colour.
 const STATE_COLOR = {
   critical: '#8c1d11', needs_help: '#c8412b', waiting: '#e39a2f',
   ok: '#2f6b5a', not_contacted: '#b9b3a6',
 };
 
-/** A responder in transit: a filled dot with a ring, so it reads as moving rather than placed. */
-const responderIcon = L.divIcon({
-  className: '',
-  html: '<div style="width:16px;height:16px;border-radius:50%;background:#2f6b5a;border:3px solid #fff;'
-    + 'box-shadow:0 0 0 3px rgba(47,107,90,.3),0 1px 4px rgba(0,0,0,.4)"></div>',
-  iconSize: [16, 16],
-  iconAnchor: [8, 8],
-});
+// Several responders can be moving at once, so each trip gets its own colour and each marker carries
+// the name. Without that a coordinator has to hunt for which dot is which, which defeats the map.
+const TRIP_COLOURS = ['#c8412b', '#2f6b5a', '#8c5bc4', '#1f6f8b', '#b8741a', '#7a4b2a'];
+const tripColour = (i) => TRIP_COLOURS[i % TRIP_COLOURS.length];
+
+/** A responder in transit: their initials in a coloured disc, so several are told apart at a glance. */
+function responderIcon(colour, initials) {
+  return L.divIcon({
+    className: '',
+    html: `<div style="width:26px;height:26px;border-radius:50%;background:${colour};color:#fff;`
+      + 'border:3px solid #fff;box-shadow:0 0 0 3px rgba(0,0,0,.18),0 2px 6px rgba(0,0,0,.35);'
+      + 'display:flex;align-items:center;justify-content:center;font:600 10px/1 system-ui,sans-serif;'
+      + `letter-spacing:.02em">${initials}</div>`,
+    iconSize: [26, 26],
+    iconAnchor: [13, 13],
+  });
+}
+
+const initialsOf = (name = '') => name.split(/\s+/).filter(Boolean).slice(0, 2)
+  .map((w) => w[0]).join('').toUpperCase() || '?';
 
 const resourceIcon = L.divIcon({
   className: '',
@@ -55,17 +69,71 @@ const resourceIcon = L.divIcon({
   iconAnchor: [7, 7],
 });
 
-/** Frame every neighbour and every resource, rather than guessing a zoom that may cut one off. */
-function FitToData({ points }) {
+/**
+ * Frame everything worth seeing — but only when what is worth seeing actually changes.
+ *
+ * The points array is rebuilt on every render, so depending on its identity refits the map constantly:
+ * hovering a card was enough to yank the view back, and because the fit covers every neighbour, every
+ * resource and every route, the person being hovered ended up wherever that box happened to put them —
+ * usually the edge. Comparing the contents instead means the map holds still unless the data moved.
+ */
+function FitToData({ points, suspended }) {
   const map = useMap();
+  const signature = points.map((p) => `${p[0].toFixed(4)},${p[1].toFixed(4)}`).sort().join('|');
+  const last = useRef('');
   useEffect(() => {
-    if (points.length === 0) return;
+    // While the coordinator is looking at one neighbour, the fit must not drag the view off them.
+    // A responder moving changes the point set every few seconds, which is exactly when this fires.
+    if (suspended) return;
+    if (!signature || signature === last.current) return;
+    last.current = signature;
     if (points.length === 1) {
-      map.setView(points[0], 14);
+      map.setView(points[0], 15);
       return;
     }
     map.fitBounds(L.latLngBounds(points).pad(0.15), { animate: false });
-  }, [map, points]);
+  }, [map, signature, suspended]);   // deliberately not `points`: identity changes every render
+  return null;
+}
+
+/**
+ * Keep Leaflet's idea of its own size in step with the element it lives in.
+ *
+ * The map shares its column with the decision cards and the trip list, which appear and disappear as a
+ * run progresses and change the map's height underneath it. Leaflet caches the container size at
+ * initialisation, so without this every calculation that depends on it — centring most visibly — is
+ * off by however much the element has changed since. It showed up as a hovered neighbour landing a
+ * fifth of the way below the middle, the same distance every time.
+ */
+function KeepSized() {
+  const map = useMap();
+  useEffect(() => {
+    const el = map.getContainer();
+    map.invalidateSize({ animate: false });
+    const ro = new ResizeObserver(() => map.invalidateSize({ animate: false }));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [map]);
+  return null;
+}
+
+/**
+ * Bring the hovered neighbour to the middle of the map, without changing the zoom.
+ *
+ * Panning is the right gesture here: a coordinator running their eye down the list wants to see where
+ * each person is in the context they already have, not to be re-framed on every mouse move.
+ */
+function CentreOn({ point }) {
+  const map = useMap();
+  const lat = point ? point[0] : null;
+  const lon = point ? point[1] : null;
+  useEffect(() => {
+    if (lat == null || lon == null) return;
+    // setView rather than panTo: a pan is a request that a competing fit or a long distance can leave
+    // half-finished, which is how a hovered neighbour kept ending up near the edge instead of the
+    // middle. The zoom is kept so the surroundings a coordinator already has stay put.
+    map.setView([lat, lon], map.getZoom(), { animate: true, duration: 0.3 });
+  }, [map, lat, lon]);
   return null;
 }
 
@@ -94,7 +162,10 @@ export default function MapView({ members, resources, episode, deployments = [],
   );
   // Approved trips are drawn on the map; a declined one is not a journey anybody is making.
   const live = useMemo(
-    () => deployments.filter((d) => d.status === 'approved' && (d.route || []).length > 1),
+    () => deployments.filter((d) => d.status === 'approved'
+      && (d.route || []).length > 1
+      && (d.progress || 0) < 1
+      && !d.arrived_at),
     [deployments],
   );
   const proposed = useMemo(
@@ -117,17 +188,23 @@ export default function MapView({ members, resources, episode, deployments = [],
   const decisions = Object.fromEntries((episode?.triage?.decisions || []).map((d) => [d.member_id, d]));
   const checkins = Object.fromEntries((episode?.checkins || []).map((c) => [c.member_id, c]));
 
-  if (!people.length) return null;
-  const center = [
-    people.reduce((s, m) => s + m.lat, 0) / people.length,
-    people.reduce((s, m) => s + m.lon, 0) / people.length,
-  ];
+  // Never unmount. The map is the centre of this screen, and a reload that briefly returns no
+  // neighbours used to make it vanish entirely — taking its tiles, its hazard layers and the user's
+  // pan and zoom with it. With no roster yet it simply shows the neighbourhood.
+  const center = people.length
+    ? [people.reduce((s, m) => s + m.lat, 0) / people.length,
+       people.reduce((s, m) => s + m.lon, 0) / people.length]
+    : [FALLBACK_CENTRE[0], FALLBACK_CENTRE[1]];
+
+  const highlighted = people.find((m) => m.id === highlight);
 
   return (
     <div className="map">
       <MapContainer center={center} zoom={13} scrollWheelZoom={false} style={{ height: '100%', width: '100%' }}>
         <TileLayer attribution={ATTRIBUTION} url={BASEMAP} maxZoom={20} />
-        <FitToData points={points} />
+        <KeepSized />
+        <FitToData points={points} suspended={!!highlighted} />
+        <CentreOn point={highlighted ? [highlighted.lat, highlighted.lon] : null} />
 
         {/* The conditions actually measured across the neighbourhood, underneath everything else.
             A warning is issued for a whole county; this is the part of it that is about one street. */}
@@ -173,18 +250,30 @@ export default function MapView({ members, resources, episode, deployments = [],
         {/* A suggested trip, faint: nobody has agreed to make it yet. */}
         {proposed.map((d) => (
           <Polyline key={`p-${d.id}`} positions={d.route}
-                    pathOptions={{ color: '#b8741a', weight: 3, opacity: 0.45, dashArray: '4 7' }} />
+                    pathOptions={{ color: '#b8741a', weight: 3, opacity: 0.4, dashArray: '4 7' }} />
         ))}
 
-        {/* An approved trip: the road actually being driven, and where they should be by now. */}
-        {live.map((d) => (
+        {/* Approved trips still under way. Each keeps one colour across its line, its marker and its
+            label, so several running at once stay distinguishable. Arrived trips are gone from `live`
+            entirely: their line and their marker come off the map rather than lingering. */}
+        {live.map((d, i) => (
           <Polyline key={`r-${d.id}`} positions={d.route}
-                    pathOptions={{ color: '#c8412b', weight: 4, opacity: 0.85, dashArray: '8 6' }} />
+                    pathOptions={{ color: tripColour(i), weight: 5, opacity: 0.9, dashArray: '9 6' }} />
         ))}
-        {live.filter((d) => d.position).map((d) => (
-          <Marker key={`v-${d.id}`} position={d.position} icon={responderIcon} zIndexOffset={1000}>
+        {live.filter((d) => d.position).map((d, i) => (
+          <Marker key={`v-${d.id}`} position={d.position}
+                  icon={responderIcon(tripColour(i), initialsOf(d.responder_name))}
+                  zIndexOffset={1000}>
+            <Tooltip permanent direction="right" offset={[15, 0]} className="trip-label">
+              <b>{d.responder_name}</b> → {d.member_name}
+              <span className="trip-eta">
+                {Math.max(0, Math.round((d.eta_seconds || 0) / 60))} min
+              </span>
+            </Tooltip>
             <Popup>
               <b>{d.responder_name}</b> → {d.member_name}<br />
+              {(d.task || '').replace(/_/g, ' ')}
+              {d.destination_name ? <> → {d.destination_name}</> : null}<br />
               {Math.round((d.progress || 0) * 100)}% of the way · about {Math.max(0, Math.round((d.eta_seconds || 0) / 60))} min left
               <br /><i style={{ fontSize: 11 }}>Estimated from the route, not a GPS position.</i>
             </Popup>
