@@ -1,5 +1,7 @@
 # Porchlight
 
+[![CI](https://github.com/SVstudent/Porchlight/actions/workflows/ci.yml/badge.svg)](https://github.com/SVstudent/Porchlight/actions/workflows/ci.yml)
+
 **A neighbor check-in agent for community groups, built with the Strands Agents SDK.**
 
 When dangerous heat, smoke, a freeze or an outage threatens a neighborhood, Porchlight reads the official alert, works out which neighbors are actually in danger, writes each of them a personal message in their language, lines up volunteers and cooling centers — and then **stops and waits for a human to approve**. After the messages go out it reads the replies people actually write, reminds whoever goes quiet three times and then stops and flags them, and routes a real volunteer to whoever needs one.
