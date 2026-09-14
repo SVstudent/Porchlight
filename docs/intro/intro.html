@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Porchlight — opening titles</title>
+<!--
+  The opening forty seconds of the demo video, built to be screen-recorded.
+
+  It carries the three things the pitch has to say, in the order the script says them:
+
+    Act 1  why it matters   a neighbourhood in a heat wave, and the homes that go dark
+    Act 2  the problem      one volunteer reaching them one at a time
+    Act 3  who it is for    the same volunteer, with an agent
+
+  Every figure on screen is in docs/sources.md. Nothing here is a stock visual: the dots are homes, the
+  ones that go out are the count from the county's own review, and the lines in act two are drawn at the
+  rate a person actually works. The animation is an argument, not an ornament.
+
+  Recording:
+    · open in a browser, press H to hide the controls, then F for fullscreen
+    · SPACE plays and pauses · R restarts · ← → step between acts
+    · designed for 1920×1080; it letterboxes to fit anything else
+-->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+  :root {
+    --ink: #0d1211;
+    --warm: #e8a33d;
+    --hot: #c8412b;
+    --cool: #6f8f9a;
+    --paper: #f3efe4;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; background: #07090a; overflow: hidden; }
+  body {
+    font-family: ui-serif, "Iowan Old Style", Georgia, serif;
+    color: var(--paper);
+    display: grid;
+    place-items: center;
+  }
+
+  /* A fixed 16:9 stage so the recording is framed identically whatever the window is. */
+  #stage {
+    position: relative;
+    width: 100vw; height: 56.25vw;
+    max-height: 100vh; max-width: 177.78vh;
+    overflow: hidden;
+    background: radial-gradient(ellipse at 50% 62%, #12181a 0%, #07090a 70%);
+  }
+  canvas { position: absolute; inset: 0; display: block; }
+
+  /* ---------- typography ---------- */
+  .layer { position: absolute; inset: 0; pointer-events: none; }
+  .line {
+    position: absolute;
+    opacity: 0;
+    transform: translateY(14px);
+    transition: opacity .9s ease, transform .9s cubic-bezier(.2,.7,.3,1);
+    will-change: opacity, transform;
+  }
+  .line.on { opacity: 1; transform: none; }
+
+  .kicker {
+    left: 7%; top: 11%;
+    font: 400 1.15vw/1.5 ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: .28em; text-transform: uppercase; color: #8d9b9b;
+  }
+  .stat {
+    left: 7%; top: 16.5%;
+    font-size: 4.7vw; line-height: 1.06; font-weight: 400; letter-spacing: -.02em;
+    max-width: 13ch;
+  }
+  .stat em { font-style: normal; color: var(--hot); }
+  .sub {
+    left: 7%; top: 41%;
+    font-size: 1.5vw; line-height: 1.6; color: #b9c2c0; max-width: 30ch;
+    text-shadow: 0 2px 18px rgba(7,9,10,.9);
+  }
+  .source {
+    left: 7%; bottom: 6%;
+    font: 400 .82vw/1.6 ui-sans-serif, system-ui, sans-serif;
+    color: #6d7a79; letter-spacing: .06em;
+  }
+
+  /* Act two's counter ticks with the lines being drawn. */
+  .counter {
+    right: 7%; top: 18%; text-align: right;
+    font: 300 6.4vw/1 ui-sans-serif, system-ui, sans-serif;
+    font-variant-numeric: tabular-nums; letter-spacing: -.03em;
+    color: var(--paper);
+  }
+  .counter small {
+    display: block; margin-top: .9vw;
+    font: 400 1.05vw/1.5 ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: .2em; text-transform: uppercase; color: #8d9b9b;
+  }
+
+  /* Act three's title. */
+  .wordmark {
+    left: 50%; top: 50%; transform: translate(-50%, calc(-50% + 14px));
+    text-align: center;
+    /* The porch lights come up bright behind this block, so the words need their own ground to sit on.
+       A soft radial scrim keeps them readable without putting a visible panel on the frame. */
+    padding: 4vw 7vw 3.4vw;
+    background: radial-gradient(ellipse at 50% 46%,
+                rgba(7,9,10,.88) 0%, rgba(7,9,10,.72) 46%, rgba(7,9,10,0) 78%);
+  }
+  .wordmark.on { transform: translate(-50%, -50%); }
+  .wordmark h1 {
+    font-size: 7.4vw; font-weight: 400; letter-spacing: -.03em; line-height: 1;
+    display: flex; align-items: center; gap: 1.6vw;
+  }
+  .lamp {
+    width: 5.2vw; height: 5.2vw; border-radius: 50%;
+    background: radial-gradient(circle at 38% 34%, #ffd89b 0%, var(--warm) 42%, #a9641c 100%);
+    box-shadow: 0 0 5vw rgba(232,163,61,.55), 0 0 12vw rgba(232,163,61,.28);
+    animation: breathe 3.6s ease-in-out infinite;
+  }
+  @keyframes breathe {
+    0%, 100% { box-shadow: 0 0 5vw rgba(232,163,61,.55), 0 0 12vw rgba(232,163,61,.26); }
+    50%      { box-shadow: 0 0 6.4vw rgba(232,163,61,.72), 0 0 15vw rgba(232,163,61,.34); }
+  }
+  .tagline {
+    margin-top: 1.5vw; font-size: 1.42vw; color: #cfd6d4; letter-spacing: .01em;
+    max-width: 40ch; margin-left: auto; margin-right: auto;
+  }
+  .built {
+    margin-top: 2.2vw; color: #93a09e;
+    font: 400 .95vw/1.7 ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: .16em; text-transform: uppercase; color: #7d8a89;
+  }
+
+  /* ---------- controls, hidden for the take ---------- */
+  #ui {
+    position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%);
+    display: flex; gap: 10px; align-items: center;
+    background: rgba(12,16,17,.9); border: 1px solid #26302f; border-radius: 999px;
+    padding: 7px 14px; font: 400 12px/1 ui-sans-serif, system-ui, sans-serif; color: #9aa7a5;
+    backdrop-filter: blur(6px); z-index: 20;
+  }
+  #ui button {
+    font: inherit; color: #d8dedc; background: #1a2222; border: 1px solid #2c3735;
+    border-radius: 999px; padding: 5px 11px; cursor: pointer;
+  }
+  #ui button:hover { background: #232d2c; }
+  #ui .t { font-variant-numeric: tabular-nums; color: #6d7a79; min-width: 42px; }
+  #ui.hide { display: none; }
+  .hint { position: fixed; right: 14px; top: 12px; font: 400 11px/1.6 ui-sans-serif, system-ui, sans-serif;
+          color: #46514f; z-index: 20; }
+  .hint.hide { display: none; }
+</style>
+</head>
+<body>
+
+<div id="stage">
+  <canvas id="scene"></canvas>
+
+  <!-- Act 1 — why it matters -->
+  <div class="layer" id="act1">
+    <div class="line kicker" data-k="a1k">June 2021 · Multnomah County, Oregon</div>
+    <div class="line stat"   data-k="a1s"><em>69 people</em> died<br>in one county</div>
+    <div class="line sub"    data-k="a1b">Seventy-one percent of them lived alone. They did not die in the street. They died at home, because nobody reached them in time.</div>
+    <div class="line source" data-k="a1c">Multnomah County Health Department · 2021 excessive heat event review</div>
+  </div>
+
+  <!-- Act 2 — the problem -->
+  <div class="layer" id="act2">
+    <div class="line kicker" data-k="a2k">Every agency says the same sentence</div>
+    <div class="line stat"   data-k="a2s">“Check on your<br>neighbours.”</div>
+    <div class="line sub"    data-k="a2b">Doing it falls to volunteers with a spreadsheet and a phone. New York City runs exactly this programme — by hand.</div>
+    <div class="line counter" data-k="a2n"><span id="tally">0</span><small>wellness checks, one at a time</small></div>
+    <div class="line source" data-k="a2c">NYC Be a Buddy · February–September 2025</div>
+  </div>
+
+  <!-- Act 3 — who it is for -->
+  <div class="layer" id="act3">
+    <div class="line wordmark" data-k="a3w">
+      <h1><span class="lamp"></span>Porchlight</h1>
+      <div class="tagline">The neighbour check-in agent, for the volunteer who holds the list.</div>
+      <div class="built">Five Strands agents · Amazon Bedrock · AgentCore</div>
+    </div>
+  </div>
+</div>
+
+<div class="hint" id="hint">H hide · F fullscreen · SPACE play · R restart · ← → acts</div>
+<div id="ui">
+  <button id="play">Pause</button>
+  <button id="restart">Restart</button>
+  <span class="t" id="clock">0.0s</span>
+  <button data-go="0">1</button><button data-go="1">2</button><button data-go="2">3</button>
+</div>
+
+<script>
+/* ===========================================================================
+   The neighbourhood.
+
+   Six hundred homes on a slow-drifting grid. Their colour is their condition: cool when the night is
+   survivable, red as the heat builds. Sixty-nine of them go out in act one — the county's own count,
+   not a number chosen because it looked right — and the ones that go out are picked from the isolated
+   half of the field, because that is who it happened to.
+   =========================================================================== */
+
+const STAGE = document.getElementById('stage');
+const CANVAS = document.getElementById('scene');
+
+const HOMES = 600;
+const DEATHS = 69;          // Multnomah County, June 2021
+const CHECKS = 1942;        // NYC Be a Buddy, Feb–Sep 2025
+
+const renderer = new THREE.WebGLRenderer({ canvas: CANVAS, antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(42, 16 / 9, 0.1, 200);
+camera.position.set(0, 19.5, 23);
+camera.lookAt(0, 0, 3.4);   // aim below centre so the text band above stays clear
+
+/* ---- the homes ---- */
+const positions = new Float32Array(HOMES * 3);
+const colours = new Float32Array(HOMES * 3);
+const sizes = new Float32Array(HOMES);
+
+const homes = [];
+const COLS = 34, ROWS = 18, GAP = 1.12;
+for (let i = 0; i < HOMES; i++) {
+  const c = i % COLS, r = Math.floor(i / COLS);
+  // A street grid, loosened so it reads as a place rather than a lattice.
+  const x = (c - COLS / 2) * GAP + (Math.random() - 0.5) * 0.42;
+  const z = (r - ROWS / 2) * GAP + (Math.random() - 0.5) * 0.42;
+  homes.push({
+    x, z,
+    phase: Math.random() * Math.PI * 2,
+    alone: Math.random() < 0.42,   // the isolated share of the field
+    out: false, outAt: 0, lit: false, litAt: 0,
+    heat: 0,
+  });
+  positions.set([x, 0, z], i * 3);
+  sizes[i] = 9;
+}
+
+const geo = new THREE.BufferGeometry();
+geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+geo.setAttribute('colour', new THREE.BufferAttribute(colours, 3));
+geo.setAttribute('psize', new THREE.BufferAttribute(sizes, 1));
+
+// A round, soft point. Sprites would need a texture fetch; this keeps the file self-contained.
+const homeMat = new THREE.ShaderMaterial({
+  transparent: true,
+  depthWrite: false,
+  blending: THREE.AdditiveBlending,
+  uniforms: { uScale: { value: 1 } },
+  vertexShader: `
+    attribute vec3 colour;
+    attribute float psize;
+    varying vec3 vColour;
+    uniform float uScale;
+    void main() {
+      vColour = colour;
+      vec4 mv = modelViewMatrix * vec4(position, 1.0);
+      gl_PointSize = psize * uScale * (34.0 / -mv.z);
+      gl_Position = projectionMatrix * mv;
+    }`,
+  fragmentShader: `
+    varying vec3 vColour;
+    void main() {
+      vec2 d = gl_PointCoord - vec2(0.5);
+      float r = length(d);
+      if (r > 0.5) discard;
+      float core = smoothstep(0.5, 0.06, r);
+      float halo = smoothstep(0.5, 0.24, r) * 0.55;
+      gl_FragColor = vec4(vColour, core + halo);
+    }`,
+});
+const cloud = new THREE.Points(geo, homeMat);
+scene.add(cloud);
+
+/* ---- the lines a volunteer draws ---- */
+const LINE_MAX = 240;
+const linePos = new Float32Array(LINE_MAX * 6);
+const lineCol = new Float32Array(LINE_MAX * 6);
+const lineGeo = new THREE.BufferGeometry();
+lineGeo.setAttribute('position', new THREE.BufferAttribute(linePos, 3));
+lineGeo.setAttribute('colour', new THREE.BufferAttribute(lineCol, 3));
+const lineMat = new THREE.ShaderMaterial({
+  transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+  vertexShader: `attribute vec3 colour; varying vec3 vC;
+    void main(){ vC = colour; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
+  fragmentShader: `varying vec3 vC; void main(){ gl_FragColor = vec4(vC, 0.5); }`,
+});
+const lines = new THREE.LineSegments(lineGeo, lineMat);
+scene.add(lines);
+let lineCount = 0;
+
+// The coordinator: one home among the others, and the only one that reaches out.
+const HUB = homes[Math.floor(HOMES / 2) + 7];
+
+function addLine(to, colour) {
+  if (lineCount >= LINE_MAX) return;
+  const i = lineCount * 6;
+  linePos.set([HUB.x, 0.05, HUB.z, to.x, 0.05, to.z], i);
+  lineCol.set([...colour, ...colour], i);
+  lineCount++;
+  lineGeo.setDrawRange(0, lineCount * 2);
+  lineGeo.attributes.position.needsUpdate = true;
+  lineGeo.attributes.colour.needsUpdate = true;
+}
+function clearLines() {
+  lineCount = 0;
+  lineGeo.setDrawRange(0, 0);
+}
+
+function resize() {
+  const w = STAGE.clientWidth, h = STAGE.clientHeight;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  homeMat.uniforms.uScale.value = Math.min(1.5, Math.max(0.55, w / 1600));
+}
+addEventListener('resize', resize);
+resize();
+
+/* ===========================================================================
+   The score. Everything is driven off one clock so the visuals and the text
+   cannot drift apart, and so a presenter can scrub to an act and it still looks right.
+   =========================================================================== */
+
+const ACTS = [
+  { at: 0.0,  name: 'why it matters' },
+  { at: 13.5, name: 'the problem' },
+  { at: 26.5, name: 'who it is for' },
+];
+const END = 41;
+
+const CUES = [
+  ['a1k', 0.8],  ['a1s', 2.0],  ['a1b', 6.4],  ['a1c', 9.0],
+  ['a2k', 14.2], ['a2s', 15.2], ['a2b', 18.6], ['a2n', 17.4], ['a2c', 24.0],
+  ['a3w', 27.4],
+];
+
+const lineEls = {};
+document.querySelectorAll('.line').forEach((el) => { lineEls[el.dataset.k] = el; });
+const tally = document.getElementById('tally');
+
+let t = 0, playing = true, last = performance.now();
+
+function applyCues() {
+  for (const [key, at] of CUES) {
+    const el = lineEls[key];
+    if (!el) continue;
+    const visible = t >= at && t < (key.startsWith('a1') ? ACTS[1].at + 0.6
+                                  : key.startsWith('a2') ? ACTS[2].at + 0.6 : END + 2);
+    el.classList.toggle('on', visible);
+  }
+}
+
+/** Reset every home to a living, cool state — used on restart and when scrubbing back. */
+function resetHomes() {
+  homes.forEach((h) => { h.out = false; h.outAt = 0; h.lit = false; h.litAt = 0; h.heat = 0; });
+  clearLines();
+}
+
+// Which homes go dark, chosen once so a scrub does not reshuffle them. Isolated homes first, which is
+// what the county found: the people who died were overwhelmingly those living alone.
+const doomed = homes
+  .map((h, i) => ({ i, k: (h.alone ? 0 : 1) + Math.random() * 0.7 }))
+  .sort((a, b) => a.k - b.k)
+  .slice(0, DEATHS)
+  .map((x) => x.i);
+
+const colour = new THREE.Color();
+const COOL = new THREE.Color('#5d7f8c');
+const HOT = new THREE.Color('#c8412b');
+const DEAD = new THREE.Color('#1d2422');
+const LIT = new THREE.Color('#e8a33d');
+
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000);
+  last = now;
+  if (playing) t = Math.min(END, t + dt);
+
+  /* ---- act one: the heat builds, then homes go out ---- */
+  const heatWave = Math.min(1, Math.max(0, (t - 1.2) / 5.5));
+  const dyingFrom = 4.2, dyingTo = 11.5;
+  const dyingProgress = Math.min(1, Math.max(0, (t - dyingFrom) / (dyingTo - dyingFrom)));
+  const shouldBeOut = t < ACTS[1].at ? Math.floor(dyingProgress * DEATHS) : DEATHS;
+
+  doomed.forEach((idx, n) => {
+    const h = homes[idx];
+    const out = n < shouldBeOut && t < ACTS[2].at;   // act three brings them back as lit
+    if (out && !h.out) { h.out = true; h.outAt = t; }
+    if (!out && h.out) { h.out = false; }
+  });
+
+  /* ---- act two: one line at a time, at a human rate ---- */
+  if (t >= ACTS[1].at && t < ACTS[2].at) {
+    const into = t - ACTS[1].at;
+    const want = Math.min(11, Math.floor(into / 0.92));      // roughly one a second: slow on purpose
+    while (lineCount < want) {
+      const pick = homes[(lineCount * 53 + 17) % HOMES];
+      addLine(pick, [0.42, 0.52, 0.55]);
+    }
+    const shown = Math.min(CHECKS, Math.round((into / 8.5) * CHECKS));
+    tally.textContent = shown.toLocaleString();
+  } else if (t < ACTS[1].at) {
+    if (lineCount) clearLines();
+    tally.textContent = '0';
+  }
+
+  /* ---- act three: the agent reaches everyone, and the porch lights come on ---- */
+  if (t >= ACTS[2].at) {
+    const into = t - ACTS[2].at;
+    if (into < 0.1) clearLines();
+    const reach = Math.min(1, into / 2.6);
+    const want = Math.floor(reach * 120);
+    while (lineCount < want) {
+      const pick = homes[(lineCount * 37 + 5) % HOMES];
+      addLine(pick, [0.62, 0.42, 0.16]);
+    }
+    homes.forEach((h, i) => {
+      const when = ACTS[2].at + 1.0 + (i % 40) * 0.045 + Math.random() * 0.002;
+      if (t > when && !h.lit) { h.lit = true; h.litAt = t; }
+    });
+  } else {
+    homes.forEach((h) => { h.lit = false; });
+  }
+
+  /* ---- paint ---- */
+  const cols = geo.attributes.colour.array;
+  const szs = geo.attributes.psize.array;
+  for (let i = 0; i < HOMES; i++) {
+    const h = homes[i];
+    const sway = Math.sin(t * 0.8 + h.phase) * 0.5 + 0.5;
+
+    if (h.lit) {
+      const age = Math.min(1, (t - h.litAt) / 0.8);
+      colour.copy(DEAD).lerp(LIT, age);
+      szs[i] = 9 + age * 7 + sway * 2.2;
+    } else if (h.out) {
+      const age = Math.min(1, (t - h.outAt) / 0.9);
+      colour.copy(HOT).lerp(DEAD, age);
+      szs[i] = 9 * (1 - age * 0.72);
+    } else {
+      colour.copy(COOL).lerp(HOT, heatWave * (0.55 + sway * 0.45));
+      szs[i] = 8.5 + sway * 2.4;
+    }
+    if (h === HUB && t >= ACTS[1].at) {
+      colour.set('#f0ead6');
+      szs[i] = 17 + Math.sin(t * 4) * 2.4;
+    }
+    cols.set([colour.r, colour.g, colour.b], i * 3);
+  }
+  geo.attributes.colour.needsUpdate = true;
+  geo.attributes.psize.needsUpdate = true;
+
+  // A slow drift, and a lift into act three so the field opens out as the lights come on.
+  const lift = t >= ACTS[2].at ? Math.min(1, (t - ACTS[2].at) / 4) : 0;
+  camera.position.x = Math.sin(t * 0.055) * 2.2;
+  camera.position.y = 19.5 - lift * 4.2;
+  camera.position.z = 23 - lift * 2.2;
+  camera.lookAt(0, 0, 3.4 - lift * 2.2);   // act three opens the field out as the lights come on
+
+  applyCues();
+  document.getElementById('clock').textContent = t.toFixed(1) + 's';
+  renderer.render(scene, camera);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+/* ---- presenter controls ---- */
+const playBtn = document.getElementById('play');
+function setPlaying(v) { playing = v; playBtn.textContent = v ? 'Pause' : 'Play'; }
+function goto(seconds) { t = seconds; resetHomes(); }
+
+playBtn.onclick = () => setPlaying(!playing);
+document.getElementById('restart').onclick = () => { goto(0); setPlaying(true); };
+document.querySelectorAll('[data-go]').forEach((b) => {
+  b.onclick = () => { goto(ACTS[+b.dataset.go].at); setPlaying(true); };
+});
+
+addEventListener('keydown', (e) => {
+  if (e.code === 'Space') { e.preventDefault(); setPlaying(!playing); }
+  if (e.key === 'r' || e.key === 'R') { goto(0); setPlaying(true); }
+  if (e.key === 'h' || e.key === 'H') {
+    document.getElementById('ui').classList.toggle('hide');
+    document.getElementById('hint').classList.toggle('hide');
+  }
+  if (e.key === 'f' || e.key === 'F') {
+    if (document.fullscreenElement) document.exitFullscreen();
+    else document.documentElement.requestFullscreen();
+  }
+  if (e.key === 'ArrowRight') {
+    const next = ACTS.find((a) => a.at > t + 0.2);
+    goto(next ? next.at : END);
+  }
+  if (e.key === 'ArrowLeft') {
+    const prev = [...ACTS].reverse().find((a) => a.at < t - 0.4);
+    goto(prev ? prev.at : 0);
+  }
+});
+</script>
+</body>
+</html>
