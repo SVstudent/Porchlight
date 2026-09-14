@@ -12,3 +12,6 @@ frontend/dist/
 
 # agent worktrees / local Claude Code state
 .claude/
+
+# Polly voice-call recordings are generated at runtime, not source
+backend/data/voice_sims/
