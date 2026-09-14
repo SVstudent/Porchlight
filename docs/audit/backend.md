@@ -1,5 +1,10 @@
 # Backend audit — correctness, robustness, Strands agent design
 
+> **Point-in-time report.** This is the audit as it was written, unedited, against the tree of that
+> date. Findings listed here as missing or broken may have been fixed since — the repository's
+> current state is what `README.md` and the test suite describe. The reports are kept because a
+> project claiming nothing is faked should be willing to publish what its own critics found.
+
 > **Status:** this is the original report, kept unedited. Everything it marks BLOCKER has been fixed;
 > see [README.md](README.md) for what changed and what is still open. Line numbers below refer to the
 > tree on 2026-09-08 and have since drifted.

@@ -1,12 +1,17 @@
 # Authenticity audit — "Nothing is faked."
 
+> **Point-in-time report.** This is the audit as it was written, unedited, against the tree of that
+> date. Findings listed here as missing or broken may have been fixed since — the repository's
+> current state is what `README.md` and the test suite describe. The reports are kept because a
+> project claiming nothing is faked should be willing to publish what its own critics found.
+
 > **Status:** this is the original report, kept unedited. Everything it marks BLOCKER has been fixed;
 > see [README.md](README.md) for what changed and what is still open. Line numbers below refer to the
 > tree on 2026-09-08 and have since drifted.
 
 **Scope:** fabricated real-world facts, fixture integrity, claims vs implementation, simulation smells, unverified
 SDK usage, dead code.
-**Audited:** 2026-09-08, the **working tree** (not `HEAD`) at `/Users/sathvikvempati/Desktop/AWShack`.
+**Audited:** 2026-09-08, the **working tree** (not `HEAD`).
 At audit time `git status` showed 11 modified tracked files and 6 untracked new files (see G1); another agent
 appears to have been editing concurrently, so line numbers may drift. Every `file:line` below was confirmed with
 `grep -n` at the moment of writing.

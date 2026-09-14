@@ -1,111 +1,178 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="860" viewBox="0 0 1400 860" font-family="IBM Plex Sans, Helvetica, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1120" viewBox="0 0 1600 1120" font-family="IBM Plex Sans, Helvetica, Arial, sans-serif">
   <defs>
     <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#1e2a2b"/></marker>
     <marker id="arrA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#b8741a"/></marker>
+    <marker id="arrV" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#6b4b9a"/></marker>
+    <marker id="arrG" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#2f6b5a"/></marker>
   </defs>
-  <rect width="1400" height="860" fill="#f3f1ec"/>
-  <text x="40" y="52" font-size="30" font-weight="700" fill="#1e2a2b">Porchlight — architecture</text>
-  <text x="40" y="78" font-size="15" fill="#5f6b6c">Neighbor check-in agent for community groups · built on the Strands Agents SDK · Amazon Bedrock · AgentCore Runtime</text>
+  <rect width="1600" height="1120" fill="#f3f1ec"/>
+  <text x="44" y="54" font-size="30" font-weight="700" fill="#1e2a2b">Porchlight — architecture</text>
+  <text x="44" y="80" font-size="15" fill="#5f6b6c">Neighbor check-in agent for community groups · Strands Agents SDK · Amazon Bedrock · AgentCore Runtime + AgentCore Memory · live public data, no API keys</text>
 
-  <!-- Feeds -->
-  <rect x="40" y="120" width="260" height="250" rx="12" fill="#ffffff" stroke="#d9d5cc"/>
-  <text x="60" y="150" font-size="13" font-weight="700" fill="#5f6b6c" letter-spacing="1">LIVE PUBLIC DATA (no keys)</text>
-  <rect x="60" y="165" width="220" height="52" rx="8" fill="#dce8f0"/><text x="72" y="187" font-size="14" font-weight="600" fill="#1e2a2b">NWS alerts API</text><text x="72" y="206" font-size="12" fill="#5f6b6c">api.weather.gov · Extreme Heat Warning…</text>
-  <rect x="60" y="225" width="220" height="52" rx="8" fill="#dce8f0"/><text x="72" y="247" font-size="14" font-weight="600" fill="#1e2a2b">Open-Meteo</text><text x="72" y="266" font-size="12" fill="#5f6b6c">feels-like °F, US AQI per member home</text>
-  <rect x="60" y="285" width="220" height="52" rx="8" fill="#dce8f0"/><text x="72" y="307" font-size="14" font-weight="600" fill="#1e2a2b">OpenStreetMap Overpass</text><text x="72" y="326" font-size="12" fill="#5f6b6c">libraries &amp; community centres nearby</text>
+  <!-- ── Live public data ───────────────────────────────────────────── -->
+  <rect x="44" y="118" width="300" height="300" rx="12" fill="#ffffff" stroke="#d9d5cc"/>
+  <text x="64" y="148" font-size="13" font-weight="700" fill="#5f6b6c" letter-spacing="1">LIVE PUBLIC DATA (no keys)</text>
+  <rect x="64" y="162" width="260" height="52" rx="8" fill="#dce8f0"/><text x="76" y="184" font-size="14" font-weight="600" fill="#1e2a2b">National Weather Service</text><text x="76" y="203" font-size="11.5" fill="#5f6b6c">alerts · the forecast zones a warning names</text>
+  <rect x="64" y="222" width="260" height="52" rx="8" fill="#dce8f0"/><text x="76" y="244" font-size="14" font-weight="600" fill="#1e2a2b">Open-Meteo</text><text x="76" y="263" font-size="11.5" fill="#5f6b6c">feels-like °F + AQI per home, and a grid</text>
+  <rect x="64" y="282" width="260" height="52" rx="8" fill="#dce8f0"/><text x="76" y="304" font-size="14" font-weight="600" fill="#1e2a2b">OpenStreetMap Overpass</text><text x="76" y="323" font-size="11.5" fill="#5f6b6c">libraries &amp; community centres nearby</text>
+  <rect x="64" y="342" width="260" height="52" rx="8" fill="#dce8f0"/><text x="76" y="364" font-size="14" font-weight="600" fill="#1e2a2b">Valhalla · OSRM</text><text x="76" y="383" font-size="11.5" fill="#5f6b6c">road route + travel time, keyless</text>
 
-  <!-- Sentinel -->
-  <rect x="340" y="120" width="250" height="110" rx="12" fill="#ffffff" stroke="#3a6a8a" stroke-width="2"/>
-  <text x="360" y="150" font-size="16" font-weight="700" fill="#1e2a2b">Sentinel scan (deterministic)</text>
-  <text x="360" y="172" font-size="12" fill="#5f6b6c">APScheduler every 15 min · no LLM</text>
-  <text x="360" y="190" font-size="12" fill="#5f6b6c">official alerts + thresholds (≥105 °F,</text>
-  <text x="360" y="206" font-size="12" fill="#5f6b6c">AQI ≥151, ≤15 °F) · de-duplicated</text>
-  <line x1="300" y1="245" x2="340" y2="175" stroke="#1e2a2b" stroke-width="1.5" marker-end="url(#arr)"/>
+  <!-- ── Sentinel ───────────────────────────────────────────────────── -->
+  <rect x="376" y="118" width="390" height="130" rx="12" fill="#ffffff" stroke="#3a6a8a" stroke-width="2"/>
+  <text x="396" y="148" font-size="16" font-weight="700" fill="#1e2a2b">Sentinel scan — deterministic</text>
+  <text x="396" y="170" font-size="12" fill="#5f6b6c">APScheduler every 15 min · official NWS alerts, plus</text>
+  <text x="396" y="188" font-size="12" fill="#5f6b6c">thresholds at the roster: ≥105 °F, AQI ≥151, ≤15 °F</text>
+  <text x="396" y="206" font-size="12" fill="#5f6b6c">de-duplicated — one hazard opens one episode</text>
+  <text x="396" y="230" font-size="12.5" font-weight="600" fill="#3a6a8a">No model decides when to wake up.</text>
+  <line x1="344" y1="268" x2="376" y2="200" stroke="#1e2a2b" stroke-width="1.5" marker-end="url(#arr)"/>
 
-  <!-- Strands graph -->
-  <rect x="340" y="260" width="740" height="330" rx="14" fill="#ffffff" stroke="#1e2a2b" stroke-width="2"/>
-  <text x="360" y="290" font-size="16" font-weight="700" fill="#1e2a2b">Strands Agents SDK — GraphBuilder pipeline (one graph per episode)</text>
-  <text x="360" y="308" font-size="12" fill="#5f6b6c">FileSessionManager persists state · AuditHook streams every model/tool call · ApprovalGateHook interrupts gated tools</text>
+  <!-- ── Map layers ─────────────────────────────────────────────────── -->
+  <rect x="796" y="118" width="370" height="130" rx="12" fill="#ffffff" stroke="#d9d5cc"/>
+  <text x="816" y="146" font-size="13" font-weight="700" fill="#5f6b6c" letter-spacing="1">WHAT THE MAP DRAWS</text>
+  <text x="816" y="170" font-size="13" fill="#1e2a2b">Warning zones — the alert polygon, or the</text>
+  <text x="816" y="188" font-size="13" fill="#1e2a2b">forecast zones an area warning names</text>
+  <text x="816" y="210" font-size="13" fill="#1e2a2b">Conditions grid — measured street by street</text>
+  <text x="816" y="232" font-size="11.5" fill="#5f6b6c">Leaflet · OpenStreetMap tiles · no key, no token</text>
 
-  <g font-size="13">
-    <rect x="360" y="330" width="130" height="86" rx="10" fill="#dce8f0" stroke="#3a6a8a"/><text x="372" y="352" font-weight="700" fill="#1e2a2b">assess</text><text x="372" y="370" fill="#5f6b6c">sentinel agent</text><text x="372" y="386" fill="#5f6b6c">structured output</text><text x="372" y="402" fill="#5f6b6c">HazardAssessment</text>
-    <rect x="530" y="330" width="130" height="86" rx="10" fill="#f6e6c9" stroke="#b8741a"/><text x="542" y="352" font-weight="700" fill="#1e2a2b">triage</text><text x="542" y="370" fill="#5f6b6c">tiers 1-3 per</text><text x="542" y="386" fill="#5f6b6c">neighbor from risk</text><text x="542" y="402" fill="#5f6b6c">× live exposure</text>
-    <rect x="700" y="330" width="130" height="86" rx="10" fill="#dcebe4" stroke="#2f6b5a"/><text x="712" y="352" font-weight="700" fill="#1e2a2b">outreach</text><text x="712" y="370" fill="#5f6b6c">per-member msgs</text><text x="712" y="386" fill="#5f6b6c">EN/ES + call script</text><text x="712" y="402" fill="#5f6b6c">dispatch_outreach ⏸</text>
-    <rect x="700" y="440" width="130" height="86" rx="10" fill="#e8dff3" stroke="#6b4b9a"/><text x="712" y="462" font-weight="700" fill="#1e2a2b">logistics</text><text x="712" y="480" fill="#5f6b6c">volunteers ↔ needs</text><text x="712" y="496" fill="#5f6b6c">cooling centres</text><text x="712" y="512" fill="#5f6b6c">assign_volunteers ⏸</text>
-    <rect x="890" y="385" width="150" height="86" rx="10" fill="#ebe8e1" stroke="#1e2a2b"/><text x="902" y="407" font-weight="700" fill="#1e2a2b">brief</text><text x="902" y="425" fill="#5f6b6c">plain-language</text><text x="902" y="441" fill="#5f6b6c">coordinator summary</text><text x="902" y="457" fill="#5f6b6c">record_coordinator_brief</text>
+  <!-- ── Model ──────────────────────────────────────────────────────── -->
+  <rect x="1246" y="118" width="310" height="150" rx="12" fill="#ffffff" stroke="#d9d5cc"/>
+  <text x="1266" y="146" font-size="12.5" font-weight="700" fill="#5f6b6c" letter-spacing="1">MODEL · strands ModelRouter</text>
+  <text x="1266" y="172" font-size="14" font-weight="600" fill="#1e2a2b">Amazon Bedrock · Nova Pro</text>
+  <text x="1266" y="191" font-size="11.5" fill="#5f6b6c">amazon.nova-pro-v1:0 — no per-account form</text>
+  <text x="1266" y="216" font-size="13" fill="#1e2a2b">Anthropic models: a one-line swap</text>
+  <text x="1266" y="240" font-size="11.5" fill="#5f6b6c">FallbackStrategy · retries · OpenTelemetry</text>
+
+  <!-- ── Strands graph ──────────────────────────────────────────────── -->
+  <rect x="376" y="278" width="790" height="382" rx="14" fill="#ffffff" stroke="#1e2a2b" stroke-width="2"/>
+  <text x="396" y="308" font-size="16" font-weight="700" fill="#1e2a2b">Strands Agents SDK — GraphBuilder graph, one per episode</text>
+  <text x="396" y="328" font-size="11.5" fill="#5f6b6c">conditional edge (a mild advisory stops at assess) · parallel branches · FileSessionManager keeps a paused run alive</text>
+  <text x="396" y="344" font-size="11.5" fill="#5f6b6c">AuditHook streams every model and tool call to the desk over SSE</text>
+
+  <g font-size="12">
+    <rect x="396" y="362" width="150" height="88" rx="10" fill="#dce8f0" stroke="#3a6a8a"/><text x="408" y="384" font-size="13" font-weight="700" fill="#1e2a2b">assess</text><text x="408" y="402" fill="#5f6b6c">reads the hazard</text><text x="408" y="418" fill="#5f6b6c">structured output</text><text x="408" y="434" fill="#5f6b6c">HazardAssessment</text>
+    <rect x="596" y="362" width="160" height="88" rx="10" fill="#f6e6c9" stroke="#b8741a"/><text x="608" y="384" font-size="13" font-weight="700" fill="#1e2a2b">triage</text><text x="608" y="402" fill="#5f6b6c">ranks neighbours by</text><text x="608" y="418" fill="#5f6b6c">recorded risk × the</text><text x="608" y="434" fill="#5f6b6c">air at their address</text>
+    <rect x="782" y="362" width="175" height="88" rx="10" fill="#dcebe4" stroke="#2f6b5a"/><text x="794" y="384" font-size="13" font-weight="700" fill="#1e2a2b">outreach</text><text x="794" y="402" fill="#5f6b6c">one personal message</text><text x="794" y="418" fill="#5f6b6c">each · one-tap link</text><text x="794" y="434" font-weight="600" fill="#7a4d0a">⏸ dispatch_outreach</text>
+    <rect x="782" y="472" width="175" height="88" rx="10" fill="#e8dff3" stroke="#6b4b9a"/><text x="794" y="494" font-size="13" font-weight="700" fill="#1e2a2b">logistics</text><text x="794" y="512" fill="#5f6b6c">volunteers ↔ needs by</text><text x="794" y="528" fill="#5f6b6c">skill, distance, load</text><text x="794" y="544" font-weight="600" fill="#7a4d0a">⏸ assign_volunteers</text>
+    <rect x="975" y="417" width="170" height="88" rx="10" fill="#ebe8e1" stroke="#1e2a2b"/><text x="987" y="439" font-size="13" font-weight="700" fill="#1e2a2b">brief</text><text x="987" y="457" fill="#5f6b6c">who was reached, who</text><text x="987" y="473" fill="#5f6b6c">was visited, who is</text><text x="987" y="489" fill="#5f6b6c">still unaccounted for</text>
   </g>
-  <line x1="490" y1="373" x2="530" y2="373" stroke="#1e2a2b" stroke-width="1.5" marker-end="url(#arr)"/>
-  <text x="493" y="364" font-size="10" fill="#5f6b6c">activate?</text>
-  <line x1="660" y1="373" x2="700" y2="373" stroke="#1e2a2b" stroke-width="1.5" marker-end="url(#arr)"/>
-  <line x1="660" y1="380" x2="700" y2="470" stroke="#1e2a2b" stroke-width="1.5" marker-end="url(#arr)"/>
-  <line x1="830" y1="373" x2="890" y2="410" stroke="#1e2a2b" stroke-width="1.5" marker-end="url(#arr)"/>
-  <line x1="830" y1="483" x2="890" y2="450" stroke="#1e2a2b" stroke-width="1.5" marker-end="url(#arr)"/>
-  <line x1="465" y1="230" x2="425" y2="330" stroke="#1e2a2b" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="546" y1="406" x2="596" y2="406" stroke="#1e2a2b" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="549" y="398" font-size="10" fill="#5f6b6c">activate?</text>
+  <line x1="756" y1="406" x2="782" y2="406" stroke="#1e2a2b" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="756" y1="414" x2="782" y2="500" stroke="#1e2a2b" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="957" y1="406" x2="975" y2="432" stroke="#1e2a2b" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="957" y1="516" x2="975" y2="482" stroke="#1e2a2b" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="471" y1="248" x2="462" y2="276" stroke="#1e2a2b" stroke-width="1.5" marker-end="url(#arr)"/>
 
-  <rect x="360" y="440" width="300" height="130" rx="10" fill="#fff7e8" stroke="#e39a2f"/>
-  <text x="372" y="462" font-size="13" font-weight="700" fill="#7a4d0a">Tools (@tool)</text>
-  <text x="372" y="482" font-size="11.5" fill="#1e2a2b">get_roster · get_member_conditions · get_area_conditions</text>
-  <text x="372" y="500" font-size="11.5" fill="#1e2a2b">find_nearby_cooled_places · list_volunteers · list_resources</text>
-  <text x="372" y="518" font-size="12" fill="#1e2a2b">get_checkin_status · submit_triage_plan</text>
-  <text x="372" y="540" font-size="12" font-weight="600" fill="#7a4d0a">⏸ gated: dispatch_outreach · assign_volunteers · escalate_member</text>
-  <text x="372" y="558" font-size="11" fill="#5f6b6c">gated = BeforeToolCallEvent → event.interrupt() → coordinator decides → resume</text>
+  <!-- gated tools -->
+  <rect x="396" y="472" width="340" height="165" rx="10" fill="#fff7e8" stroke="#e39a2f"/>
+  <text x="408" y="494" font-size="13" font-weight="700" fill="#7a4d0a">Tools (@tool)</text>
+  <text x="408" y="514" font-size="10.5" fill="#1e2a2b">get_roster · get_member_conditions · get_area_conditions</text>
+  <text x="408" y="531" font-size="10.5" fill="#1e2a2b">find_nearby_cooled_places · list_volunteers · list_resources</text>
+  <text x="408" y="548" font-size="10.5" fill="#1e2a2b">get_checkin_status · submit_triage_plan · neighbor_history</text>
+  <text x="408" y="572" font-size="11.5" font-weight="700" fill="#7a4d0a">⏸ gated: dispatch_outreach · assign_volunteers</text>
+  <text x="408" y="589" font-size="11.5" font-weight="700" fill="#7a4d0a">escalate_member — the three that touch the world</text>
+  <text x="408" y="610" font-size="10.5" fill="#5f6b6c">BeforeToolCallEvent → event.interrupt() → the graph stops</text>
+  <text x="408" y="626" font-size="10.5" fill="#5f6b6c">inside the call → coordinator edits, decides → resumes there</text>
 
-  <!-- Follow-up agent -->
-  <rect x="1110" y="260" width="250" height="140" rx="12" fill="#ffffff" stroke="#c8412b" stroke-width="2"/>
-  <text x="1130" y="290" font-size="16" font-weight="700" fill="#1e2a2b">Follow-up agent</text>
-  <text x="1130" y="310" font-size="12" fill="#5f6b6c">runs every 2 min while monitoring</text>
-  <text x="1130" y="328" font-size="12" fill="#5f6b6c">reads check-ins · escalates tier-1</text>
-  <text x="1130" y="346" font-size="12" fill="#5f6b6c">non-responders: volunteer visit,</text>
-  <text x="1130" y="364" font-size="12" fill="#5f6b6c">emergency contact, or 911 advice</text>
-  <text x="1130" y="386" font-size="12" font-weight="600" fill="#7a4d0a">policy can pre-authorise visits</text>
-  <line x1="1080" y1="428" x2="1110" y2="330" stroke="#1e2a2b" stroke-width="1.5" marker-end="url(#arr)"/>
+  <!-- ── AgentCore Memory ───────────────────────────────────────────── -->
+  <rect x="1246" y="290" width="310" height="370" rx="12" fill="#ffffff" stroke="#6b4b9a" stroke-width="2"/>
+  <text x="1266" y="318" font-size="12.5" font-weight="700" fill="#6b4b9a" letter-spacing="1">AMAZON BEDROCK</text>
+  <text x="1266" y="344" font-size="16" font-weight="700" fill="#1e2a2b">AgentCore Memory</text>
+  <text x="1266" y="368" font-size="12" fill="#5f6b6c">Every outcome is written automatically —</text>
+  <text x="1266" y="386" font-size="12" fill="#5f6b6c">when a neighbour replies, and again when</text>
+  <text x="1266" y="404" font-size="12" fill="#5f6b6c">the run finishes. Nobody calls an endpoint.</text>
+  <text x="1266" y="432" font-size="12.5" fill="#1e2a2b">semantic → durable facts about a person</text>
+  <text x="1266" y="452" font-size="12.5" fill="#1e2a2b">summary → what happened in one episode</text>
+  <rect x="1266" y="472" width="270" height="86" rx="8" fill="#e8dff3"/>
+  <text x="1280" y="494" font-size="11.5" font-weight="700" fill="#4a3563">AgentCore distils them itself:</text>
+  <text x="1280" y="516" font-size="12.5" font-style="italic" fill="#1e2a2b">“Contact Lesson: Rosa Alvarez —</text>
+  <text x="1280" y="534" font-size="12.5" font-style="italic" fill="#1e2a2b">answers in Spanish, by phone.”</text>
+  <text x="1266" y="582" font-size="12.5" font-weight="600" fill="#6b4b9a">triage reads those back the next time</text>
+  <text x="1266" y="600" font-size="12.5" font-weight="600" fill="#6b4b9a">heat threatens this street.</text>
+  <text x="1266" y="626" font-size="11" fill="#5f6b6c">The loop closes: a hazard happens, outcomes</text>
+  <text x="1266" y="642" font-size="11" fill="#5f6b6c">are kept, the next hazard starts better informed.</text>
 
-  <!-- Model -->
-  <rect x="1110" y="430" width="250" height="160" rx="12" fill="#ffffff" stroke="#d9d5cc"/>
-  <text x="1130" y="458" font-size="13" font-weight="700" fill="#5f6b6c" letter-spacing="1">MODEL (strands ModelRouter)</text>
-  <text x="1130" y="482" font-size="14" font-weight="600" fill="#1e2a2b">1. Amazon Bedrock · Nova Pro</text>
-  <text x="1130" y="502" font-size="12" fill="#5f6b6c">BedrockModel(model_id, region)</text>
-  <text x="1130" y="526" font-size="13" fill="#1e2a2b">2. Anthropic API (fallback)</text>
-  <text x="1130" y="550" font-size="11" fill="#5f6b6c">FallbackStrategy · OpenTelemetry traces</text>
+  <line x1="1166" y1="398" x2="1246" y2="388" stroke="#6b4b9a" stroke-width="1.5" marker-end="url(#arrV)"/>
+  <text x="1170" y="380" font-size="9" fill="#6b4b9a">outcomes written</text>
+  <line x1="1246" y1="470" x2="1166" y2="470" stroke="#6b4b9a" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arrV)"/>
+  <text x="1178" y="462" font-size="9" fill="#6b4b9a">lessons back</text>
 
-  <!-- API / storage -->
-  <rect x="40" y="410" width="260" height="180" rx="12" fill="#ffffff" stroke="#d9d5cc"/>
-  <text x="60" y="440" font-size="13" font-weight="700" fill="#5f6b6c" letter-spacing="1">BACKEND (FastAPI)</text>
-  <text x="60" y="464" font-size="13" fill="#1e2a2b">REST + Server-Sent Events</text>
-  <text x="60" y="484" font-size="13" fill="#1e2a2b">SQLite store (roster, episodes,</text>
-  <text x="60" y="502" font-size="13" fill="#1e2a2b">approvals, check-ins)</text>
-  <text x="60" y="524" font-size="13" fill="#1e2a2b">Channel registry: Twilio SMS,</text>
-  <text x="60" y="542" font-size="13" fill="#1e2a2b">Telegram (two-way), Amazon SES</text>
-  <text x="60" y="566" font-size="12" fill="#5f6b6c">.env stays in backend/ (never committed)</text>
-  <line x1="300" y1="470" x2="340" y2="470" stroke="#1e2a2b" stroke-width="1.5" marker-end="url(#arr)" marker-start="url(#arr)"/>
+  <!-- ── Backend ────────────────────────────────────────────────────── -->
+  <rect x="44" y="440" width="300" height="220" rx="12" fill="#ffffff" stroke="#d9d5cc"/>
+  <text x="64" y="468" font-size="13" font-weight="700" fill="#5f6b6c" letter-spacing="1">BACKEND (FastAPI)</text>
+  <text x="64" y="492" font-size="13" fill="#1e2a2b">REST + Server-Sent Events</text>
+  <text x="64" y="512" font-size="13" fill="#1e2a2b">SQLite: roster, episodes, approvals,</text>
+  <text x="64" y="530" font-size="13" fill="#1e2a2b">check-ins, reminders, deployments</text>
+  <text x="64" y="554" font-size="13" fill="#1e2a2b">Channel registry: Twilio SMS,</text>
+  <text x="64" y="572" font-size="13" fill="#1e2a2b">Telegram (two-way), Amazon SES,</text>
+  <text x="64" y="590" font-size="13" fill="#1e2a2b">Amazon Polly for a spoken call</text>
+  <text x="64" y="616" font-size="12" fill="#5f6b6c">Sentinel + reminder jobs on one</text>
+  <text x="64" y="632" font-size="12" fill="#5f6b6c">scheduler · .env stays in backend/,</text>
+  <text x="64" y="648" font-size="12" fill="#5f6b6c">never committed</text>
+  <line x1="344" y1="540" x2="376" y2="540" stroke="#1e2a2b" stroke-width="1.5" marker-end="url(#arr)" marker-start="url(#arr)"/>
 
-  <!-- Humans -->
-  <rect x="40" y="630" width="420" height="190" rx="12" fill="#ffffff" stroke="#e39a2f" stroke-width="2"/>
-  <text x="60" y="660" font-size="16" font-weight="700" fill="#1e2a2b">Coordinator desk (React + Vite)</text>
-  <text x="60" y="684" font-size="13" fill="#1e2a2b">Live agent activity feed (SSE) · hazard + pipeline stepper</text>
-  <text x="60" y="704" font-size="13" fill="#1e2a2b">Decision cards: edit messages, approve / decline</text>
-  <text x="60" y="724" font-size="13" fill="#1e2a2b">Neighbor status tiles + Leaflet map · volunteer assignments</text>
-  <text x="60" y="744" font-size="13" fill="#1e2a2b">Standing policy toggles · roster CSV import</text>
-  <text x="60" y="776" font-size="12" font-weight="600" fill="#7a4d0a">The agents surface only when a human must decide.</text>
-  <line x1="250" y1="590" x2="250" y2="630" stroke="#b8741a" stroke-width="2" marker-end="url(#arrA)" marker-start="url(#arrA)"/>
+  <!-- ── Reminders → critical ───────────────────────────────────────── -->
+  <rect x="44" y="692" width="480" height="190" rx="12" fill="#ffffff" stroke="#e39a2f" stroke-width="2"/>
+  <text x="64" y="722" font-size="16" font-weight="700" fill="#1e2a2b">Reminders — paced, and finite</text>
+  <text x="64" y="746" font-size="13" fill="#1e2a2b">Three messages, three minutes apart — counted per</text>
+  <text x="64" y="764" font-size="13" fill="#1e2a2b">person across every episode, never per row.</text>
+  <text x="64" y="788" font-size="13" font-weight="600" fill="#2f6b5a">One reply closes all of them, everywhere.</text>
+  <text x="64" y="818" font-size="13.5" font-weight="700" fill="#c8412b">Out of reminders with no word back → critical:</text>
+  <text x="64" y="838" font-size="13.5" font-weight="700" fill="#c8412b">the texting stops and the coordinator is told.</text>
+  <text x="64" y="864" font-size="11.5" fill="#5f6b6c">Silence from someone at risk is the finding, not a reason</text>
+  <text x="64" y="878" font-size="11.5" fill="#5f6b6c">to send a fourth message.</text>
 
-  <rect x="500" y="630" width="400" height="190" rx="12" fill="#ffffff" stroke="#2f6b5a" stroke-width="2"/>
-  <text x="520" y="660" font-size="16" font-weight="700" fill="#1e2a2b">Neighbors &amp; volunteers</text>
-  <text x="520" y="684" font-size="13" fill="#1e2a2b">Personal SMS / Telegram / email in their language</text>
-  <text x="520" y="704" font-size="13" fill="#1e2a2b">One-tap check-in page: “I'm OK” / “I need help”</text>
-  <text x="520" y="724" font-size="13" fill="#1e2a2b">Telegram replies (OK / HELP) captured automatically</text>
-  <text x="520" y="744" font-size="13" fill="#1e2a2b">Volunteers get visit / ride / call requests</text>
-  <text x="520" y="776" font-size="12" font-weight="600" fill="#2f6b5a">Replies feed the follow-up agent's next cycle.</text>
-  <line x1="700" y1="590" x2="700" y2="630" stroke="#1e2a2b" stroke-width="1.5" marker-end="url(#arr)"/>
-  <line x1="900" y1="700" x2="1110" y2="400" stroke="#2f6b5a" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arr)"/>
+  <!-- ── responder ──────────────────────────────────────────────────── -->
+  <rect x="552" y="692" width="440" height="190" rx="12" fill="#ffffff" stroke="#2f6b5a" stroke-width="2"/>
+  <text x="572" y="722" font-size="16" font-weight="700" fill="#1e2a2b">responder — the sixth agent</text>
+  <text x="572" y="746" font-size="13" fill="#1e2a2b">People do not tap buttons. They write back.</text>
+  <text x="572" y="766" font-size="13" fill="#1e2a2b">It reads what they actually wrote, answers them</text>
+  <text x="572" y="784" font-size="13" fill="#1e2a2b">by name with the nearest cooled building, and</text>
+  <text x="572" y="802" font-size="13" fill="#1e2a2b">flags them on the coordinator's board.</text>
+  <text x="572" y="830" font-size="13" font-weight="700" fill="#c8412b">Chest pain or trouble breathing is matched</text>
+  <text x="572" y="848" font-size="13" font-weight="700" fill="#c8412b">before any model call → “call 911”.</text>
+  <text x="572" y="872" font-size="11.5" fill="#5f6b6c">Telegram two-way · one-tap check-in page · SMS</text>
+  <line x1="552" y1="790" x2="524" y2="790" stroke="#1e2a2b" stroke-width="1.5" marker-end="url(#arr)"/>
 
-  <!-- AgentCore -->
-  <rect x="940" y="630" width="420" height="190" rx="12" fill="#ffffff" stroke="#d9d5cc"/>
-  <text x="960" y="660" font-size="13" font-weight="700" fill="#5f6b6c" letter-spacing="1">DEPLOYMENT</text>
-  <text x="960" y="684" font-size="14" font-weight="600" fill="#1e2a2b">Amazon Bedrock AgentCore Runtime</text>
-  <text x="960" y="704" font-size="12" fill="#5f6b6c">backend/agentcore_app.py · BedrockAgentCoreApp entrypoint</text>
-  <text x="960" y="722" font-size="12" fill="#5f6b6c">streams graph events; resume with interrupt responses</text>
-  <text x="960" y="748" font-size="14" font-weight="600" fill="#1e2a2b">Docker Compose (backend + nginx frontend)</text>
-  <text x="960" y="768" font-size="12" fill="#5f6b6c">local or any container host · IAM role or ~/.aws mounted</text>
-  <text x="960" y="796" font-size="12" fill="#5f6b6c">Observability: strands[otel] → CloudWatch GenAI / OTLP</text>
+  <!-- ── Deployments ────────────────────────────────────────────────── -->
+  <rect x="1020" y="692" width="536" height="190" rx="12" fill="#ffffff" stroke="#3a6a8a" stroke-width="2"/>
+  <text x="1040" y="722" font-size="16" font-weight="700" fill="#1e2a2b">Deployments — who goes, drawn on the map</text>
+  <text x="1040" y="748" font-size="13" fill="#1e2a2b">Raised only on evidence: they asked for help, or they went silent.</text>
+  <text x="1040" y="770" font-size="13" fill="#1e2a2b">A lift needs a driver. A powered medical device needs someone medical.</text>
+  <text x="1040" y="792" font-size="13" fill="#1e2a2b">If no driver is free, a lift degrades to a visit rather than vanishing.</text>
+  <text x="1040" y="818" font-size="13" font-weight="600" fill="#3a6a8a">Valhalla → OSRM → straight line · cached · real roads, real travel time</text>
+  <text x="1040" y="842" font-size="12.5" font-weight="700" fill="#c8412b">The marker is estimated from the route. Nobody is GPS-tracked.</text>
+  <text x="1040" y="866" font-size="11.5" fill="#5f6b6c">A suggestion until the coordinator approves · arrived trips leave the map</text>
+  <line x1="992" y1="790" x2="1020" y2="790" stroke="#1e2a2b" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- ── Coordinator desk ───────────────────────────────────────────── -->
+  <rect x="44" y="912" width="520" height="170" rx="12" fill="#ffffff" stroke="#e39a2f" stroke-width="2"/>
+  <text x="64" y="942" font-size="16" font-weight="700" fill="#1e2a2b">Coordinator desk (React + Vite)</text>
+  <text x="64" y="966" font-size="13" fill="#1e2a2b">One screen: everyone being watched on the left, worst-first;</text>
+  <text x="64" y="986" font-size="13" fill="#1e2a2b">the live map on the right. Agent activity streams as it happens.</text>
+  <text x="64" y="1008" font-size="13" fill="#1e2a2b">Decision cards — read it, edit the wording, approve or decline</text>
+  <text x="64" y="1028" font-size="13" fill="#1e2a2b">A case page per neighbour: history, protocols, escalate</text>
+  <text x="64" y="1056" font-size="12" font-weight="600" fill="#7a4d0a">The agents surface only when a human must decide.</text>
+  <line x1="300" y1="882" x2="300" y2="912" stroke="#b8741a" stroke-width="2" marker-end="url(#arrA)" marker-start="url(#arrA)"/>
+
+  <!-- ── Neighbours ─────────────────────────────────────────────────── -->
+  <rect x="592" y="912" width="460" height="170" rx="12" fill="#ffffff" stroke="#2f6b5a" stroke-width="2"/>
+  <text x="612" y="942" font-size="16" font-weight="700" fill="#1e2a2b">Neighbours &amp; volunteers</text>
+  <text x="612" y="966" font-size="13" fill="#1e2a2b">One message in their own language, two large buttons</text>
+  <text x="612" y="986" font-size="13" fill="#1e2a2b">— or just write back in their own words.</text>
+  <text x="612" y="1008" font-size="13" fill="#1e2a2b">Twilio SMS · Telegram (two-way) · Amazon SES · Polly</text>
+  <text x="612" y="1028" font-size="13" fill="#1e2a2b">Volunteers get visit, ride and call requests</text>
+  <text x="612" y="1056" font-size="12" font-weight="600" fill="#2f6b5a">Every reply lands on the board within seconds.</text>
+  <line x1="760" y1="912" x2="760" y2="882" stroke="#2f6b5a" stroke-width="1.5" marker-end="url(#arrG)"/>
+  <text x="768" y="902" font-size="10" fill="#2f6b5a">they write back</text>
+
+  <!-- ── AgentCore Runtime / deployment ─────────────────────────────── -->
+  <rect x="1080" y="912" width="476" height="170" rx="12" fill="#ffffff" stroke="#d9d5cc"/>
+  <text x="1100" y="940" font-size="13" font-weight="700" fill="#5f6b6c" letter-spacing="1">DEPLOYMENT</text>
+  <text x="1100" y="964" font-size="14" font-weight="600" fill="#1e2a2b">Amazon Bedrock AgentCore Runtime</text>
+  <text x="1100" y="984" font-size="12" fill="#5f6b6c">backend/agentcore_app.py · BedrockAgentCoreApp entrypoint</text>
+  <text x="1100" y="1002" font-size="12" fill="#5f6b6c">streams the same graph; resume with interrupt_responses</text>
+  <text x="1100" y="1028" font-size="14" font-weight="600" fill="#1e2a2b">Docker Compose (backend + nginx frontend)</text>
+  <text x="1100" y="1048" font-size="12" fill="#5f6b6c">local or any container host · IAM role or ~/.aws mounted</text>
+  <text x="1100" y="1072" font-size="12" fill="#5f6b6c">Observability: strands[otel] → CloudWatch GenAI / OTLP</text>
 </svg>

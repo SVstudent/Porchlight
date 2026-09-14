@@ -1,8 +1,10 @@
 #!/bin/bash
 # Post-merge verification: run every deterministic test and build the frontend.
 set -u
-REPO="${1:-/Users/sathvikvempati/Desktop/AWShack}"
-VENV=/private/tmp/claude-503/-Users-sathvikvempati-Desktop-AWShack/77261510-4d84-4758-9632-89e97e39eb7b/scratchpad/sv/bin/python
+REPO="${1:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
+# Python to run the suite with: the repo venv if present, else whatever `python3` is.
+VENV="${VENV:-$REPO/backend/.venv/bin/python}"
+[ -x "$VENV" ] || VENV="$(command -v python3)"
 fail=0
 echo "=== conflict marker check ==="
 if grep -rn "^<<<<<<< \|^>>>>>>> " --include="*.py" --include="*.js" --include="*.jsx" --include="*.css" \
@@ -22,7 +24,7 @@ for t in $(ls tests/test_*.py 2>/dev/null | sed 's#tests/##; s#\.py##'); do
 done
 echo "=== frontend build ==="
 cd "$REPO/frontend" || exit 1
-[ -d node_modules ] || ln -s /Users/sathvikvempati/Desktop/AWShack/frontend/node_modules node_modules 2>/dev/null
+[ -d node_modules ] || npm ci --silent || npm install --silent
 npm run build 2>&1 | tail -4 | grep -E "built in|error" || fail=1
 echo "=== RESULT: $([ $fail -eq 0 ] && echo ALL GREEN || echo FAILURES) ==="
 exit $fail

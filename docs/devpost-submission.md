@@ -22,9 +22,17 @@ Porchlight runs in the background for a community group. A deterministic sentine
 - **Outreach**: writes each neighbor a personal message in English or Spanish with one concrete action and a one-tap check-in link, then pauses for the coordinator.
 - **Logistics**: matches volunteers by skill, proximity and load, finds the nearest real cooling center, and pauses for the coordinator.
 - **Brief**: writes a plain-language summary and what the coordinator should do next.
-- **Follow-up**: every two minutes it reads the replies and escalates "I need help" and tier-1 non-responders to a volunteer visit or emergency contact, pausing for approval unless the coordinator has set a standing policy.
+Outreach and logistics are parallel branches that join at the brief.
 
-The coordinator's desk shows the live agent activity, a decision card with editable messages, neighbor status tiles, a map, and the brief. Neighbors get a page with two very large buttons: I'm OK, I need help.
+Then the part a spreadsheet cannot do:
+
+- **Replies**: people do not tap buttons, they write back. A `responder` agent reads free text in either language, answers them by name with the nearest cooled building, and flags them for the coordinator. Symptoms that mean *call 911* — chest pain, trouble breathing — are matched deterministically **before any model call**, so that answer never depends on a model being reachable.
+- **Reminders**: anyone who stays silent is reminded three times, three minutes apart, counted per person across every open episode. Any reply closes all of them at once.
+- **Critical**: out of reminders with no word back, Porchlight stops texting and marks that person critical for the coordinator. Silence from a man on a home oxygen concentrator is the finding, not a reason to send a fourth message.
+- **Deployments**: raised only on evidence — they asked for help, or they went silent — and matched to the need: a driver for a lift, someone medical for a powered device. Each carries a real road route and travel time, and stays a suggestion until the coordinator approves it.
+- **Memory**: every outcome is written to Amazon Bedrock AgentCore Memory automatically. AgentCore distils them into contact lessons, and triage reads those back the next time heat threatens the same street.
+
+The coordinator's desk is one screen: every neighbor on the left ordered worst-first, the live map on the right with the Weather Service's own warning zones and conditions measured street by street, agent activity streaming as it happens, and a decision card whenever a human is needed. Clicking a neighbor opens their case page. Neighbors get a page with two very large buttons: I'm OK, I need help — or they can just write back.
 
 The same loop runs for heat, smoke, freeze, winter storm, flood and outage. The sentinel maps NWS event names to hazard types in plain Python; the agents reason about whichever hazard they are handed.
 
@@ -50,7 +58,7 @@ Every agent is a Strands `Agent` with its own system prompt and tool set, wired 
 
 ## Challenges
 
-Keeping the LLM out of decisions that should be deterministic (when to poll, what counts as a hazard, de-duplicating alerts), designing the approval gate so it works uniformly across every agent in the graph, and making check-in links and Telegram replies close the loop back into the follow-up agent.
+Keeping the model out of decisions that should be deterministic — when to poll, what counts as a hazard, de-duplicating alerts, how many reminders is enough, and whether a described symptom means call 911. Designing the approval gate so it works uniformly across every agent in the graph, and so an agent that re-proposes the same decision in different words is told it was already answered instead of asking the coordinator forever. And counting reminders per person rather than per row, which is the difference between one reminder and six arriving at 4am.
 
 ## What we learned
 
