@@ -10,10 +10,10 @@ import tempfile
 os.environ["DATA_DIR"] = tempfile.mkdtemp(prefix="porchlight-dep-")
 os.environ["SENTINEL_ENABLED"] = "false"
 
-from app import deployments  # noqa: E402
-from app.models import Checkin, Episode, HazardEvent  # noqa: E402
-from app.seed import MEMBERS, RESOURCES, VOLUNTEERS  # noqa: E402
-from app.store import store  # noqa: E402
+from app import deployments
+from app.models import Checkin, Episode, HazardEvent
+from app.seed import MEMBERS, RESOURCES, VOLUNTEERS
+from app.store import store
 
 store.seed_if_empty(MEMBERS, VOLUNTEERS, RESOURCES)
 for v in VOLUNTEERS:

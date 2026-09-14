@@ -8,8 +8,9 @@ from __future__ import annotations
 
 import re
 import statistics
-from datetime import datetime
-from typing import Any, Iterable, Optional
+from collections.abc import Iterable
+from datetime import UTC, datetime
+from typing import Any
 
 from .models import Approval, Checkin, Episode, Member, Volunteer
 
@@ -18,7 +19,7 @@ NEEDED_HELP_STATUSES = {"needs_help", "escalated"}
 _ESCALATION_RE = re.compile(r"escalated \(([a-z_0-9]+)\)")
 
 
-def _dt(s: Any) -> Optional[datetime]:
+def _dt(s: Any) -> datetime | None:
     """Parse an ISO-8601 string from the models; '' / None / garbage -> None."""
     if not s or not isinstance(s, str):
         return None
@@ -27,24 +28,23 @@ def _dt(s: Any) -> Optional[datetime]:
     except ValueError:
         return None
     if d.tzinfo is None:  # treat naive stamps as UTC so they compare with now_iso() values
-        from datetime import timezone
 
-        d = d.replace(tzinfo=timezone.utc)
+        d = d.replace(tzinfo=UTC)
     return d
 
 
-def _minutes(a: Optional[datetime], b: Optional[datetime]) -> Optional[float]:
+def _minutes(a: datetime | None, b: datetime | None) -> float | None:
     if a is None or b is None:
         return None
     return round((b - a).total_seconds() / 60, 1)
 
 
-def _median(xs: Iterable[Optional[float]]) -> Optional[float]:
+def _median(xs: Iterable[float | None]) -> float | None:
     vals = [x for x in xs if x is not None]
     return round(statistics.median(vals), 1) if vals else None
 
 
-def _pct(num: int, den: int) -> Optional[float]:
+def _pct(num: int, den: int) -> float | None:
     return round(100.0 * num / den, 1) if den else None
 
 

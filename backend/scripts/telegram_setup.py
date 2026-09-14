@@ -21,10 +21,10 @@ from pathlib import Path
 BACKEND = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BACKEND))
 
-from app.config import settings  # noqa: E402
-from app.channels.telegram import get_updates  # noqa: E402
-
 import httpx  # noqa: E402
+
+from app.channels.telegram import get_updates  # noqa: E402
+from app.config import settings  # noqa: E402
 
 ENV = BACKEND / ".env"
 OK, BAD, INFO = "\033[32m  ok  \033[0m", "\033[31m fail \033[0m", "\033[36m ---- \033[0m"

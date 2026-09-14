@@ -6,13 +6,12 @@ lessons), so it works without a model or AWS. When Amazon Bedrock AgentCore Memo
 """
 from __future__ import annotations
 
-from concurrent.futures import ThreadPoolExecutor
-
 import logging
 import re
 import statistics
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from strands import tool
 from strands.types.tools import ToolContext
@@ -36,9 +35,9 @@ OUTCOME_LABEL = {
 }
 
 
-def _minutes_between(a: str, b: str) -> Optional[int]:
+def _minutes_between(a: str, b: str) -> int | None:
     try:
-        return max(0, int(round((datetime.fromisoformat(b) - datetime.fromisoformat(a)).total_seconds() / 60)))
+        return max(0, round((datetime.fromisoformat(b) - datetime.fromisoformat(a)).total_seconds() / 60))
     except Exception:  # noqa: BLE001
         return None
 
@@ -59,12 +58,12 @@ def _member_escalations(ep: Episode, m: Member) -> list[dict[str, Any]]:
     return out
 
 
-def episode_record(ep: Episode, m: Member) -> Optional[dict[str, Any]]:
+def episode_record(ep: Episode, m: Member) -> dict[str, Any] | None:
     """What happened to one member in one episode, or None if they played no part in it."""
     decision = next((d for d in (ep.triage.decisions if ep.triage else []) if d.member_id == m.id), None)
     cks = sorted((c for c in store.checkins(ep.id) if c.member_id == m.id), key=lambda c: c.sent_at)
     esc = _member_escalations(ep, m)
-    lessons = [l for l in ep.stats.get("lessons", []) if isinstance(l, dict) and l.get("member_id") == m.id]
+    lessons = [x for x in ep.stats.get("lessons", []) if isinstance(x, dict) and x.get("member_id") == m.id]
     tasks = [a.task for a in (ep.logistics.assignments if ep.logistics else []) if a.member_id == m.id]
     if decision is None and not cks and not esc and not lessons and not tasks:
         return None
@@ -102,7 +101,7 @@ def episode_record(ep: Episode, m: Member) -> Optional[dict[str, Any]]:
         "note": note[:300],
         "escalations": esc,
         "volunteer_tasks": tasks,
-        "lessons": [str(l.get("text", ""))[:300] for l in lessons],
+        "lessons": [str(x.get("text", ""))[:300] for x in lessons],
     }
 
 
@@ -160,7 +159,7 @@ def _insight(m: Member, recs: list[dict[str, Any]], rel: dict[str, Any]) -> str:
         parts.append(f"Needed a visit in {rel['visits_needed']} of {n} past {what}.")
     if rel["needs_help_count"]:
         parts.append(f"Asked for help {rel['needs_help_count']} time{'s' if rel['needs_help_count'] != 1 else ''}.")
-    latest_lesson = next((l for r in recs for l in r["lessons"]), "")
+    latest_lesson = next((lesson for r in recs for lesson in r["lessons"]), "")
     if latest_lesson:
         parts.append(f'Coordinator note: "{latest_lesson}"')
     return " ".join(parts)
@@ -190,7 +189,7 @@ def neighbor_history(member_id: str, exclude_episode_id: str = "") -> dict[str, 
     }
 
 
-def compact_history(member_id: str, exclude_episode_id: str = "") -> Optional[dict[str, Any]]:
+def compact_history(member_id: str, exclude_episode_id: str = "") -> dict[str, Any] | None:
     """Tiny per-member summary for dashboard tiles; None when there is nothing to show."""
     h = neighbor_history(member_id, exclude_episode_id)
     if "error" in h or not h["episodes"]:
@@ -217,7 +216,7 @@ def community_history(limit: int = 5, exclude_episode_id: str = "") -> dict[str,
         cks = store.checkins(ep.id)
         contacted = sum(1 for c in cks if c.status != "failed")
         replied = sum(1 for c in cks if c.responded_at or c.status in ("ok", "needs_help"))
-        lessons = [l for l in ep.stats.get("lessons", []) if isinstance(l, dict)]
+        lessons = [x for x in ep.stats.get("lessons", []) if isinstance(x, dict)]
         out.append({
             "episode_id": ep.id,
             "date": (ep.created_at or "")[:10],
@@ -230,7 +229,7 @@ def community_history(limit: int = 5, exclude_episode_id: str = "") -> dict[str,
             "needs_help": sum(1 for c in cks if c.status == "needs_help" or (c.status == "escalated" and c.responded_at)),
             "escalated": sum(1 for t in ep.timeline if t.kind == "escalation"),
             "volunteer_assignments": len(ep.logistics.assignments) if ep.logistics else 0,
-            "lessons": [{"member_id": l.get("member_id", ""), "text": str(l.get("text", ""))[:300]} for l in lessons],
+            "lessons": [{"member_id": x.get("member_id", ""), "text": str(x.get("text", ""))[:300]} for x in lessons],
             "brief": str(ep.stats.get("brief", ""))[:400],
         })
     return {
@@ -274,7 +273,7 @@ def get_neighbor_history(tool_context: ToolContext, member_ids: list[str]) -> di
 
     ids = member_ids[:50]
     with ThreadPoolExecutor(max_workers=8) as pool:
-        return dict(zip(ids, pool.map(one, ids)))
+        return dict(zip(ids, pool.map(one, ids), strict=True))
 
 
 @tool(context=True)

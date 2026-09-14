@@ -8,11 +8,11 @@ os.environ["DATA_DIR"] = tempfile.mkdtemp(prefix="porchlight-memory-")
 os.environ["SEND_MODE"] = "console"
 os.environ.pop("AGENTCORE_MEMORY_ID", None)  # local history only in tests
 
-from fastapi.testclient import TestClient  # noqa: E402
+from fastapi.testclient import TestClient
 
-from app.agents import agentcore_memory  # noqa: E402
-from app.agents.tools import dispatch_outreach_impl, escalate_member_impl  # noqa: E402
-from app.agents.tools_memory import (  # noqa: E402
+from app.agents import agentcore_memory
+from app.agents.tools import dispatch_outreach_impl, escalate_member_impl
+from app.agents.tools_memory import (
     community_history,
     compact_history,
     get_community_history,
@@ -20,10 +20,10 @@ from app.agents.tools_memory import (  # noqa: E402
     neighbor_history,
     sync_to_agentcore,
 )
-from app.main import app  # noqa: E402
-from app.models import Episode, HazardEvent, TriageDecision, TriagePlan  # noqa: E402
-from app.seed import MEMBERS, RESOURCES, VOLUNTEERS  # noqa: E402
-from app.store import store  # noqa: E402
+from app.main import app
+from app.models import Episode, HazardEvent, TriageDecision, TriagePlan
+from app.seed import MEMBERS, RESOURCES, VOLUNTEERS
+from app.store import store
 
 client = TestClient(app)
 
@@ -100,7 +100,7 @@ def test_member_summaries():
 
 
 def test_current_episode_excluded_and_compact():
-    ep1, ep2 = setup()
+    setup()
     cur = Episode(hazard=HazardEvent(source="manual", event_name="Heat Advisory", hazard_type="heat"))
     store.put_episode(cur)
     dispatch_outreach_impl(cur.id, [{"member_id": "mem_walter", "channel": "sms", "language": "en", "body": "x {checkin_link}"}], "n")

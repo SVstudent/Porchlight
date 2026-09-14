@@ -9,8 +9,8 @@ from pathlib import Path
 os.environ["DATA_DIR"] = tempfile.mkdtemp(prefix="porchlight-report-")
 os.environ["SEND_MODE"] = "console"
 
-from app.feeds.nws import feature_to_hazard  # noqa: E402
-from app.models import (  # noqa: E402
+from app.feeds.nws import feature_to_hazard
+from app.models import (
     Approval,
     Checkin,
     Episode,
@@ -21,8 +21,8 @@ from app.models import (  # noqa: E402
     TriagePlan,
     VolunteerAssignment,
 )
-from app.report import compute_metrics  # noqa: E402
-from app.seed import MEMBERS, RESOURCES, VOLUNTEERS  # noqa: E402
+from app.report import compute_metrics
+from app.seed import MEMBERS, RESOURCES, VOLUNTEERS
 
 FIX = Path(__file__).resolve().parent.parent / "app" / "data" / "fixtures"
 T0 = "2026-09-08T20:00:00+00:00"  # hazard detected

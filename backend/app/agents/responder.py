@@ -23,7 +23,6 @@ from typing import Any
 
 from strands import Agent
 
-from ..config import settings
 from ..events import bus
 from ..models import TimelineEntry, now_iso
 from ..store import store

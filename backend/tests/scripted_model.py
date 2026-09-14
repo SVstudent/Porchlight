@@ -11,12 +11,12 @@ why it is useless for anything except proving that the plumbing around the agent
 from __future__ import annotations
 
 import json
-from typing import Any, AsyncGenerator, AsyncIterable
+from collections.abc import AsyncGenerator, AsyncIterable
+from typing import Any
 
 from strands.models.model import Model
 
 from app.models import HazardAssessment
-
 
 # Every tool the app registers on a node. Anything else in a node's tool list was put there by the SDK.
 APP_TOOLS = {

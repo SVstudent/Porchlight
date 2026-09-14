@@ -12,9 +12,9 @@ import tempfile
 os.environ["DATA_DIR"] = tempfile.mkdtemp(prefix="porchlight-dup-")
 os.environ["SENTINEL_ENABLED"] = "false"
 
-from app.agents.hooks import _already_decided, _fingerprint  # noqa: E402
-from app.models import Approval, Episode, HazardEvent  # noqa: E402
-from app.store import store  # noqa: E402
+from app.agents.hooks import _already_decided, _fingerprint
+from app.models import Approval, Episode, HazardEvent
+from app.store import store
 
 PLAN = {"assignments": [{"volunteer_id": "vol_marisol", "member_id": "mem_rosa",
                          "task": "wellness_visit", "reason": "Spanish speaker", "priority": 1}],

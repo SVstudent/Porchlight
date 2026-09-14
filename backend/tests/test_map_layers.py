@@ -15,9 +15,9 @@ from pathlib import Path
 os.environ["DATA_DIR"] = tempfile.mkdtemp(prefix="porchlight-layers-")
 os.environ["SENTINEL_ENABLED"] = "false"
 
-from app.feeds import field as field_mod  # noqa: E402
-from app.feeds import footprint as fp_mod  # noqa: E402
-from app.feeds.nws import feature_to_hazard  # noqa: E402
+from app.feeds import field as field_mod
+from app.feeds import footprint as fp_mod
+from app.feeds.nws import feature_to_hazard
 
 FIX = Path(__file__).resolve().parent.parent / "app" / "data" / "fixtures"
 

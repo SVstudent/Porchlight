@@ -2,14 +2,14 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
-from typing import Any, Literal, Optional
+from datetime import UTC, datetime
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
 
 def now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+    return datetime.now(UTC).isoformat(timespec="seconds")
 
 
 def new_id(prefix: str) -> str:
@@ -233,10 +233,10 @@ class Episode(BaseModel):
     status: str = "assessing"  # assessing | stood_down | triaging | awaiting_approval | dispatching | monitoring | escalating | closed | failed
     created_at: str = Field(default_factory=now_iso)
     updated_at: str = Field(default_factory=now_iso)
-    assessment: Optional[HazardAssessment] = None
-    triage: Optional[TriagePlan] = None
-    outreach: Optional[OutreachPlan] = None
-    logistics: Optional[LogisticsPlan] = None
+    assessment: HazardAssessment | None = None
+    triage: TriagePlan | None = None
+    outreach: OutreachPlan | None = None
+    logistics: LogisticsPlan | None = None
     timeline: list[TimelineEntry] = []
     session_id: str = ""
     stats: dict[str, Any] = {}

@@ -6,10 +6,9 @@ world, and every one of them is gated by the ApprovalGateHook interrupt unless p
 """
 from __future__ import annotations
 
-from concurrent.futures import ThreadPoolExecutor
-
 import logging
 import secrets
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
 from strands import tool
@@ -63,7 +62,7 @@ def _community_centroid() -> tuple[float, float]:
 def get_episode_context(tool_context: ToolContext) -> dict:
     """Get the current hazard, the sentinel assessment, and any triage already completed for this episode.
     Call this first so your work builds on what earlier agents decided."""
-    ep_id, ep = _episode(tool_context)
+    _, ep = _episode(tool_context)
     if ep is None:
         return {"error": "no active episode"}
     return {
@@ -162,9 +161,9 @@ def get_member_conditions(member_ids: list[str]) -> dict:
     keys = {(round(m.lat, 2), round(m.lon, 2)) for _, m in wanted}
     # Serially this is a minute of waiting in the middle of a live demo; the calls are independent.
     with ThreadPoolExecutor(max_workers=8) as pool:
-        by_place = dict(zip(keys, pool.map(_fetch, keys)))
+        by_place = dict(zip(keys, pool.map(_fetch, keys), strict=True))
 
-    for member_id, m in wanted:
+    for _, m in wanted:
         key = (round(m.lat, 2), round(m.lon, 2))
         nearest = None
         for r in cooled:
@@ -227,7 +226,7 @@ def list_volunteers() -> list[dict]:
 def get_checkin_status(tool_context: ToolContext) -> dict:
     """Per-member check-in status for this episode: ok, needs_help, sent (no reply yet), or escalated,
     with minutes elapsed since the message went out."""
-    ep_id, ep = _episode(tool_context)
+    _, ep = _episode(tool_context)
     if ep is None:
         return {"error": "no active episode"}
     from datetime import datetime
@@ -263,7 +262,7 @@ def dispatch_outreach(tool_context: ToolContext, messages: list[dict], coordinat
                   "language": "en"|"es", "body": str (<320 chars, includes {checkin_link}), "call_script": str (optional)}
         coordinator_note: 2-3 sentences for the coordinator explaining who is being contacted and why
     """
-    ep_id, ep = _episode(tool_context)
+    _, ep = _episode(tool_context)
     if ep is None:
         return {"error": "no active episode"}
     return dispatch_outreach_impl(ep.id, messages, coordinator_note)
@@ -324,7 +323,7 @@ def assign_volunteers(tool_context: ToolContext, assignments: list[dict], recomm
         recommended_resource_ids: resource ids members should be pointed to
         gaps: needs that no volunteer or resource can cover, for the coordinator to solve
     """
-    ep_id, ep = _episode(tool_context)
+    _, ep = _episode(tool_context)
     if ep is None:
         return {"error": "no active episode"}
     return assign_volunteers_impl(ep.id, assignments, recommended_resource_ids, gaps)
@@ -371,7 +370,7 @@ def escalate_member(tool_context: ToolContext, member_id: str, action: str, reas
         reason: why, in one sentence
         volunteer_id: required for volunteer_visit
     """
-    ep_id, ep = _episode(tool_context)
+    _, ep = _episode(tool_context)
     if ep is None:
         return {"error": "no active episode"}
     return escalate_member_impl(ep.id, member_id, action, reason, volunteer_id)
@@ -429,7 +428,7 @@ def record_coordinator_brief(tool_context: ToolContext, brief: str) -> dict:
     Args:
         brief: 4-8 short lines, no jargon
     """
-    ep_id, ep = _episode(tool_context)
+    _, ep = _episode(tool_context)
     if ep is None:
         return {"error": "no active episode"}
     return record_coordinator_brief_impl(ep.id, brief)

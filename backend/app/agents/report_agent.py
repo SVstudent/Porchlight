@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -38,7 +38,7 @@ Rules:
 """
 
 
-def generate_narrative(metrics: dict[str, Any], episode_summary: dict[str, Any]) -> tuple[Optional[AfterActionNarrative], str]:
+def generate_narrative(metrics: dict[str, Any], episode_summary: dict[str, Any]) -> tuple[AfterActionNarrative | None, str]:
     """Return (narrative, reason). narrative is None and reason is set when no model is available or the call fails."""
     try:
         model = build_model()

@@ -12,6 +12,7 @@ every other outbound action in this system works.
 """
 from __future__ import annotations
 
+import itertools
 import logging
 from typing import Any
 
@@ -216,7 +217,7 @@ def progress(dep: Deployment, now_s: float) -> dict[str, Any]:
     # Walk the polyline by distance so the marker follows the road at a steady speed.
     total = 0.0
     spans = []
-    for a, b in zip(dep.route, dep.route[1:]):
+    for a, b in itertools.pairwise(dep.route):
         d = haversine_m(a[0], a[1], b[0], b[1])
         spans.append((a, b, d))
         total += d

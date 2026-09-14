@@ -117,9 +117,11 @@ class EpisodeRunner:
             await self._finish_graph(ep_id, final)
         except Exception as e:  # noqa: BLE001
             log.error("graph failed for %s: %s\n%s", ep_id, e, traceback.format_exc())
+            reason = str(e)
+
             def _fail(ep):
                 ep.status = "failed"
-                ep.timeline.append(TimelineEntry(kind="error", text=f"Agent run failed: {e}"))
+                ep.timeline.append(TimelineEntry(kind="error", text=f"Agent run failed: {reason}"))
 
             store.mutate_episode(ep_id, _fail)
             self._graphs.pop(ep_id, None)
@@ -178,9 +180,7 @@ class EpisodeRunner:
         elif t == "multiagent_node_interrupt":
             for itp in ev.get("interrupts", []) or []:
                 bus.emit("interrupt", f"{ev.get('node_id')} is waiting for the coordinator", episode_id=ep_id, agent=ev.get("node_id", ""), interrupt_id=getattr(itp, "id", ""))
-        elif t == "multiagent_result":
-            return ev.get("result")
-        elif "result" in ev and t is None:
+        elif t == "multiagent_result" or ("result" in ev and t is None):
             return ev.get("result")
         return None
 
@@ -270,7 +270,7 @@ class EpisodeRunner:
                 batch_id=batch_id,
             )
             store.put_approval(a)
-            store.mutate_episode(ep.id, lambda e: e.timeline.append(TimelineEntry(kind="approval_requested", text=a.title, data={"approval_id": a.id})))
+            store.mutate_episode(ep.id, lambda e, a=a: e.timeline.append(TimelineEntry(kind="approval_requested", text=a.title, data={"approval_id": a.id})))
             bus.emit("approval", a.title, episode_id=ep.id, agent=a.agent_name, approval_id=a.id, kind=a.kind)
 
     # ------------------------------------------------------------ decisions

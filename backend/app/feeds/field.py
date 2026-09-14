@@ -80,7 +80,7 @@ def sample(points: list[tuple[float, float]], hazard_type: str = "heat",
         return {"cells": [], "metric": "", "unit": "", "min": None, "max": None, "error": str(e)[:120]}
 
     out = []
-    for (lat, lon), row, value in zip(cells, rows, values):
+    for (lat, lon), _row, value in zip(cells, rows, values, strict=False):
         if value is None:
             continue
         out.append({

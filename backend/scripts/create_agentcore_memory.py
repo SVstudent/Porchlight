@@ -39,7 +39,7 @@ def main() -> int:
     ap.add_argument("--max-wait", type=int, default=600, help="seconds to wait for the memory to become ACTIVE")
     args = ap.parse_args()
 
-    from bedrock_agentcore.memory import MemoryClient  # noqa: E402  (fails clearly if the SDK is missing)
+    from bedrock_agentcore.memory import MemoryClient  # fails clearly if the SDK is missing
 
     client = MemoryClient(region_name=args.region)
     strategies = [

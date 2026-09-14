@@ -92,7 +92,7 @@ class Settings:
     DB_PATH = DATA_DIR / "porchlight.db"
 
     # --- server ---
-    HOST = os.getenv("HOST", "0.0.0.0")
+    HOST = os.getenv("HOST", "0.0.0.0")  # noqa: S104 — a server in a container must listen on every interface
     PORT = _int("PORT", 8000)
     CORS_ORIGINS = [o.strip() for o in os.getenv("CORS_ORIGINS", "*").split(",")]
 

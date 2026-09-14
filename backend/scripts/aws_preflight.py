@@ -55,7 +55,7 @@ def record(name: str, status: str, detail: str = "") -> None:
 
 def aws(*args: str, timeout: int = 60) -> tuple[int, str]:
     try:
-        p = subprocess.run(["aws", *args], capture_output=True, text=True, timeout=timeout)
+        p = subprocess.run(["aws", *args], capture_output=True, text=True, timeout=timeout, check=False)  # noqa: S603, S607 — fixed argv, no shell
         return p.returncode, (p.stdout or p.stderr).strip()
     except FileNotFoundError:
         return 127, "aws CLI not found on PATH"

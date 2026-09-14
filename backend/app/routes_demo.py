@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Any, Optional
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -28,8 +28,8 @@ router = APIRouter()
 
 class PacingIn(BaseModel):
     """Follow-up timings. Real deployments use 20+ minute grace; a demo needs a shorter one to show escalation."""
-    followup_grace_minutes: Optional[int] = None
-    followup_interval_minutes: Optional[int] = None
+    followup_grace_minutes: int | None = None
+    followup_interval_minutes: int | None = None
 
 
 @router.get("/api/demo/pacing")
@@ -142,7 +142,7 @@ def probe_public_base() -> tuple[bool, str]:
 
     url = settings.PUBLIC_BASE_URL
     try:
-        with urllib.request.urlopen(url, timeout=2) as r:
+        with urllib.request.urlopen(url, timeout=2) as r:  # noqa: S310 — PUBLIC_BASE_URL is operator config, not user input
             body = r.read(4096).decode("utf-8", "replace")
         if "Porchlight" in body:
             ok, detail = True, f"{url} is serving Porchlight"
@@ -161,7 +161,7 @@ class IngestBody(BaseModel):
     # "filming" walks the agents one at a time with a gap between them, so a recording can be narrated.
     # "real" fans outreach and logistics out in parallel, which is what an actual emergency wants.
     pace: str = "filming"
-    fixture_id: Optional[str] = None
+    fixture_id: str | None = None
     # A small gap only. The agents themselves take about fifty seconds in sequence, which is already
     # slow enough to follow; longer pauses push a run past a minute for no benefit to a viewer.
     step_pause_seconds: float = 2.0

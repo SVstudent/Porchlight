@@ -14,9 +14,9 @@ from typing import Any
 
 from strands import Agent, tool
 from strands.multiagent import GraphBuilder
-from strands.types.tools import ToolContext
 from strands.multiagent.graph import GraphState
 from strands.session import FileSessionManager
+from strands.types.tools import ToolContext
 
 from ..config import settings
 from ..models import Episode, HazardAssessment, TriageDecision, TriagePlan
@@ -170,7 +170,7 @@ def sequential() -> bool:
         stored = store.get_setting("sequential_agents", None)
         if stored is not None:
             return bool(stored)
-    except Exception:  # noqa: BLE001
+    except Exception:  # noqa: BLE001, S110 — no settings store yet (scripts, tests): the environment decides
         pass
     return os.getenv("SEQUENTIAL_AGENTS", "").strip().lower() in {"1", "true", "yes", "on"}
 

@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Optional
+from typing import Any
 
 from fastapi import APIRouter
 from pydantic import BaseModel
@@ -20,7 +20,7 @@ COMPOUND_TYPES = ("heat", "cold", "winter")
 ACTIVE_EXCLUDED = ("closed", "stood_down", "failed")
 
 
-def active_compound_episode() -> Optional[Episode]:
+def active_compound_episode() -> Episode | None:
     """Most recent heat/cold/winter episode that is still open, if any."""
     for ep in store.episodes():  # newest first
         if ep.hazard.hazard_type in COMPOUND_TYPES and ep.status not in ACTIVE_EXCLUDED:
@@ -41,7 +41,7 @@ class OutageReportIn(BaseModel):
     estimated_restoration_iso: str = ""
 
 
-def build_outage_hazard(body: OutageReportIn, compound: Optional[Episode]) -> HazardEvent:
+def build_outage_hazard(body: OutageReportIn, compound: Episode | None) -> HazardEvent:
     utility = (body.utility or "the utility").strip()
     area = body.area.strip() or settings.COMMUNITY_NAME
     dependents = electricity_dependent_members()

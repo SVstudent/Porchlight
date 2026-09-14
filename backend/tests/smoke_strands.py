@@ -119,7 +119,7 @@ async def main():
         types.append(ev.get("type"))
         if ev.get("type") == "multiagent_result":
             gres = ev.get("result")
-    print("graph event types:", sorted(set(t for t in types if t)))
+    print("graph event types:", sorted({t for t in types if t}))
     print("graph status:", gres.status if gres else None, "| interrupts:", [i.name for i in (gres.interrupts if gres else [])])
     assert gres and gres.status == Status.INTERRUPTED
     responses = [{"interruptResponse": {"interruptId": i.id, "response": {"decision": "approve"}}} for i in gres.interrupts]

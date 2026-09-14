@@ -18,13 +18,13 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel
 
+from . import voice_sim
 from .agents.runner import runner
 from .channels.twilio_voice import PROMPTS, build_reply_twiml, build_twiml, lang
 from .config import settings
 from .events import bus
 from .models import Checkin, TimelineEntry, now_iso
 from .store import store
-from . import voice_sim
 
 log = logging.getLogger("porchlight.voice")
 router = APIRouter()
@@ -50,7 +50,7 @@ def create_voice_sim(req: VoiceSimRequest) -> dict[str, Any]:
     episode = store.episode(req.episode_id) if req.episode_id else voice_sim.current_episode()
     try:
         return voice_sim.simulate(member, episode, req.outcome, req.call_script)
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         log.warning("voice simulation failed for %s: %s", member.id, e)
         raise HTTPException(503, f"Amazon Polly could not record the call: {e}") from e
 

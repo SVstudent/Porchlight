@@ -7,15 +7,15 @@ import tempfile
 os.environ["DATA_DIR"] = tempfile.mkdtemp(prefix="porchlight-outage-")
 os.environ["SEND_MODE"] = "console"
 
-from fastapi.testclient import TestClient  # noqa: E402
+from fastapi.testclient import TestClient
 
-from app.agents import sentinel  # noqa: E402
-from app.agents.runner import runner  # noqa: E402
-from app.agents.tools_outage import electricity_dependent_members  # noqa: E402
-from app.main import app  # noqa: E402
-from app.models import Episode, HazardEvent, Member  # noqa: E402
-from app.seed import MEMBERS, RESOURCES, VOLUNTEERS  # noqa: E402
-from app.store import store  # noqa: E402
+from app.agents import sentinel
+from app.agents.runner import runner
+from app.agents.tools_outage import electricity_dependent_members
+from app.main import app
+from app.models import Episode, HazardEvent, Member
+from app.seed import MEMBERS, RESOURCES, VOLUNTEERS
+from app.store import store
 
 STARTED: list[Episode] = []
 

@@ -17,6 +17,7 @@ Run: python -m tests.test_pipeline_mechanics
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import os
 import tempfile
 
@@ -24,12 +25,11 @@ os.environ["DATA_DIR"] = tempfile.mkdtemp(prefix="porchlight-mechanics-")
 os.environ["SENTINEL_ENABLED"] = "false"
 os.environ["SEND_MODE"] = "console"
 
-from app.agents import runner as runner_mod  # noqa: E402
-from app.agents.runner import EpisodeRunner  # noqa: E402
-from app.models import HazardEvent  # noqa: E402
-from app.seed import MEMBERS, RESOURCES, VOLUNTEERS  # noqa: E402
-from app.store import store  # noqa: E402
-from tests.scripted_model import ScriptedModel  # noqa: E402
+from app.agents.runner import EpisodeRunner
+from app.models import HazardEvent
+from app.seed import MEMBERS, RESOURCES, VOLUNTEERS
+from app.store import store
+from tests.scripted_model import ScriptedModel
 
 
 def _seed() -> ScriptedModel:
@@ -147,10 +147,8 @@ async def _settle(r: EpisodeRunner, ep_id: str, limit: float = 90.0) -> None:
         waited += 0.2
     task = r._tasks.get(ep_id)
     if task:
-        try:
+        with contextlib.suppress(Exception):  # only wait for the run to settle; the assertions below judge it
             await asyncio.wait_for(asyncio.shield(task), timeout=5)
-        except (asyncio.TimeoutError, Exception):
-            pass
 
 
 _BOTH = asyncio.run(_drive())

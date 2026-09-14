@@ -7,19 +7,19 @@ from __future__ import annotations
 
 import os
 import tempfile
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 os.environ["DATA_DIR"] = tempfile.mkdtemp(prefix="porchlight-rem-")
 os.environ["SENTINEL_ENABLED"] = "false"
 
-from app import reminders  # noqa: E402
-from app.config import settings  # noqa: E402
-from app.models import Checkin, Episode, HazardEvent, Member  # noqa: E402
-from app.store import store  # noqa: E402
+from app import reminders
+from app.config import settings
+from app.models import Checkin, Episode, HazardEvent, Member
+from app.store import store
 
 
 def ago(minutes: float) -> str:
-    return (datetime.now(timezone.utc) - timedelta(minutes=minutes)).isoformat()
+    return (datetime.now(UTC) - timedelta(minutes=minutes)).isoformat()
 
 
 def make(n_episodes: int = 1, sent_minutes_ago: float = 10.0) -> list[Checkin]:

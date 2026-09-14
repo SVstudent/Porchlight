@@ -4,11 +4,11 @@ from __future__ import annotations
 import json
 import sqlite3
 import threading
-from typing import Any, Iterable, Optional
+from collections.abc import Iterable
+from typing import Any
 
 from .config import settings
-from .models import (Approval, Checkin, Deployment, Episode, HazardEvent, Member, Resource,
-                     Volunteer, now_iso)
+from .models import Approval, Checkin, Deployment, Episode, HazardEvent, Member, Resource, Volunteer, now_iso
 
 _TABLES = ["members", "volunteers", "resources", "hazards", "episodes", "approvals", "checkins",
            "deployments", "seen_alerts", "settings"]
@@ -37,7 +37,7 @@ class Store:
             )
             self._conn.commit()
 
-    def _get(self, table: str, id: str) -> Optional[dict[str, Any]]:
+    def _get(self, table: str, id: str) -> dict[str, Any] | None:
         with self._lock:
             row = self._conn.execute(f"SELECT doc FROM {table} WHERE id = ?", (id,)).fetchone()
         return json.loads(row["doc"]) if row else None
@@ -61,7 +61,7 @@ class Store:
     def members(self) -> list[Member]:
         return [Member(**d) for d in self._all("members")]
 
-    def member(self, id: str) -> Optional[Member]:
+    def member(self, id: str) -> Member | None:
         d = self._get("members", id)
         return Member(**d) if d else None
 
@@ -76,7 +76,7 @@ class Store:
     def volunteers(self) -> list[Volunteer]:
         return [Volunteer(**d) for d in self._all("volunteers")]
 
-    def volunteer(self, id: str) -> Optional[Volunteer]:
+    def volunteer(self, id: str) -> Volunteer | None:
         d = self._get("volunteers", id)
         return Volunteer(**d) if d else None
 
@@ -119,7 +119,7 @@ class Store:
         eps.sort(key=lambda e: e.created_at, reverse=True)
         return eps
 
-    def episode(self, id: str) -> Optional[Episode]:
+    def episode(self, id: str) -> Episode | None:
         d = self._get("episodes", id)
         return Episode(**d) if d else None
 
@@ -128,7 +128,7 @@ class Store:
         self._put("episodes", e.id, e.model_dump())
         return e
 
-    def mutate_episode(self, id: str, fn) -> Optional[Episode]:
+    def mutate_episode(self, id: str, fn) -> Episode | None:
         """Atomic read-modify-write. Parallel graph branches and hooks all update the same episode row, so
         every update goes through here to avoid a stale write clobbering another branch's fields."""
         with self._lock:
@@ -148,7 +148,7 @@ class Store:
         out.sort(key=lambda a: a.created_at, reverse=True)
         return out
 
-    def approval(self, id: str) -> Optional[Approval]:
+    def approval(self, id: str) -> Approval | None:
         d = self._get("approvals", id)
         return Approval(**d) if d else None
 
@@ -169,7 +169,7 @@ class Store:
             out = [d for d in out if d.episode_id == episode_id]
         return sorted(out, key=lambda d: d.created_at)
 
-    def deployment(self, dep_id: str) -> Optional[Deployment]:
+    def deployment(self, dep_id: str) -> Deployment | None:
         d = self._get("deployments", dep_id)
         return Deployment(**d) if d else None
 
@@ -177,7 +177,7 @@ class Store:
         self._put("deployments", d.id, d.model_dump())
         return d
 
-    def mutate_deployment(self, dep_id: str, fn) -> Optional[Deployment]:
+    def mutate_deployment(self, dep_id: str, fn) -> Deployment | None:
         with self._lock:
             d = self.deployment(dep_id)
             if d is None:
@@ -185,7 +185,7 @@ class Store:
             fn(d)
             return self.put_deployment(d)
 
-    def checkin(self, token: str) -> Optional[Checkin]:
+    def checkin(self, token: str) -> Checkin | None:
         d = self._get("checkins", token)
         return Checkin(**d) if d else None
 
@@ -193,7 +193,7 @@ class Store:
         self._put("checkins", c.token, c.model_dump())
         return c
 
-    def mutate_checkin(self, token: str, fn) -> Optional[Checkin]:
+    def mutate_checkin(self, token: str, fn) -> Checkin | None:
         """Atomic read-modify-write. A member's tap, a Telegram reply and an escalation can land together."""
         with self._lock:
             c = self.checkin(token)

@@ -16,7 +16,7 @@ we text an anxious 78-year-old" is a policy decision, not something to re-derive
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime
 
 from .config import settings
 from .events import bus
@@ -37,8 +37,8 @@ def _age_minutes(ts: str) -> float:
     except ValueError:
         return 1e9
     if t.tzinfo is None:
-        t = t.replace(tzinfo=timezone.utc)
-    return (datetime.now(timezone.utc) - t).total_seconds() / 60.0
+        t = t.replace(tzinfo=UTC)
+    return (datetime.now(UTC) - t).total_seconds() / 60.0
 
 
 def open_checkins_for(member_id: str) -> list:

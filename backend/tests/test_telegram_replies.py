@@ -13,10 +13,10 @@ import tempfile
 os.environ["DATA_DIR"] = tempfile.mkdtemp(prefix="porchlight-tg-")
 os.environ["SENTINEL_ENABLED"] = "false"
 
-from app import scheduler  # noqa: E402
-from app.config import settings  # noqa: E402
-from app.models import Checkin, Episode, HazardEvent, Member  # noqa: E402
-from app.store import store  # noqa: E402
+from app import scheduler
+from app.config import settings
+from app.models import Checkin, Episode, HazardEvent, Member
+from app.store import store
 
 MY_CHAT = "987654321"
 

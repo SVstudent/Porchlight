@@ -91,7 +91,7 @@ def list_lessons(episode_id: str) -> dict[str, Any]:
     ep = store.episode(episode_id)
     if not ep:
         raise HTTPException(404, "unknown episode")
-    return {"lessons": [l for l in ep.stats.get("lessons", []) if isinstance(l, dict)]}
+    return {"lessons": [x for x in ep.stats.get("lessons", []) if isinstance(x, dict)]}
 
 
 # ------------------------------------------------------------------ AgentCore writer (bus subscriber)
@@ -108,10 +108,14 @@ async def _pump(q: asyncio.Queue) -> None:
             log.info("AgentCore Memory writer skipped an event: %s", e)
 
 
+_writer_task: asyncio.Task | None = None
+
+
 @router.on_event("startup")
 async def _start_memory_writer() -> None:
+    global _writer_task
     if not agentcore_memory.enabled():
         log.info("AgentCore Memory not configured (set AGENTCORE_MEMORY_ID and AWS_REGION); using local history only")
         return
-    asyncio.create_task(_pump(bus.subscribe()))
+    _writer_task = asyncio.create_task(_pump(bus.subscribe()))
     log.info("AgentCore Memory writer started for memory %s in %s", agentcore_memory.status()["memory_id"], agentcore_memory.REGION)

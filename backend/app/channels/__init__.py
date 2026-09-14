@@ -1,1 +1,1 @@
-from .registry import deliver, available_channels  # noqa: F401
+from .registry import available_channels, deliver  # noqa: F401

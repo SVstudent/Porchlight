@@ -6,7 +6,6 @@ on TokenRouter, an OpenAI-compatible gateway, when Bedrock is not reachable.
 from __future__ import annotations
 
 import logging
-import os
 from typing import Any
 
 from ..config import settings

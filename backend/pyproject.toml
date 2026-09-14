@@ -1,0 +1,38 @@
+[project]
+name = "porchlight"
+version = "1.0.0"
+description = "Neighbor check-in agent for community groups, built with the Strands Agents SDK"
+requires-python = ">=3.12"
+license = "MIT"
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+extend-exclude = ["data", ".bedrock_agentcore"]
+
+[tool.ruff.lint]
+select = [
+    "E4", "E7", "E9", "F", "W",  # pyflakes + pycodestyle errors
+    "B",                         # bugbear: likely bugs
+    "S",                         # bandit: security
+    "BLE",                       # no silent blind excepts without a stated reason
+    "ASYNC",                     # blocking calls inside async code
+    "DTZ",                       # timezone-naive datetimes
+    "UP",                        # modern Python syntax
+    "I",                         # import order
+    "SIM", "C4",                 # simpler code
+    "RUF",                       # ruff-specific checks, including unused noqa
+]
+ignore = [
+    "E501",                      # long lines are prose in prompts and messages; formatting is not enforced
+    "RUF001", "RUF002", "RUF003",  # typographic dashes and Spanish text are intentional
+    "RUF012",                    # Settings reads the environment once into plain class attributes
+    "S105", "S106", "S107",      # "token" here is a check-in link token, not a credential
+    "C408",                      # keyword dict() reads better for agent keyword arguments
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101", "S311", "S314"]  # tests assert, draw random ids, and parse the TwiML they generate
+"tests/smoke_*.py" = ["E702"]
+# Table names are interpolated only from the module's own fixed list; every value is a bound parameter.
+"app/store.py" = ["S608"]

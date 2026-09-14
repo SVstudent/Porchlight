@@ -9,11 +9,11 @@ from pathlib import Path
 
 os.environ.setdefault("DATA_DIR", tempfile.mkdtemp(prefix="porchlight-test-"))
 
-from app.feeds.nws import classify_event, feature_to_hazard, is_relevant  # noqa: E402
-from app.feeds.open_meteo import aqi_label  # noqa: E402
-from app.feeds.places import haversine_km  # noqa: E402
-from app.models import Episode, HazardEvent, TimelineEntry  # noqa: E402
-from app.store import Store  # noqa: E402
+from app.feeds.nws import classify_event, feature_to_hazard, is_relevant
+from app.feeds.open_meteo import aqi_label
+from app.feeds.places import haversine_km
+from app.models import Episode, HazardEvent, TimelineEntry
+from app.store import Store
 
 FIX = Path(__file__).resolve().parent.parent / "app" / "data" / "fixtures"
 
@@ -49,7 +49,7 @@ def test_store_atomic_updates():
 
     def writer(kind: str):
         for i in range(50):
-            st.mutate_episode(ep.id, lambda e: e.timeline.append(TimelineEntry(kind=kind, text=str(i))))
+            st.mutate_episode(ep.id, lambda e, i=i: e.timeline.append(TimelineEntry(kind=kind, text=str(i))))
 
     threads = [threading.Thread(target=writer, args=(f"w{n}",)) for n in range(4)]
     for t in threads:

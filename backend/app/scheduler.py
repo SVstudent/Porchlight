@@ -3,17 +3,17 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
+from . import reminders
 from .agents.runner import runner
 from .agents.sentinel import new_hazards
 from .channels.telegram import get_updates
 from .config import settings
 from .events import bus
-from . import reminders
 from .models import now_iso
 from .store import store
 
@@ -232,7 +232,7 @@ async def telegram_job() -> None:
 
 def start() -> None:
     scheduler.add_job(sentinel_job, "interval", minutes=settings.SENTINEL_INTERVAL_MINUTES, id="sentinel",
-                      next_run_time=datetime.now() + timedelta(seconds=20))  # first scan shortly after startup
+                      next_run_time=datetime.now(UTC) + timedelta(seconds=20))  # first scan shortly after startup
     try:
         followup_minutes = max(1, int(store.get_setting("followup_interval_minutes", settings.FOLLOWUP_INTERVAL_MINUTES)))
     except (TypeError, ValueError):

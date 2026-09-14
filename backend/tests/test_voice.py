@@ -13,19 +13,19 @@ os.environ.pop("TWILIO_ACCOUNT_SID", None)
 os.environ.pop("TWILIO_AUTH_TOKEN", None)
 os.environ.pop("TWILIO_FROM_NUMBER", None)
 
-from fastapi import FastAPI  # noqa: E402
-from fastapi.testclient import TestClient  # noqa: E402
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
 
-from app import routes_voice  # noqa: E402
-from app.agents.runner import runner  # noqa: E402
-from app.agents.tools import dispatch_outreach_impl  # noqa: E402
-from app.channels import deliver  # noqa: E402
-from app.channels.twilio_voice import build_reply_twiml, build_twiml, spoken_text, voice_for  # noqa: E402
-from app.config import settings  # noqa: E402
-from app.events import bus  # noqa: E402
-from app.models import Episode, HazardEvent  # noqa: E402
-from app.seed import MEMBERS, RESOURCES, VOLUNTEERS  # noqa: E402
-from app.store import store  # noqa: E402
+from app import routes_voice
+from app.agents.runner import runner
+from app.agents.tools import dispatch_outreach_impl
+from app.channels import deliver
+from app.channels.twilio_voice import build_reply_twiml, build_twiml, spoken_text, voice_for
+from app.config import settings
+from app.events import bus
+from app.models import Episode, HazardEvent
+from app.seed import MEMBERS, RESOURCES, VOLUNTEERS
+from app.store import store
 
 _app = FastAPI()
 _app.include_router(routes_voice.router)

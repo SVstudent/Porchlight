@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import threading
 from collections import deque
 from typing import Any
@@ -28,10 +29,8 @@ class EventBus:
             if loop and loop.is_running():
                 loop.call_soon_threadsafe(q.put_nowait, event)
             else:
-                try:
+                with contextlib.suppress(Exception):  # a full or closed subscriber must not block the rest
                     q.put_nowait(event)
-                except Exception:
-                    pass
         return event
 
     def emit(self, type: str, text: str = "", episode_id: str = "", agent: str = "", **data: Any) -> AgentEvent:

@@ -2,15 +2,16 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import csv
 import io
 import json
+import logging
 import os
 import signal
-from datetime import datetime, timezone
-import logging
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -18,11 +19,7 @@ from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from . import routes_demo
-from . import routes_memory
-from . import routes_outage
-from . import routes_report
-from . import routes_voice
+from . import routes_demo, routes_memory, routes_outage, routes_report, routes_voice
 from . import scheduler as sched
 from .agents.model_factory import candidate_names
 from .agents.runner import runner
@@ -81,10 +78,8 @@ def _setup_telemetry() -> None:
 
 @app.on_event("shutdown")
 async def _shutdown() -> None:
-    try:
+    with contextlib.suppress(Exception):  # stopping an already-stopped scheduler is harmless
         sched.stop()
-    except Exception:  # noqa: BLE001
-        pass
 
 
 # Settings the presenter view can change at runtime. Once changed they live in the database and win over
@@ -114,10 +109,8 @@ def _begin_shutdown(*_a) -> None:
     dashboard holds an event stream open, so the scheduler went on sending messages for the nine
     minutes between asking the server to stop and it actually stopping.
     """
-    try:
+    with contextlib.suppress(Exception):  # stopping an already-stopped scheduler is harmless
         sched.stop()
-    except Exception:  # noqa: BLE001
-        pass
 
 
 @app.on_event("startup")
@@ -161,8 +154,8 @@ def health() -> dict[str, Any]:
 
 
 class SettingsIn(BaseModel):
-    auto_approve_escalations: Optional[bool] = None
-    sentinel_enabled: Optional[bool] = None
+    auto_approve_escalations: bool | None = None
+    sentinel_enabled: bool | None = None
 
 
 @app.post("/api/settings")
@@ -310,7 +303,7 @@ def _deployment_view(d) -> dict[str, Any]:
     responder = store.volunteer(d.responder_id)
     elapsed = 0.0
     if d.approved_at:
-        elapsed = max(0.0, (datetime.now(timezone.utc)
+        elapsed = max(0.0, (datetime.now(UTC)
                             - datetime.fromisoformat(d.approved_at.replace("Z", "+00:00"))).total_seconds())
     p = dep_mod.progress(d, elapsed)
     return {
@@ -337,7 +330,6 @@ async def run_checkup(member_id: str) -> dict[str, Any]:
     import secrets
 
     from .channels.registry import deliver
-    from .models import Checkin
 
     member = store.member(member_id)
     episode = _current_episode()
@@ -411,7 +403,6 @@ def _current_episode():
 @app.get("/api/episodes/{episode_id}/deployments")
 def list_deployments(episode_id: str) -> dict[str, Any]:
     """Suggested and approved trips, each with its road route and where the responder should be by now."""
-    from . import deployments as dep_mod
 
     return {"deployments": [_deployment_view(d) for d in store.deployments(episode_id)]}
 
@@ -452,7 +443,7 @@ async def events_stream(request: Request):
                 try:
                     ev = await asyncio.wait_for(q.get(), timeout=15)
                     yield f"data: {ev.model_dump_json()}\n\n"
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     yield ": keepalive\n\n"
         finally:
             bus.unsubscribe(q)
@@ -565,7 +556,7 @@ async def hazards_replay(body: ReplayIn) -> dict[str, Any]:
     try:
         h = replay_fixture(body.fixture_id)
     except FileNotFoundError:
-        raise HTTPException(404, "unknown fixture")
+        raise HTTPException(404, "unknown fixture") from None
     ep = await runner.start(h)
     return {"episode": ep.model_dump()}
 
@@ -673,7 +664,7 @@ async def decide(approval_id: str, body: DecisionIn) -> dict[str, Any]:
     try:
         a = await runner.decide(approval_id, body.decision, body.note, body.edits)
     except KeyError:
-        raise HTTPException(404, "unknown approval")
+        raise HTTPException(404, "unknown approval") from None
     return a.model_dump()
 
 

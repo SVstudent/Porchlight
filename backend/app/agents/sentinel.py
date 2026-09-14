@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -49,7 +49,7 @@ def scan_thresholds() -> list[HazardEvent]:
     """Threshold-based detection from live conditions, for places/hazards without an official alert."""
     out: list[HazardEvent] = []
     lat, lon = _clusters(1)[0]
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    today = datetime.now(UTC).strftime("%Y-%m-%d")
     try:
         wx = open_meteo.current_conditions(lat, lon)
         feels = wx.get("feels_like_f") or wx.get("temp_f")
@@ -108,7 +108,7 @@ def list_fixtures() -> list[dict[str, Any]]:
                 "sender": sender,
                 "area": (props.get("areaDesc") or "")[:80],
             })
-        except Exception:  # noqa: BLE001
+        except Exception:  # noqa: BLE001, S112 — one malformed fixture must not hide the others
             continue
     return out
 
@@ -119,5 +119,5 @@ def replay_fixture(fixture_id: str) -> HazardEvent:
     d = json.loads(p.read_text())
     feat = d["features"][0] if "features" in d else d
     h = nws.feature_to_hazard(feat, source="replay")
-    h.external_id = f"{h.external_id}#replay-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S')}"
+    h.external_id = f"{h.external_id}#replay-{datetime.now(UTC).strftime('%Y%m%dT%H%M%S')}"
     return h
