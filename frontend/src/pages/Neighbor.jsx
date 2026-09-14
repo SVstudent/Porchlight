@@ -59,8 +59,11 @@ export default function Neighbor() {
     setBusy(key); setNote('');
     try {
       const r = await fn();
-      if (r.already_waiting) setNote('A check-in is already out with them; waiting on a reply.');
+      if (r.already_waiting) setNote('They already have a check-in outstanding — waiting on their reply rather than messaging them twice.');
       else if (r.sent) setNote(`Sent via ${r.channel}.`);
+      // A message that was only written to the activity feed must not report as sent — otherwise the
+      // first sign that nothing left the building is that nobody ever replies.
+      else if (r.logged_only) setNote(`Not actually sent — written to the activity feed instead${r.why ? ` (${r.why})` : ''}.`);
       else if (r.proposed) setNote('A visit has been suggested — approve it below.');
       else if (r.reason) setNote(r.reason);
       load();

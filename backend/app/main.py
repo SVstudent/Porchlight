@@ -363,7 +363,19 @@ async def run_checkup(member_id: str) -> dict[str, Any]:
         kind="checkin", text=f"Check-in sent to {member.name} by the coordinator")))
     bus.emit("checkin", f"Check-in sent to {member.name}", episode_id=episode.id,
              member_id=member_id, agent="coordinator")
-    return {"sent": res.ok, "channel": res.channel, "detail": res.detail, "token": token}
+    from .channels.registry import live_for
+
+    really_sent = live_for(member) and res.channel != "console"
+    return {
+        "sent": really_sent,
+        "logged_only": not really_sent,
+        "channel": res.channel,
+        "detail": res.detail,
+        "token": token,
+        "why": ("" if really_sent
+                else f"SEND_MODE is '{settings.SEND_MODE}'" if settings.SEND_MODE != "live"
+                else f"only {settings.DEMO_LIVE_MEMBER_ID} is contacted for real right now"),
+    }
 
 
 @app.post("/api/neighbors/{member_id}/escalate")
