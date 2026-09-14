@@ -74,7 +74,7 @@ The coordinator sees all of it on one screen: live agent activity, a decision ca
 - **Tools with context**: `@tool(context=True)` tools read the episode id from `invocation_state`, so one tool module serves every agent in every episode.
 - **Hooks for observability**: `AuditHook` mirrors `BeforeModelCallEvent`, `BeforeToolCallEvent`, `AfterToolCallEvent` and `MessageAddedEvent` into a server-sent event stream and the episode timeline, which is what the dashboard's live feed shows.
 - **Streaming**: `graph.stream_async()` node events drive the pipeline stepper; `agent.stream_async()` text deltas are forwarded live.
-- **`ModelRouter` with fallback**: Amazon Bedrock first, then the Anthropic API, so a provider outage does not end an episode mid-run.
+- **`ModelRouter` with fallback**: Amazon Bedrock (Nova Pro) first; with `MODEL_PROVIDER=auto`, TokenRouter or the Anthropic API take over if Bedrock fails, so a provider outage does not end an episode mid-run.
 - **AgentCore Runtime entrypoint** (`backend/agentcore_app.py`): `BedrockAgentCoreApp` with a streaming `@app.entrypoint` that runs the identical graph and resumes on interrupt responses.
 - **Deterministic guardrails outside the LLM**: thresholds, alert filtering and de-duplication live in `sentinel.py`; the model never decides whether to poll, only what to do once a real hazard exists.
 
@@ -123,7 +123,7 @@ Or point the roster somewhere with weather right now: edit `backend/app/seed.py`
 Model access is the most common blocker. Before the first run, confirm your account can invoke the configured model:
 
 ```bash
-aws bedrock list-foundation-models --region us-east-1 --by-provider anthropic --query 'modelSummaries[].modelId'
+aws bedrock list-foundation-models --region us-east-1 --by-provider amazon --query 'modelSummaries[].modelId'
 python -c "from strands import Agent; print(Agent(model='amazon.nova-pro-v1:0', callback_handler=None)('Say ready.'))"
 ```
 If the model id is not enabled for your account, request access in the Bedrock console (Model access) or set `BEDROCK_MODEL_ID` to one that is.
@@ -201,7 +201,7 @@ and a `Graph` whose node interrupts and then resumes to completion.
 
 ## Built with
 
-Strands Agents SDK 1.55 (Python) · Amazon Bedrock (Claude) · Amazon Bedrock AgentCore Runtime · FastAPI · React + Vite · Leaflet/OpenStreetMap · National Weather Service API · Open-Meteo · Twilio / Telegram / Amazon SES
+Strands Agents SDK 1.55 (Python) · Amazon Bedrock (Nova Pro) · Amazon Bedrock AgentCore Runtime · FastAPI · React + Vite · Leaflet/OpenStreetMap · National Weather Service API · Open-Meteo · Twilio / Telegram / Amazon SES
 
 AI coding assistants were used for boilerplate, tests and debugging, as permitted by the hackathon rules. All code was written during the submission period.
 

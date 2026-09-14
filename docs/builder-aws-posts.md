@@ -29,7 +29,7 @@ The whole `GraphBuilder` graph stops with `Status.INTERRUPTED`. Our FastAPI laye
 
 What surprised us: editing the tool input inside the hook on resume is enough to let a human rewrite a message the agent drafted, without the agent ever knowing. That is the right amount of human in the loop for a volunteer.
 
-Stack: Strands Agents 1.55, Amazon Bedrock (Claude), AgentCore Runtime entrypoint, FastAPI, React. Repo: <link>. [FINALIZE AFTER FIRST BEDROCK RUN.]
+Stack: Strands Agents 1.55, Amazon Bedrock (Nova Pro), AgentCore Runtime entrypoint, FastAPI, React. Repo: <link>. [FINALIZE AFTER FIRST BEDROCK RUN.]
 
 ---
 

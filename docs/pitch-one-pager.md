@@ -29,7 +29,7 @@ The one volunteer who holds a community's list: a block captain, a parish coordi
 - Human in the loop with interrupts: a `BeforeToolCallEvent` hook calls `event.interrupt()` on every world-changing tool; the graph stops with `Status.INTERRUPTED` and resumes on `interruptResponse`. Coordinator edits are written into the tool input.
 - `FileSessionManager` persistence: a paused graph is rebuilt and resumed after a restart, so a decision can wait hours.
 - `structured_output_model` for the hazard assessment, so a Pydantic object drives the graph edge, not free text.
-- `ModelRouter` fallback (Bedrock, then Anthropic) and a `BedrockAgentCoreApp` entrypoint: the same graph runs on a laptop and on AgentCore Runtime.
+- `ModelRouter` fallback (Bedrock Nova Pro first, other providers when enabled) and a `BedrockAgentCoreApp` entrypoint: the same graph runs on a laptop and on AgentCore Runtime.
 
 ## Impact model
 

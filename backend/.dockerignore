@@ -1,0 +1,7 @@
+# Secrets and local state never go into an image; the runtime gets its settings as environment variables.
+.env
+data/
+__pycache__/
+*.pyc
+tests/
+.bedrock_agentcore/

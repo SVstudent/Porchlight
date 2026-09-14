@@ -19,7 +19,11 @@ from app.agents.context import current_episode_id
 from app.agents.pipeline import build_graph, graph_task
 from app.agents.sentinel import new_hazards, replay_fixture
 from app.models import Episode, HazardEvent
+from app.seed import MEMBERS, RESOURCES, VOLUNTEERS
 from app.store import store
+
+# The runtime container starts with an empty store; without the roster, triage has nobody to rank.
+store.seed_if_empty(MEMBERS, VOLUNTEERS, RESOURCES)
 
 app = BedrockAgentCoreApp()
 _graphs: dict[str, Any] = {}

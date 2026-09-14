@@ -3,7 +3,7 @@
 **Project name:** Porchlight
 **Tagline:** A neighbor check-in agent that turns a weather alert into personal outreach, volunteer dispatch and follow-up, and only asks the block captain to press Approve.
 **Track:** Good Neighbor Agents
-**Built with:** Strands Agents SDK (Python), Amazon Bedrock (Claude), Amazon Bedrock AgentCore Runtime, FastAPI, React, Vite, Leaflet, National Weather Service API, Open-Meteo, OpenStreetMap, Twilio, Telegram Bot API, Amazon SES, SQLite, Docker
+**Built with:** Strands Agents SDK (Python), Amazon Bedrock (Nova Pro), Amazon Bedrock AgentCore Runtime, FastAPI, React, Vite, Leaflet, National Weather Service API, Open-Meteo, OpenStreetMap, Twilio, Telegram Bot API, Amazon SES, SQLite, Docker
 
 ## Inspiration
 

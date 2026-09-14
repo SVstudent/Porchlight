@@ -13,7 +13,7 @@ Without a model provider the pipeline cannot run. Pick one.
 | Variable | Value | Notes |
 |---|---|---|
 | `MODEL_PROVIDER` | `bedrock` | Or `auto` to fall back Bedrock → Anthropic |
-| `BEDROCK_MODEL_ID` | a Claude model id enabled in your account | Confirm with the preflight below |
+| `BEDROCK_MODEL_ID` | `amazon.nova-pro-v1:0` (Amazon Nova Pro) | Confirm with the preflight below |
 | `AWS_REGION` | `us-east-1` | Must be a region where the model is enabled |
 
 AWS credentials come from the standard chain, so `aws configure` is enough and no key needs to go in `.env`. If you prefer explicit values, set `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`, or a single `AWS_BEARER_TOKEN_BEDROCK`.
@@ -22,7 +22,7 @@ AWS credentials come from the standard chain, so `aws configure` is enough and n
 
 ```bash
 aws sts get-caller-identity
-aws bedrock list-foundation-models --region us-east-1 --by-provider anthropic \
+aws bedrock list-foundation-models --region us-east-1 --by-provider amazon \
   --query 'modelSummaries[].modelId' --output text | tr '\t' '\n' | head
 ```
 
