@@ -169,10 +169,10 @@
   <!-- ── AgentCore Runtime / deployment ─────────────────────────────── -->
   <rect x="1080" y="912" width="476" height="170" rx="12" fill="#ffffff" stroke="#d9d5cc"/>
   <text x="1100" y="940" font-size="13" font-weight="700" fill="#5f6b6c" letter-spacing="1">DEPLOYMENT</text>
-  <text x="1100" y="964" font-size="14" font-weight="600" fill="#1e2a2b">Amazon Bedrock AgentCore Runtime</text>
-  <text x="1100" y="984" font-size="12" fill="#5f6b6c">backend/agentcore_app.py · BedrockAgentCoreApp entrypoint</text>
-  <text x="1100" y="1002" font-size="12" fill="#5f6b6c">streams the same graph; resume with interrupt_responses</text>
-  <text x="1100" y="1028" font-size="14" font-weight="600" fill="#1e2a2b">Docker Compose (backend + nginx frontend)</text>
-  <text x="1100" y="1048" font-size="12" fill="#5f6b6c">local or any container host · IAM role or ~/.aws mounted</text>
+  <text x="1100" y="964" font-size="14" font-weight="600" fill="#1e2a2b">Live on AWS · EC2 t4g.small behind CloudFront</text>
+  <text x="1100" y="984" font-size="12" fill="#5f6b6c">IAM role, no keys · SQLite and paused sessions on EBS</text>
+  <text x="1100" y="1002" font-size="12" fill="#5f6b6c">asleep → CloudFront fails over to a Lambda that wakes it</text>
+  <text x="1100" y="1028" font-size="14" font-weight="600" fill="#1e2a2b">Amazon Bedrock AgentCore Runtime</text>
+  <text x="1100" y="1048" font-size="12" fill="#5f6b6c">agentcore_app.py · same graph, resumes with interrupt_responses</text>
   <text x="1100" y="1072" font-size="12" fill="#5f6b6c">Observability: strands[otel] → CloudWatch GenAI / OTLP</text>
 </svg>
