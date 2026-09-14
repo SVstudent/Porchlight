@@ -6,6 +6,8 @@ When dangerous heat, smoke, a freeze or an outage threatens a neighborhood, Porc
 
 *Agents for Humans Hackathon · **Good Neighbor Agents** track · MIT licensed*
 
+**Live demo: [d3mb3p2bf8o8jp.cloudfront.net](https://d3mb3p2bf8o8jp.cloudfront.net)** — no sign-up, and nothing is sent to anyone: messages are logged, not delivered. To keep hosting near zero the server sleeps when nobody is using it, so the first visit shows a *waking up* page that opens the app by itself in under a minute.
+
 ![Architecture](docs/architecture.png)
 
 ## Why
@@ -105,6 +107,8 @@ Copy `backend/.env.example` to `backend/.env` — every setting is documented th
 | `MAX_REMINDERS`, `REMINDER_GAP_MINUTES` | The reminder ladder (3, 3 minutes). |
 
 `python scripts/aws_preflight.py` checks Bedrock access from inside the server's own process. Docker: `docker compose up --build`. Going live: [`docs/go-live.md`](docs/go-live.md).
+
+The live demo runs on one EC2 t4g.small behind CloudFront, using an IAM role (no keys on the server, none in the frontend). When it is asleep, CloudFront fails over to a small Lambda that starts it, and the instance powers itself off after an hour without use.
 
 ## What's real, and what isn't
 
